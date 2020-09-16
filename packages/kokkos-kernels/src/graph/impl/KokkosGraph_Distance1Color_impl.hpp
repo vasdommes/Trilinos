@@ -361,11 +361,16 @@ public:
     //the conflictlist
     nnz_lno_temp_work_view_t current_vertexList =
         nnz_lno_temp_work_view_t(Kokkos::ViewAllocateWithoutInitializing("vertexList"), this->nv);
+    nnz_lno_t current_vertexListLength = this->nv;
 
     //init vertexList sequentially.
-    Kokkos::parallel_for("KokkosGraph::GraphColoring::InitList",
+    if(this->cp->get_use_vtx_list()){
+      current_vertexList = this->cp->get_vertex_list();
+      current_vertexListLength = this->cp->get_vertex_list_size();
+    } else {
+      Kokkos::parallel_for("KokkosGraph::GraphColoring::InitList",
         my_exec_space(0, this->nv), functorInitList<nnz_lno_temp_work_view_t> (current_vertexList));
-
+    }
 
     // the next iteration's conflict list
     nnz_lno_temp_work_view_t next_iteration_recolorList;
@@ -382,7 +387,6 @@ public:
     }
 
     nnz_lno_t numUncolored = this->nv;
-    nnz_lno_t current_vertexListLength = this->nv;
 
 
     double t, total=0.0;

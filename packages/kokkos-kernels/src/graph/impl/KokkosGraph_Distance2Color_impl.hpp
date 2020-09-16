@@ -250,8 +250,14 @@ class GraphColorDistance2
         lno_view_t current_vertexList(
             Kokkos::ViewAllocateWithoutInitializing("vertexList"), this->nr);
 
+        lno_t current_vertexListLength = this->nr;
         // init conflictlist sequentially.
-        Kokkos::parallel_for("InitList", range_policy_type(0, this->nr), functorInitList<lno_view_t>(current_vertexList));
+	if(this->gc_handle->get_use_vtx_list()){
+	  current_vertexList = this->gc_handle->get_vertex_list();
+	  current_vertexListLength = this->gc_handle->get_vertex_list_size();
+	} else {
+          Kokkos::parallel_for("InitList", range_policy_type(0, this->nr), functorInitList<lno_view_t>(current_vertexList));
+	}
 
         // Next iteratons's conflictList
         lno_view_t next_iteration_recolorList(Kokkos::ViewAllocateWithoutInitializing("recolorList"), this->nr);
@@ -261,7 +267,6 @@ class GraphColorDistance2
 
         lno_t numUncolored             = this->nr;
         lno_t numUncoloredPreviousIter = this->nr + 1;
-        lno_t current_vertexListLength = this->nr;
 
         double              time;
         double              total_time = 0.0;
@@ -465,7 +470,7 @@ class GraphColorDistance2
                 break;
               }
             }
-            if(color)
+            if(color && (colors(v) == 0 || colors(v) == CONFLICTED || colors(v) == UNCOLORABLE))
             {
               //Color v
               colors(v) = color;
@@ -486,7 +491,7 @@ class GraphColorDistance2
                 }
               }
             }
-            else 
+            else if (colors(v) == 0 || colors(v) == CONFLICTED || colors(v) == UNCOLORABLE)
             {
               colors(v) = UNCOLORABLE;
             }
@@ -745,9 +750,9 @@ class GraphColorDistance2
       int iter = 0;
       Kokkos::Impl::Timer timer;
       lno_t currentWork = this->nr;
-      batch = 1;
+      //batch = 1;
       //std::cout<<"initializing forbidden for previous colors\n";
-      for(int v = 0; v < numVerts; v++){
+      /*for(int v = 0; v < numVerts; v++){
         if(colors_out(v) != 0){
           size_type rowBegin = this->xadj(v);
           size_type rowEnd = this->xadj(v + 1);
@@ -767,7 +772,7 @@ class GraphColorDistance2
             }
           }
         }
-      }
+      }*/
       //std::cout<<"done initializing\n";
       //Kokkos::parallel_for("NB D2 Forbidden", range_policy_type(0, numCols),
       //    NB_RefreshForbidden<1>(1, forbidden, colors_out, this->t_xadj, this->t_adj, numVerts));
@@ -780,11 +785,58 @@ class GraphColorDistance2
       }*/
       for(color_type colorBase = 1;; colorBase += 32 * batch)
       {
+        /*if(currentWork)
+        {
+          switch(batch)
+          {
+            case 1:
+              Kokkos::parallel_for("NB D2 Forbidden", range_policy_type(0, numCols),
+                  NB_RefreshForbidden<1>(colorBase, forbidden, colors_out, this->t_xadj, this->t_adj, numVerts));
+              break;
+            case 2:
+              Kokkos::parallel_for("NB D2 Forbidden", range_policy_type(0, numCols),
+                  NB_RefreshForbidden<2>(colorBase, forbidden, colors_out, this->t_xadj, this->t_adj, numVerts));
+              break;
+            case 4:
+              Kokkos::parallel_for("NB D2 Forbidden", range_policy_type(0, numCols),
+                  NB_RefreshForbidden<4>(colorBase, forbidden, colors_out, this->t_xadj, this->t_adj, numVerts));
+              break;
+            case 8:
+              Kokkos::parallel_for("NB D2 Forbidden", range_policy_type(0, numCols),
+                  NB_RefreshForbidden<8>(colorBase, forbidden, colors_out, this->t_xadj, this->t_adj, numVerts));
+              break;
+            default:;
+          }
+          forbiddenTime += timer.seconds();
+          timer.reset();
+        }*/
         //Until the worklist is completely empty, run the functor specialization for batch size
         while(currentWork)
         {
           lno_t vertsPerThread = 1;
           lno_t workBatches = (currentWork + vertsPerThread - 1) / vertsPerThread;
+          timer.reset();
+          switch(batch)
+          {
+            case 1:
+              Kokkos::parallel_for("NB D2 Forbidden", range_policy_type(0, numCols),
+                  NB_RefreshForbidden<1>(colorBase, forbidden, colors_out, this->t_xadj, this->t_adj, numVerts));
+              break;
+            case 2:
+              Kokkos::parallel_for("NB D2 Forbidden", range_policy_type(0, numCols),
+                  NB_RefreshForbidden<2>(colorBase, forbidden, colors_out, this->t_xadj, this->t_adj, numVerts));
+              break;
+            case 4:
+              Kokkos::parallel_for("NB D2 Forbidden", range_policy_type(0, numCols),
+                  NB_RefreshForbidden<4>(colorBase, forbidden, colors_out, this->t_xadj, this->t_adj, numVerts));
+              break;
+            case 8:
+              Kokkos::parallel_for("NB D2 Forbidden", range_policy_type(0, numCols),
+                  NB_RefreshForbidden<8>(colorBase, forbidden, colors_out, this->t_xadj, this->t_adj, numVerts));
+              break;
+            default:;
+          }
+          forbiddenTime += timer.seconds();
           timer.reset();
           //std::cout<<"starting coloring\n";
           switch(batch)
@@ -842,34 +894,31 @@ class GraphColorDistance2
           //std::cout<<"done building worklist, updating forbidden\n";
           //if still using this color set, refresh forbidden.
           //This avoids using too many colors, by relying on forbidden from before conflict resolution (which is now stale).
-          if(currentWork)
-          {
-            switch(batch)
-            {
-              case 1:
-                Kokkos::parallel_for("NB D2 Forbidden", range_policy_type(0, numCols),
-                    NB_RefreshForbidden<1>(colorBase, forbidden, colors_out, this->t_xadj, this->t_adj, numVerts));
-                break;
-              case 2:
-                Kokkos::parallel_for("NB D2 Forbidden", range_policy_type(0, numCols),
-                    NB_RefreshForbidden<2>(colorBase, forbidden, colors_out, this->t_xadj, this->t_adj, numVerts));
-                break;
-              case 4:
-                Kokkos::parallel_for("NB D2 Forbidden", range_policy_type(0, numCols),
-                    NB_RefreshForbidden<4>(colorBase, forbidden, colors_out, this->t_xadj, this->t_adj, numVerts));
-                break;
-              case 8:
-                Kokkos::parallel_for("NB D2 Forbidden", range_policy_type(0, numCols),
-                    NB_RefreshForbidden<8>(colorBase, forbidden, colors_out, this->t_xadj, this->t_adj, numVerts));
-                break;
-              default:;
-            }
-            forbiddenTime += timer.seconds();
-            timer.reset();
-          }
           //std::cout<<"done with iteration: "<<iter<<" for colorBase "<<colorBase<<" and remaining work "<<currentWork<<"\n";
           iter++;
         }
+        switch(batch)
+        {
+          case 1:
+            Kokkos::parallel_for("NB D2 Forbidden", range_policy_type(0, numCols),
+                NB_RefreshForbidden<1>(colorBase, forbidden, colors_out, this->t_xadj, this->t_adj, numVerts));
+            break;
+          case 2:
+            Kokkos::parallel_for("NB D2 Forbidden", range_policy_type(0, numCols),
+                NB_RefreshForbidden<2>(colorBase, forbidden, colors_out, this->t_xadj, this->t_adj, numVerts));
+            break;
+          case 4:
+            Kokkos::parallel_for("NB D2 Forbidden", range_policy_type(0, numCols),
+                NB_RefreshForbidden<4>(colorBase, forbidden, colors_out, this->t_xadj, this->t_adj, numVerts));
+            break;
+          case 8:
+            Kokkos::parallel_for("NB D2 Forbidden", range_policy_type(0, numCols),
+                NB_RefreshForbidden<8>(colorBase, forbidden, colors_out, this->t_xadj, this->t_adj, numVerts));
+            break;
+          default:;
+        }
+        forbiddenTime += timer.seconds();
+        timer.reset();
         //Will need to run with a different color base, so rebuild the work list
         Kokkos::parallel_scan("NB D2 Worklist Rebuild", range_policy_type(0, numVerts),
             NB_UpdateBatch(colors_out, worklist, worklen, numVerts));

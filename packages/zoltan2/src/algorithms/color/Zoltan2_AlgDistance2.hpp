@@ -47,9 +47,9 @@ class AlgDistance2 : public Algorithm<Adapter> {
     using map_t = Tpetra::Map<lno_t,gno_t>;
     using femv_scalar_t = int;
     using femv_t = Tpetra::FEMultiVector<femv_scalar_t, lno_t, gno_t>; 
-    using device_type = Tpetra::Map<>::device_type;
-    using execution_space = Tpetra::Map<>::execution_space;
-    using memory_space = Tpetra::Map<>::memory_space;
+    using device_type = Kokkos::Device<Kokkos::Cuda, Kokkos::Cuda::memory_space>;
+    using execution_space = Kokkos::Cuda;
+    using memory_space = Kokkos::Cuda::memory_space;
     double timer(){
       struct timeval tp;
       gettimeofday(&tp, NULL);
@@ -62,6 +62,8 @@ class AlgDistance2 : public Algorithm<Adapter> {
                        Kokkos::View<lno_t*,device_type> adjs_view,
                        Kokkos::View<offset_t*, device_type> offset_view,
                        Teuchos::RCP<femv_t> femv,
+		       Kokkos::View<lno_t*, device_type> vertex_list,
+		       size_t vertex_list_size,
                        bool recolor);
     
     RCP<const base_adapter_t> adapter;
@@ -339,6 +341,10 @@ class AlgDistance2 : public Algorithm<Adapter> {
     }
     double doOwnedToGhosts(RCP<const map_t> mapOwnedPlusGhosts,
                          size_t nVtx,
+			 typename Kokkos::View<offset_t*, device_type>::HostMirror dist_offsets,
+			 typename Kokkos::View<lno_t*, device_type>::HostMirror dist_adjs,
+			 Kokkos::View<lno_t*,device_type> verts_to_send,
+			 Kokkos::View<lno_t[1], device_type> verts_to_send_size,
                          ArrayView<int> owners,
                          Kokkos::View<int*, device_type>& colors){
       int nprocs = comm->getSize();
@@ -349,9 +355,39 @@ class AlgDistance2 : public Algorithm<Adapter> {
         recvcnts[i] = 0;
       }
       //loop through owners, count how many vertices we'll send to each processor
-      for(size_t i=0; i < owners.size(); i++){
+      /*for(size_t i=0; i < owners.size(); i++){
         if(owners[i] != comm->getRank() && owners[i] != -1) sendcnts[owners[i]]++;
+      }*/
+      for(size_t i=0; i < verts_to_send_size(0); i++){
+        bool used_proc[nprocs];
+        for(int x = 0; x < nprocs; x++) used_proc[x] = false;
+        for(offset_t j = dist_offsets(verts_to_send(i)); j < dist_offsets(verts_to_send(i)+1); j++){
+          lno_t nbor = dist_adjs(j);
+          if(nbor >= nVtx){
+            //one for the GID, one for the color, two overall.
+            if(owners[nbor-nVtx] != comm->getRank() && owners[nbor-nVtx] != -1){
+              if(!used_proc[owners[nbor-nVtx]]){
+                //std::cout<<comm->getRank()<<": sending vertex "<<mapOwnedPlusGhosts->getGlobalElement(verts_to_send(i))<<" to proc "<<owners[nbor-nVtx]<<"\n";
+                sendcnts[owners[nbor-nVtx]]+=2;
+                used_proc[owners[nbor-nVtx]] = true;
+              }
+            }
+          }
+          for(offset_t k = dist_offsets(nbor); k < dist_offsets(nbor+1); k++){
+            lno_t d2_nbor = dist_adjs(k);
+            if(d2_nbor >= nVtx){
+              if(owners[d2_nbor-nVtx] != comm->getRank() && owners[d2_nbor-nVtx] != -1){
+                if(!used_proc[owners[d2_nbor-nVtx]]){
+                  //std::cout<<comm->getRank()<<": sending vertex "<<mapOwnedPlusGhosts->getGlobalElement(verts_to_send[i])<<" to proc "<<owners[d2_nbor-nVtx]<<"\n";
+                  sendcnts[owners[d2_nbor-nVtx]]+=2;
+                  used_proc[owners[d2_nbor-nVtx]] = true;
+                }
+              }
+            }
+          }
+        }
       }
+
       int status = MPI_Alltoall(sendcnts,1,MPI_INT,recvcnts,1,MPI_INT,MPI_COMM_WORLD);
 
       int* sdispls = new int[nprocs];
@@ -373,35 +409,79 @@ class AlgDistance2 : public Algorithm<Adapter> {
       int* sendbuf = new int[sendsize];
       int* recvbuf = new int[recvsize];
 
-      for(size_t i = 0; i < owners.size(); i++){
+      for(size_t i = 0; i < verts_to_send_size(0); i++){
+        bool used_proc[nprocs];
+        for(int x = 0; x < nprocs; x++) used_proc[x] = false;
+        lno_t curr_vert = verts_to_send(i);
+        for(offset_t j = dist_offsets(verts_to_send(i)); j < dist_offsets(verts_to_send(i)+1); j++){
+          lno_t nbor = dist_adjs(j);
+          if(nbor >= nVtx){
+            if(owners[nbor-nVtx] != comm->getRank() && owners[nbor-nVtx] != -1){
+              if(!used_proc[owners[nbor-nVtx]]){
+                //grab the last used index
+                int idx = sdispls[owners[nbor-nVtx]] + sentcount[owners[nbor-nVtx]];
+                sentcount[owners[nbor-nVtx]]+=2;
+                //build up the sendbuf
+                sendbuf[idx++] = mapOwnedPlusGhosts->getGlobalElement(curr_vert);
+                sendbuf[idx] = colors(curr_vert);
+                used_proc[owners[nbor-nVtx]] = true;
+              }
+            }
+          }
+          for(offset_t k = dist_offsets(nbor); k < dist_offsets(nbor+1); k++){
+            lno_t d2_nbor = dist_adjs(k);
+            if(d2_nbor >= nVtx){
+              if(owners[d2_nbor-nVtx] != comm->getRank() && owners[d2_nbor-nVtx] != -1){
+                if(!used_proc[owners[d2_nbor-nVtx]]){
+                  int idx = sdispls[owners[d2_nbor-nVtx]] + sentcount[owners[d2_nbor-nVtx]];
+                  sentcount[owners[d2_nbor-nVtx]]+=2;
+                  sendbuf[idx++] = mapOwnedPlusGhosts->getGlobalElement(curr_vert);
+                  sendbuf[idx] = colors(curr_vert);
+                  used_proc[owners[d2_nbor-nVtx]] = true;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      /*for(size_t i = 0; i < owners.size(); i++){
         if(owners[i] != comm->getRank() && owners[i] != -1){
           int idx = sdispls[owners[i]] + sentcount[owners[i]]++;
           sendbuf[idx] = mapOwnedPlusGhosts->getGlobalElement(i+nVtx);
         }
-      }
+      }*/
 
       double comm_total = 0.0;
       double comm_temp = timer();
       status = MPI_Alltoallv(sendbuf, sendcnts, sdispls, MPI_INT, recvbuf,recvcnts,rdispls,MPI_INT,MPI_COMM_WORLD);
       comm_total += timer() - comm_temp;
 
-      int* recvColors = new int[sendsize];
+      //int* recvColors = new int[sendsize];
 
       for(int i = 0; i < comm->getSize(); i++){
+        for(int j = rdispls[i]; j < rdispls[i+1]; j+=2){
+          lno_t lid = mapOwnedPlusGhosts->getLocalElement(recvbuf[j]);
+          if(lid < nVtx) std::cout<<comm->getRank()<<": received a locally owned vertex, somehow\n";
+          colors(lid) = recvbuf[j+1];
+        }
+      }
+
+      /*for(int i = 0; i < comm->getSize(); i++){
         for(int j = rdispls[i]; j < rdispls[i+1]; j++){
           lno_t lid = mapOwnedPlusGhosts->getLocalElement(recvbuf[j]);
           recvbuf[j] = colors(lid);
         }
-      }
+      }*/
 
-      comm_temp = timer();
+      /*comm_temp = timer();
       status = MPI_Alltoallv(recvbuf, recvcnts,rdispls,MPI_INT, recvColors, sendcnts, sdispls,MPI_INT,MPI_COMM_WORLD);
       comm_total += timer() - comm_temp;
 
       for(int i = 0; i < sendsize; i++){
         colors(mapOwnedPlusGhosts->getLocalElement(sendbuf[i])) = recvColors[i];
         //std::cout<<comm->getRank()<<": global vert "<<sendbuf[i]<<" is now color  "<<recvColors[i]<<"\n";
-      }
+      }*/
       return comm_total;
       /*std::vector<int> sendcounts(comm->getSize(), 0);
       std::vector<gno_t> sdispls(comm->getSize()+1, 0);
@@ -628,62 +708,66 @@ class AlgDistance2 : public Algorithm<Adapter> {
       double comp_time = 0.0;
       double recoloring_time = 0.0;
       double conflict_detection = 0.0;
+
+      //find global max degree
+      offset_t local_max_degree = 0;
+      offset_t global_max_degree = 0;
+      for(int i = 0; i < n_local; i++){
+        offset_t curr_degree = offsets[i+1] - offsets[i];
+	if(curr_degree > local_max_degree){
+	  local_max_degree = curr_degree;
+	}
+      }
+      Teuchos::reduceAll<int, offset_t>(*comm, Teuchos::REDUCE_MAX, 1, &local_max_degree, &global_max_degree);
+      if(comm->getRank() == 0) std::cout<<"Input has max degree "<<global_max_degree<<"\n";
       //get the color view from the FEMultiVector
       Kokkos::View<int**, Kokkos::LayoutLeft> femvColors = femv->template getLocalView<memory_space>();
       Kokkos::View<int*, device_type> femv_colors = subview(femvColors, Kokkos::ALL, 0);
-      Kokkos::View<offset_t*, device_type> host_offsets("Host Offset View", offsets.size());
-      Kokkos::View<lno_t*, device_type> host_adjs("Host Adjacencies View", adjs.size());
-      for(Teuchos_Ordinal i = 0; i < offsets.size(); i++) host_offsets(i) = offsets[i];
-      for(Teuchos_Ordinal i = 0; i < adjs.size(); i++) host_adjs(i) = adjs[i];
+      Kokkos::View<offset_t*, device_type> offsets_dev("Dev offset view", offsets.size());
+      typename Kokkos::View<offset_t*, device_type>::HostMirror offsets_host = Kokkos::create_mirror(offsets_dev);
+      Kokkos::View<lno_t*, device_type> adjs_dev("Dev adjs view",adjs.size());
+      typename Kokkos::View<lno_t*, device_type>::HostMirror adjs_host = Kokkos::create_mirror(adjs_dev);
+      for(Teuchos_Ordinal i = 0; i < offsets.size(); i++) offsets_host(i) = offsets[i];
+      for(Teuchos_Ordinal i = 0; i < adjs.size(); i++) adjs_host(i) = adjs[i];
+      Kokkos::deep_copy(offsets_dev, offsets_host);
+      Kokkos::deep_copy(adjs_dev, adjs_host);
 
-      //give the entire local graph to KokkosKernels to color
-      std::cout<<comm->getRank()<<" coloring interior\n";
-      comm->barrier();
-      interior_time = timer();
-      this->colorInterior(n_local, host_adjs, host_offsets, femv, false);
-      interior_time = timer() - interior_time;
-      total_time = interior_time;
-      comp_time = interior_time;
-      comm->barrier();    
-      std::cout<<comm->getRank()<<" communicating\n";
-      //communicate the initial coloring.
-      //femv->switchActiveMultiVector();
-      //double comm_temp = timer();
-      //femv->doOwnedToOwnedPlusShared(Tpetra::REPLACE);
-      comm_time = doOwnedToGhosts(mapWithCopies, n_local, owners, femv_colors);
-      //comm_time = timer() - comm_temp;
-      total_time += comm_time;
-      //femv->switchActiveMultiVector();
-      
       std::cout<<comm->getRank()<<" building distributed graph\n";
       //create the graph structures which allow KokkosKernels to recolor the conflicting vertices
-      Kokkos::View<offset_t*, Tpetra::Map<>::device_type> dist_degrees("Owned+Ghost degree view",rand.size());
-      for(Teuchos_Ordinal i = 0; i < adjs.size(); i++) dist_degrees(adjs[i])++;
-      for(Teuchos_Ordinal i = 0; i < ghost_adjs.size(); i++) dist_degrees(ghost_adjs[i])++;
-      for(Teuchos_Ordinal i = 0; i < offsets.size()-1; i++) dist_degrees(i) = offsets[i+1] - offsets[i];
-      for(Teuchos_Ordinal i = 0; i < ghost_offsets.size()-1; i++) dist_degrees(i+n_local) = ghost_offsets[i+1] - ghost_offsets[i];
+      Kokkos::View<offset_t*, device_type> dist_degrees_dev("Owned+Ghost degree view",rand.size());
+      typename Kokkos::View<offset_t*, device_type>::HostMirror dist_degrees_host = Kokkos::create_mirror(dist_degrees_dev);
+      for(Teuchos_Ordinal i = 0; i < adjs.size(); i++) dist_degrees_host(adjs[i])++;
+      for(Teuchos_Ordinal i = 0; i < ghost_adjs.size(); i++) dist_degrees_host(ghost_adjs[i])++;
+      for(Teuchos_Ordinal i = 0; i < offsets.size()-1; i++) dist_degrees_host(i) = offsets[i+1] - offsets[i];
+      for(Teuchos_Ordinal i = 0; i < ghost_offsets.size()-1; i++) dist_degrees_host(i+n_local) = ghost_offsets[i+1] - ghost_offsets[i];
       
-      Kokkos::View<offset_t*, Tpetra::Map<>::device_type> dist_offsets("Owned+Ghost Offset view", rand.size()+1);
-      dist_offsets(0) = 0;
+      Kokkos::View<offset_t*, device_type> dist_offsets_dev("Owned+Ghost Offset view", rand.size()+1);
+      typename Kokkos::View<offset_t*, device_type>::HostMirror dist_offsets_host = Kokkos::create_mirror(dist_offsets_dev);
+      dist_offsets_host(0) = 0;
       offset_t total_adjs = 0;
       for(size_t i = 1; i < rand.size()+1; i++){
-        dist_offsets(i) = dist_degrees(i-1) + dist_offsets(i-1);
-        total_adjs += dist_degrees(i-1);
+        dist_offsets_host(i) = dist_degrees_host(i-1) + dist_offsets_host(i-1);
+        total_adjs += dist_degrees_host(i-1);
       }
-      Kokkos::View<lno_t*, Tpetra::Map<>::device_type> dist_adjs("Owned+Ghost adjacency view", total_adjs);
+      Kokkos::View<lno_t*, device_type> dist_adjs_dev("Owned+Ghost adjacency view", total_adjs);
+      typename Kokkos::View<lno_t*, device_type>::HostMirror dist_adjs_host = Kokkos::create_mirror(dist_adjs_dev);
       for(size_t i = 0; i < rand.size(); i++){
-        dist_degrees(i) = 0;
+        dist_degrees_host(i) = 0;
       }
-      for(Teuchos_Ordinal i = 0; i < adjs.size(); i++) dist_adjs(i) = adjs[i];
-      for(Teuchos_Ordinal i = adjs.size(); i < adjs.size() + ghost_adjs.size(); i++) dist_adjs(i) = ghost_adjs[i-adjs.size()];
+      for(Teuchos_Ordinal i = 0; i < adjs.size(); i++) dist_adjs_host(i) = adjs[i];
+      for(Teuchos_Ordinal i = adjs.size(); i < adjs.size() + ghost_adjs.size(); i++) dist_adjs_host(i) = ghost_adjs[i-adjs.size()];
       for(Teuchos_Ordinal i = 0; i < ghost_offsets.size()-1; i++){
         for(offset_t j = ghost_offsets[i]; j < ghost_offsets[i+1]; j++){
          if((size_t)ghost_adjs[j] >= n_total){
-            dist_adjs(dist_offsets(ghost_adjs[j]) + dist_degrees(ghost_adjs[j])) = i + n_local;
-            dist_degrees(ghost_adjs[j])++;
+            dist_adjs_host(dist_offsets_host(ghost_adjs[j]) + dist_degrees_host(ghost_adjs[j])) = i + n_local;
+            dist_degrees_host(ghost_adjs[j])++;
           }
         }
       }
+
+      Kokkos::deep_copy(dist_degrees_dev, dist_degrees_host);
+      Kokkos::deep_copy(dist_offsets_dev, dist_offsets_host);
+      Kokkos::deep_copy(dist_adjs_dev, dist_adjs_host);
 
       std::cout<<comm->getRank()<<": creating Kokkos views\n";
       //we can find all the conflicts with one loop through the ghost vertices.
@@ -695,79 +779,188 @@ class AlgDistance2 : public Algorithm<Adapter> {
       Kokkos::View<gno_t[1], device_type, Kokkos::MemoryTraits<Kokkos::Atomic> > recoloringSize_atomic = recoloringSize;
 
       //create views for the ghost adjacencies, as they can detect all conflicts.
-      Kokkos::View<offset_t*, device_type> ghost_offset_view("Ghost Offsets", ghost_offsets.size());
-      Kokkos::View<lno_t*, device_type> ghost_adjs_view("Ghost Adjacencies", ghost_adjs.size());
-      for(Teuchos_Ordinal i = 0; i < ghost_offsets.size(); i++) ghost_offset_view(i) = ghost_offsets[i];
-      for(Teuchos_Ordinal i = 0; i < ghost_adjs.size(); i++) ghost_adjs_view(i) = ghost_adjs[i];
-
+      Kokkos::View<offset_t*, device_type> ghost_offset_dev("Ghost Offsets", ghost_offsets.size());
+      typename Kokkos::View<offset_t*, device_type>::HostMirror ghost_offset_host = Kokkos::create_mirror(ghost_offset_dev);
+      Kokkos::View<lno_t*, device_type> ghost_adjs_dev("Ghost Adjacencies", ghost_adjs.size());
+      typename Kokkos::View<lno_t*, device_type>::HostMirror ghost_adjs_host = Kokkos::create_mirror(ghost_adjs_dev);
+      for(Teuchos_Ordinal i = 0; i < ghost_offsets.size(); i++) ghost_offset_host(i) = ghost_offsets[i];
+      for(Teuchos_Ordinal i = 0; i < ghost_adjs.size(); i++) ghost_adjs_host(i) = ghost_adjs[i];
+      
+      Kokkos::deep_copy(ghost_offset_dev, ghost_offset_host);
+      Kokkos::deep_copy(ghost_adjs_dev, ghost_adjs_host);
 
       //create a view for the tie-breaking numbers.
-      Kokkos::View<int*, device_type> rand_view("Random View", rand.size());
-      for(size_t i = 0; i < rand.size(); i ++) rand_view(i) = rand[i];
+      Kokkos::View<int*, device_type> rand_dev("Random View", rand.size());
+      typename Kokkos::View<int*, device_type>::HostMirror rand_host = Kokkos::create_mirror(rand_dev);
+      for(size_t i = 0; i < rand.size(); i ++) rand_host(i) = rand[i];
+      Kokkos::deep_copy(rand_dev, rand_host);
       
-      Kokkos::View<gno_t*, device_type> gid_view("GIDs", gids.size());
-      for(size_t i = 0; i < gids.size(); i++) gid_view(i) = gids[i];
+      Kokkos::View<gno_t*, device_type> gid_dev("GIDs", gids.size());
+      typename Kokkos::View<gno_t*, device_type>::HostMirror gid_host = Kokkos::create_mirror(gid_dev);
+      for(size_t i = 0; i < gids.size(); i++) gid_host(i) = gids[i];
+      Kokkos::deep_copy(gid_dev, gid_host);
+
+      std::cout<<comm->getRank()<<": counting boundary\n";
+      offset_t boundary_size = 0;
+      for(offset_t i = 0; i < n_local; i++){
+        for(offset_t j = dist_offsets_host(i); j < dist_offsets_host(i+1); j++){
+          if(dist_adjs_host(j) >= n_local){
+            boundary_size++;
+            break;
+          }
+          bool found = false;
+          for(offset_t k = dist_offsets_host(dist_adjs_host(j)); k < dist_offsets_host(dist_adjs_host(j)+1); k++){
+            if(dist_adjs_host(k) >= n_local){
+              boundary_size++;
+              found = true;
+              break;
+            }
+          }
+          if(found) break;
+        }
+      }
+      std::cout<<comm->getRank()<<": constructing communication and recoloring lists\n";
+      Kokkos::View<lno_t*, device_type> verts_to_recolor_view("verts to recolor", n_total);
+      Kokkos::parallel_for(boundary_size, KOKKOS_LAMBDA(const int& i){
+        verts_to_recolor_view(i) = -1;
+      });
+      Kokkos::View<lno_t*, device_type, Kokkos::MemoryTraits<Kokkos::Atomic>> verts_to_recolor_atomic = verts_to_recolor_view;
+
+      Kokkos::View<int[1], device_type> verts_to_recolor_size("verts to recolor size");
+      verts_to_recolor_size(0) = 0;
+      Kokkos::View<int[1], device_type, Kokkos::MemoryTraits<Kokkos::Atomic>> verts_to_recolor_size_atomic = verts_to_recolor_size;
+
+      Kokkos::View<lno_t*, device_type> verts_to_send_view("verts to send", boundary_size);
+      Kokkos::parallel_for(boundary_size, KOKKOS_LAMBDA(const int& i){
+        verts_to_send_view(i) = -1;
+      });
+      Kokkos::View<lno_t*, device_type, Kokkos::MemoryTraits<Kokkos::Atomic>> verts_to_send_atomic = verts_to_send_view;
+
+      Kokkos::View<int[1], device_type> verts_to_send_size("verts to send size");
+      verts_to_send_size(0) = 0;
+      Kokkos::View<int[1], device_type, Kokkos::MemoryTraits<Kokkos::Atomic>> verts_to_send_size_atomic = verts_to_send_size;
+      std::cout<<comm->getRank()<<": initializing the list of vertices to send\n";
+      Kokkos::parallel_for(n_local, KOKKOS_LAMBDA(const int& i){
+        for(offset_t j = dist_offsets_dev(i); j < dist_offsets_dev(i+1); j++){
+          if(dist_adjs_dev(j) >= n_local){
+            verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+            break;
+          }
+          bool found = false;
+          for(offset_t k = dist_offsets_dev(dist_adjs_dev(j)); k < dist_offsets_dev(dist_adjs_dev(j)+1); k++){
+            if(dist_adjs_dev(k) >= n_local){
+              verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+              found = true;
+              break;
+            }
+          }
+          if(found) break;
+        }
+      });
+      Kokkos::fence();
+
+      //give the entire local graph to KokkosKernels to color
+      std::cout<<comm->getRank()<<" coloring interior\n";
+      comm->barrier();
+      interior_time = timer();
+      this->colorInterior(n_local, dist_adjs_dev, dist_offsets_dev, femv, verts_to_recolor_view, verts_to_recolor_size(0), false);
+      interior_time = timer() - interior_time;
+      total_time = interior_time;
+      comp_time = interior_time;
+      Kokkos::View<int*, device_type> ghost_colors("ghost color backups", rand.size() - n_local);
+      comm->barrier();    
+      std::cout<<comm->getRank()<<" communicating\n";
+      //communicate the initial coloring.
+      //femv->switchActiveMultiVector();
+      //double comm_temp = timer();
+      //femv->doOwnedToOwnedPlusShared(Tpetra::REPLACE);
+      comm_time = doOwnedToGhosts(mapWithCopies, n_local,dist_offsets_host, dist_adjs_host, verts_to_send_view, verts_to_send_size, owners, femv_colors);
+      //comm_time = timer() - comm_temp;
+      total_time += comm_time;
+      //femv->switchActiveMultiVector();
+      Kokkos::parallel_for(rand.size() - n_local, KOKKOS_LAMBDA(const int& i){
+        ghost_colors(i) = femv_colors(i+n_local);
+      });
+      Kokkos::fence();
+      verts_to_send_size(0) = 0;
       comm->barrier();
       double temp = timer();
       Kokkos::parallel_for(offsets.size()-1, KOKKOS_LAMBDA(const uint64_t& i){
         const lno_t curr_lid = i;
         const int curr_color = femv_colors(curr_lid);
-        const size_t vid_d1_adj_begin = host_offsets(i);
-        const size_t vid_d1_adj_end   = host_offsets(i+1);
+        const size_t vid_d1_adj_begin = dist_offsets_dev(i);
+        const size_t vid_d1_adj_end   = dist_offsets_dev(i+1);
         for(size_t vid_d1_adj = vid_d1_adj_begin; vid_d1_adj < vid_d1_adj_end; vid_d1_adj++){
-          lno_t vid_d1 = host_adjs(vid_d1_adj);
+          lno_t vid_d1 = dist_adjs_dev(vid_d1_adj);
           if( vid_d1 != curr_lid && femv_colors(vid_d1) == curr_color){
-            if(rand_view(curr_lid) < rand_view(vid_d1)){
+            if(rand_dev(curr_lid) < rand_dev(vid_d1)){
               femv_colors(curr_lid) = 0;
               recoloringSize_atomic(0)++;
-              return;
-            } else if (rand_view(vid_d1) < rand_view(curr_lid)){
-              femv_colors(vid_d1) = 0;
-              recoloringSize_atomic(0)++;
-            } else{
-              if(gid_view(curr_lid) >= gid_view(vid_d1)){
-                femv_colors(curr_lid) = 0;
-                recoloringSize_atomic(0)++;
-                return;
-              } else {
+	      //add to recolor list/send list
+	      verts_to_recolor_atomic(verts_to_recolor_size_atomic(0)++) = i;
+	      verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+              break;
+            } else if(rand_dev(vid_d1) < rand_dev(curr_lid)){
+              if(vid_d1 >= n_local){
                 femv_colors(vid_d1) = 0;
                 recoloringSize_atomic(0)++;
               }
-            }
-          }
-          size_t d2_adj_begin = 0;
-          size_t d2_adj_end   = 0;
-          bool is_owned = true;
-          if(vid_d1 < n_local){
-            d2_adj_begin = host_offsets(vid_d1);
-            d2_adj_end   = host_offsets(vid_d1+1);
-          } else if (vid_d1 >=n_local && vid_d1 < n_total){
-            d2_adj_begin = ghost_offset_view(vid_d1 - n_local);
-            d2_adj_end   = ghost_offset_view(vid_d1 - n_local +1);
-            is_owned = false;
-          }
-          for(size_t vid_d2_adj = d2_adj_begin; vid_d2_adj < d2_adj_end; vid_d2_adj++){
-            const lno_t vid_d2 = is_owned ? host_adjs(vid_d2_adj) : ghost_adjs_view(vid_d2_adj);
-            if(curr_lid != vid_d2 && femv_colors(vid_d2) == curr_color){
-              if(rand_view(curr_lid) < rand_view(vid_d2)){
+            } else{
+              if(gid_dev(curr_lid) >= gid_dev(vid_d1)){ //&& rand_dev(vid_d1) == rand_dev(curr_lid)){
                 femv_colors(curr_lid) = 0;
                 recoloringSize_atomic(0)++;
-                return;
-              } else if(rand_view(vid_d2) < rand_view(curr_lid)) {
-                femv_colors(vid_d2) = 0;
-                recoloringSize_atomic(0)++;
+		//add to recolor/send list
+		verts_to_recolor_atomic(verts_to_recolor_size_atomic(0)++) = i;
+		verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+                break;
               } else {
-                if(gid_view(curr_lid) >= gid_view(vid_d2)){
-                  femv_colors(curr_lid) = 0;
-                  recoloringSize_atomic(0)++;
-                  return;
-                } else {
-                  femv_colors(vid_d2) = 0;
+                if(vid_d1 >= n_local){
+                  femv_colors(vid_d1) = 0;
                   recoloringSize_atomic(0)++;
                 }
               }
             }
           }
+          size_t d2_adj_begin = 0;
+          size_t d2_adj_end   = 0;
+          d2_adj_begin = dist_offsets_dev(vid_d1);
+          d2_adj_end   = dist_offsets_dev(vid_d1+1);
+          bool found = false;
+	  for(size_t vid_d2_adj = d2_adj_begin; vid_d2_adj < d2_adj_end; vid_d2_adj++){
+            const lno_t vid_d2 = dist_adjs_dev(vid_d2_adj);
+            if(curr_lid != vid_d2 && femv_colors(vid_d2) == curr_color){
+              if(rand_dev(curr_lid) < rand_dev(vid_d2)){
+		found = true;
+                femv_colors(curr_lid) = 0;
+                recoloringSize_atomic(0)++;
+		//add to recolor/send list
+		verts_to_recolor_atomic(verts_to_recolor_size_atomic(0)++) = i;
+		verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+                break;
+              } else if(rand_dev(vid_d2) < rand_dev(curr_lid)){
+                if(vid_d2 >= n_local){
+                  femv_colors(vid_d2) = 0;
+                  recoloringSize_atomic(0)++;
+                }
+              } else {
+                if(gid_dev(curr_lid) >= gid_dev(vid_d2)){ //&& rand_dev(vid_d2) == rand_dev(curr_lid)){
+		  found = true;
+                  femv_colors(curr_lid) = 0;
+                  recoloringSize_atomic(0)++;
+		  //add to recolor/send list
+		  verts_to_recolor_atomic(verts_to_recolor_size_atomic(0)++) = i;
+		  verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+                  break;
+                } else {
+                  if(vid_d2 >= n_local){
+                    femv_colors(vid_d2) = 0;
+                    recoloringSize_atomic(0)++;
+                  }
+                }
+              }
+            }
+          }
+	  if(found) break;
         }
       });
       Kokkos::fence();
@@ -814,10 +1007,12 @@ class AlgDistance2 : public Algorithm<Adapter> {
          vertsPerRound[distributedRounds] = localVertsToRecolor;
         }
   
-     
+        comm->barrier();
         double recolor_temp = timer();
         //recolor using KokkosKernels' coloring function 
-        this->colorInterior(femv_colors.size(), dist_adjs, dist_offsets, femv, true);
+	if(verts_to_recolor_size(0) > 0){
+          this->colorInterior(femv_colors.size(), dist_adjs_dev, dist_offsets_dev, femv, verts_to_recolor_view, verts_to_recolor_size(0), false);
+	}
         recoloringPerRound[distributedRounds] = timer() - recolor_temp;
         recoloring_time += recoloringPerRound[distributedRounds];
         total_time += recoloringPerRound[distributedRounds];
@@ -825,21 +1020,31 @@ class AlgDistance2 : public Algorithm<Adapter> {
         compPerRound[distributedRounds] = recoloringPerRound[distributedRounds];
         totalPerRound[distributedRounds] = recoloringPerRound[distributedRounds];
         recoloringSize(0) = 0;
+	verts_to_recolor_size(0) = 0;
+        Kokkos::parallel_for(rand.size() - n_local, KOKKOS_LAMBDA(const int& i){
+          femv_colors(i+n_local) = ghost_colors(i);
+        });
+        Kokkos::fence();
         //communicate the new colors
         comm->barrier();
         //femv->switchActiveMultiVector();
         //double comm_loop_temp = timer();
         //femv->doOwnedToOwnedPlusShared(Tpetra::REPLACE);
-        commPerRound[distributedRounds] = doOwnedToGhosts(mapWithCopies,n_local,owners,femv_colors);
+	std::cout<<comm->getRank()<<":verts_to_send_size(0) = "<<verts_to_send_size(0)<<"\n";
+        commPerRound[distributedRounds] = doOwnedToGhosts(mapWithCopies,n_local,dist_offsets_host, dist_adjs_host, verts_to_send_view, verts_to_send_size, owners, femv_colors);
         //commPerRound[distributedRounds] = timer() - comm_loop_temp;
         comm_time += commPerRound[distributedRounds];
         totalPerRound[distributedRounds] += commPerRound[distributedRounds];
         total_time += commPerRound[distributedRounds];
+	verts_to_send_size(0) = 0;
         //femv->switchActiveMultiVector();
+        Kokkos::parallel_for(rand.size() - n_local, KOKKOS_LAMBDA(const int& i){
+          ghost_colors(i) = femv_colors(i+n_local);
+        });
         comm->barrier();
 
         double detection_temp = timer();
-        Kokkos::parallel_for(offsets.size()-1, KOKKOS_LAMBDA(const uint64_t& i){
+        /*Kokkos::parallel_for(offsets.size()-1, KOKKOS_LAMBDA(const uint64_t& i){
           const lno_t curr_lid = i;
           const int curr_color = femv_colors(curr_lid);
           const size_t vid_d1_adj_begin = host_offsets(i);
@@ -898,6 +1103,64 @@ class AlgDistance2 : public Algorithm<Adapter> {
                 }
               }
             }
+          }
+        });*/
+        Kokkos::parallel_for(offsets.size()-1, KOKKOS_LAMBDA(const uint64_t& i){
+          const lno_t curr_lid = i;
+          const int curr_color = femv_colors(curr_lid);
+          const size_t vid_d1_adj_begin = dist_offsets_dev(i);
+          const size_t vid_d1_adj_end   = dist_offsets_dev(i+1);
+          for(size_t vid_d1_adj = vid_d1_adj_begin; vid_d1_adj < vid_d1_adj_end; vid_d1_adj++){
+            lno_t vid_d1 = dist_adjs_dev(vid_d1_adj);
+            if( vid_d1 != curr_lid && femv_colors(vid_d1) == curr_color){
+              if(rand_dev(curr_lid) < rand_dev(vid_d1)){
+                femv_colors(curr_lid) = 0;
+                recoloringSize_atomic(0)++;
+  	        //add to recolor list/send list
+  	        verts_to_recolor_atomic(verts_to_recolor_size_atomic(0)++) = i;
+	        verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+                break;
+              } else{
+                if(gid_dev(curr_lid) >= gid_dev(vid_d1) && rand_dev(vid_d1) == rand_dev(curr_lid)){
+                  femv_colors(curr_lid) = 0;
+                  recoloringSize_atomic(0)++;
+  	  	  //add to recolor/send list
+		  verts_to_recolor_atomic(verts_to_recolor_size_atomic(0)++) = i;
+		  verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+                  break;
+                }
+              }
+            }
+            size_t d2_adj_begin = 0;
+            size_t d2_adj_end   = 0;
+            d2_adj_begin = dist_offsets_dev(vid_d1);
+            d2_adj_end   = dist_offsets_dev(vid_d1+1);
+            bool found = false;
+	    for(size_t vid_d2_adj = d2_adj_begin; vid_d2_adj < d2_adj_end; vid_d2_adj++){
+              const lno_t vid_d2 = dist_adjs_dev(vid_d2_adj);
+              if(curr_lid != vid_d2 && femv_colors(vid_d2) == curr_color){
+                if(rand_dev(curr_lid) < rand_dev(vid_d2)){
+  	 	  found = true;
+                  femv_colors(curr_lid) = 0;
+                  recoloringSize_atomic(0)++;
+		  //add to recolor/send list
+		  verts_to_recolor_atomic(verts_to_recolor_size_atomic(0)++) = i;
+		  verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+                  break;
+                } else {
+                  if(gid_dev(curr_lid) >= gid_dev(vid_d2) && rand_dev(vid_d2) == rand_dev(curr_lid)){
+		    found = true;
+                    femv_colors(curr_lid) = 0;
+                    recoloringSize_atomic(0)++;
+		    //add to recolor/send list
+		    verts_to_recolor_atomic(verts_to_recolor_size_atomic(0)++) = i;
+		    verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+                    break;
+                  }
+                }
+              }
+            }
+	    if(found) break;
           }
         });
         //ensure the parallel_for finishes before continuing
@@ -1010,14 +1273,19 @@ void AlgDistance2<Adapter>::colorInterior(const size_t nVtx,
                        Kokkos::View<lno_t*,device_type> adjs_view,
                        Kokkos::View<offset_t*, device_type> offset_view,
                        Teuchos::RCP<femv_t> femv,
+		       Kokkos::View<lno_t*, device_type> vertex_list,
+		       size_t vertex_list_size,
                        bool recolor) {
   using KernelHandle = KokkosKernels::Experimental::KokkosKernelsHandle
       <offset_t, lno_t, lno_t, execution_space, memory_space, memory_space>;
   
   KernelHandle kh;
   
-  if(recolor)kh.create_distance2_graph_coloring_handle(KokkosGraph::COLORING_D2_VB);
+  if(recolor)kh.create_distance2_graph_coloring_handle(KokkosGraph::COLORING_D2_VB_BIT);
   else kh.create_distance2_graph_coloring_handle(KokkosGraph::COLORING_D2_NB_BIT);
+  if(vertex_list_size != 0){
+    kh.get_distance2_graph_coloring_handle()->set_vertex_list(vertex_list, vertex_list_size);
+  }
   //kh.get_distance2_graph_coloring_handle()->set_verbose(true);
   //kh.get_distance2_graph_coloring_handle()->set_tictoc(true);
   Kokkos::View<int**, Kokkos::LayoutLeft> femvColors = femv->template getLocalView<memory_space>();

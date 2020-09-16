@@ -105,7 +105,7 @@ typedef SparseMatrixAdapter::part_t part_t;
 //using scalar_t = int;
 //using myTypes = Zoltan2::BasicUserTypes<scalar_t, lno_t, gno_t>;
 using myAdapter = Zoltan2::IanGraphAdapter<Zoltan2::BasicUserTypes<zscalar_t, Tpetra::Map<>::local_ordinal_type, Tpetra::Map<>::global_ordinal_type>>;
-extern "C" int get_num_elements(void *data, int *ierr){
+extern "C" static int get_num_elements(void *data, int *ierr){
   color_dist_graph_t* dist_graph;
 
   if(data == NULL){
@@ -118,7 +118,7 @@ extern "C" int get_num_elements(void *data, int *ierr){
   return dist_graph->n_local;
 }
 
-extern "C" void get_elements(void *data, int num_gid_entries, int num_lid_entries,
+extern "C" static void get_elements(void *data, int num_gid_entries, int num_lid_entries,
                                     ZOLTAN_ID_PTR global_id, ZOLTAN_ID_PTR local_id,
                                     int wdim, float *wgt, int *ierr){
   color_dist_graph_t* dist_graph;
@@ -136,7 +136,7 @@ extern "C" void get_elements(void *data, int num_gid_entries, int num_lid_entrie
   *ierr = ZOLTAN_OK;
 }
 
-extern "C" void get_num_edges_list(void *data, int num_gid_entries, int num_lid_entries,
+extern "C" static void get_num_edges_list(void *data, int num_gid_entries, int num_lid_entries,
                                           int num_obj, ZOLTAN_ID_PTR global_id, ZOLTAN_ID_PTR local_id,
                                           int *numEdges, int* ierr){
   color_dist_graph_t* dist_graph;
@@ -152,7 +152,7 @@ extern "C" void get_num_edges_list(void *data, int num_gid_entries, int num_lid_
   }
 }
 
-extern "C" void get_edge_list(void *data, int num_gid_entries, int num_lid_entries,
+extern "C" static void get_edge_list(void *data, int num_gid_entries, int num_lid_entries,
                                      int num_obj, ZOLTAN_ID_PTR global_id, ZOLTAN_ID_PTR local_id,
                                      int* num_edges,
                                      ZOLTAN_ID_PTR nbor_global_id, int *nbor_procs,
@@ -233,7 +233,6 @@ int validateDistributedColoring(RCP<SparseMatrix> A, int *color, int rank){
     for (Teuchos_Ordinal j = 0; j < indices.size(); j++) {
       //std::cout<<"Debug: checking for conflict between vertex "<<rowMap->getGlobalElement(i)<<"(colored "<<color[i]<<") and vertex "<<colMap->getGlobalElement(indices[j])<<"(colored "<<colorData[indices[j]]<<")\n";
       if ((indices[j] != i) && (color[i] == colorData[indices[j]])){
-	std::cout<<rank<<": Found conflict between vertex "<<rowMap->getGlobalElement(i)<<"(colored "<<color[i]<<") and vertex "<<colMap->getGlobalElement(indices[j])<<"(colored "<<colorData[indices[j]]<<")\n";
         nconflicts++;
       }
     }
@@ -648,7 +647,7 @@ int main(int narg, char** arg)
 
   ////// Create and solve ordering problem
   //repeat 5 times
-  int repeat = 1;
+  int repeat = 5;
   for(int i = 0; i < repeat; i++){
 
     try
