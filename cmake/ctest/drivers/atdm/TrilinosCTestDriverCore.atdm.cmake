@@ -114,6 +114,10 @@ MACRO(TRILINOS_SYSTEM_SPECIFIC_CTEST_DRIVER)
     "-DTrilinos_CONFIGURE_OPTIONS_FILE:STRING=${ATDM_CONFIGURE_OPTIONS_FILES}"
     "-DTrilinos_TRACE_ADD_TEST=ON"
     "-DTrilinos_ENABLE_CONFIGURE_TIMING=ON"
+    "--trace-source=cmake/std/atdm/ATDMDevEnv.cmake"
+    "--trace-source=cmake/std/atdm/ATDMDevEnvSettings.cmake"
+    "--trace-source=cmake/std/atdm/utils/ATDMDevEnvUtils.cmake"
+    "--trace-expand"
     )
 
   # Don't bother processing packages that are only implicitly enabled due to
