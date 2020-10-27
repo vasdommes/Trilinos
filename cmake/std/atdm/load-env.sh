@@ -4,29 +4,6 @@
 #
 ################################################################################
 
-env &> load-env.pre
-export_log=$1.export.log
-module_log=$1.module.log
-> $1.export.log
-> $1.module.log
-
-function export() {
-  echo $@ >> $export_log
-  command export $@
-}
-
-eval orig_"$(declare -f module)"
-
-function module() {
-  echo "====================================================================" >> $module_log
-  echo "module $@" >> $module_log
-  echo "====================================================================" >> $module_log
-  local tmp=$export_log
-  export_log=$module_log
-  orig_module $@
-  export_log=$tmp
-}
-
 # Assert this script is sourced, not run!
 if [ "${BASH_SOURCE[0]}" == "${0}" ] ; then
   echo "This script '${0}' is being called.  Instead, it must be sourced!"
@@ -173,6 +150,5 @@ if [[ "${ATDM_CONFIG_INSTALL_PBP_RUNNER}" == "" ]] \
   export ATDM_CONFIG_INSTALL_PBP_RUNNER="${ATDM_CONFIG_INSTALL_PBP_RUNNER_DEFAULT}"
 fi
 
-env &> load-env.post
 # NOTE: The ATDMDevEnvSettings.cmake module when processed will assert that
 # many of these vars are correctly set.
