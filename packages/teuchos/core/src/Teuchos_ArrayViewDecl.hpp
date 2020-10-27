@@ -131,6 +131,7 @@ public:
   //! Type representing the number of elements in an ArrayRCP or view thereof.
   typedef Ordinal size_type;
 
+
   //! Type representing the difference between two size_type values.
   typedef Ordinal difference_type;
 
@@ -515,7 +516,7 @@ public:
 
 private:
   const T* ptr_;
-  int size_;
+  size_type size_;
 #ifdef HAVE_TEUCHOS_ARRAY_BOUNDSCHECK
   ArrayRCP<const T> arcp_;
 #endif

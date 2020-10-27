@@ -104,8 +104,9 @@ typedef SparseMatrixAdapter::part_t part_t;
 //using gno_t = Tpetra::Map<>::global_ordinal_type;
 //using scalar_t = int;
 //using myTypes = Zoltan2::BasicUserTypes<scalar_t, lno_t, gno_t>;
-using myAdapter = Zoltan2::IanGraphAdapter<Zoltan2::BasicUserTypes<zscalar_t, Tpetra::Map<>::local_ordinal_type, Tpetra::Map<>::global_ordinal_type>>;
-extern "C" static int get_num_elements(void *data, int *ierr){
+using myAdapter = Zoltan2::IanGraphAdapter<Tpetra::CrsMatrix<zscalar_t, Tpetra::Map<>::local_ordinal_type, Tpetra::Map<>::global_ordinal_type>>;
+//using myAdapter = Zoltan2::IanGraphAdapter<Zoltan2::BasicUserTypes<zscalar_t, Tpetra::Map<>::global_ordinal_type, Tpetra::Map<>::global_ordinal_type>>;
+extern "C" /*static*/ int get_num_elements(void *data, int *ierr){
   color_dist_graph_t* dist_graph;
 
   if(data == NULL){
@@ -118,7 +119,7 @@ extern "C" static int get_num_elements(void *data, int *ierr){
   return dist_graph->n_local;
 }
 
-extern "C" static void get_elements(void *data, int num_gid_entries, int num_lid_entries,
+extern "C" /*static*/ void get_elements(void *data, int num_gid_entries, int num_lid_entries,
                                     ZOLTAN_ID_PTR global_id, ZOLTAN_ID_PTR local_id,
                                     int wdim, float *wgt, int *ierr){
   color_dist_graph_t* dist_graph;
@@ -136,7 +137,7 @@ extern "C" static void get_elements(void *data, int num_gid_entries, int num_lid
   *ierr = ZOLTAN_OK;
 }
 
-extern "C" static void get_num_edges_list(void *data, int num_gid_entries, int num_lid_entries,
+extern "C" /*static*/ void get_num_edges_list(void *data, int num_gid_entries, int num_lid_entries,
                                           int num_obj, ZOLTAN_ID_PTR global_id, ZOLTAN_ID_PTR local_id,
                                           int *numEdges, int* ierr){
   color_dist_graph_t* dist_graph;
@@ -152,7 +153,7 @@ extern "C" static void get_num_edges_list(void *data, int num_gid_entries, int n
   }
 }
 
-extern "C" static void get_edge_list(void *data, int num_gid_entries, int num_lid_entries,
+extern "C" /*static*/ void get_edge_list(void *data, int num_gid_entries, int num_lid_entries,
                                      int num_obj, ZOLTAN_ID_PTR global_id, ZOLTAN_ID_PTR local_id,
                                      int* num_edges,
                                      ZOLTAN_ID_PTR nbor_global_id, int *nbor_procs,
@@ -359,9 +360,9 @@ int main(int narg, char** arg)
   // KDDKDD Should just be warnings, right?  Code should still work with these
   // KDDKDD params in the create-a-matrix file.  Better to have them where
   // KDDKDD they are used.
-  int xdim=10;
-  int ydim=10;
-  int zdim=10;
+  uint64_t xdim=10;
+  uint64_t ydim=10;
+  uint64_t zdim=10;
   std::string matrixType("Laplace3D");
 
   cmdp.setOption("x", &xdim,
@@ -410,32 +411,166 @@ int main(int narg, char** arg)
   RCP<SparseMatrix> Matrix;
   RCP<CrsGraph> crs_graph;
   RCP<myAdapter> graph_adapter;
-  if(inputFile.find("ebin") != string::npos){//we're dealing with a binary file
+  color_dist_graph_t* dist_graph;
+  if(inputFile.find("ebin") != string::npos || inputFile == ""){//we're dealing with a binary file, or no file
     procid = comm->getRank();
     nprocs = comm->getSize();
-    graph_gen_data_t* ggi = new graph_gen_data_t;
-    //char* filename = new char[inputFile.length()+2];
-    //strncpy(filename, inputFile.c_str(),inputFile.length());
-    //filename[inputFile.length()+1] = '\0';
-    //debug = true;
-    printf("--Rank %d: Reading File %s\n",comm->getRank(), inputFile.c_str());
-    if(comm->getSize() > 1) load_graph_edges(inputFile.c_str(), ggi);
-    else load_graph_edges_threaded(inputFile.c_str(), ggi);
-    //delete [] filename;
-    if(comm->getSize() > 1) {
-      printf("--Rank %d: going to exchange edges\n",comm->getRank());
-      exchange_edges(ggi);
+    if(inputFile == ""){
+      uint64_t z_per_proc = zdim/nprocs;
+      std::cout<<procid<<": calculating number of edges...\n";
+      dist_graph = new color_dist_graph_t;
+      dist_graph->n_local = xdim*ydim*z_per_proc;
+      dist_graph->n = xdim*ydim*zdim;
+      dist_graph->m = 2*(3*4 + (xdim - 2)*8 + (ydim - 2)*8 + ((xdim-2)*(ydim-2))*5);
+      dist_graph->m += (zdim-2)*(4*4 + (xdim - 2)*10 + (ydim - 2)*10 + ((xdim-2)*(ydim-2))*6);
+      dist_graph->m_local = 0;
+
+      if(procid == 0) dist_graph->m_local += 3*4 + (xdim-2)*8 + (ydim -2)*8 + ((xdim-2)*(ydim-2))*5;
+      else if(z_per_proc >= 2 || procid != nprocs-1) dist_graph->m_local += 4*4 + (xdim-2)*10 + (ydim-2)*10 + ((xdim-2)*(ydim-2))*6;
+
+      if(procid == nprocs-1) dist_graph->m_local += 3*4 + (xdim-2)*8 + (ydim -2)*8 + ((xdim-2)*(ydim-2))*5;
+      else if(z_per_proc >=2) dist_graph->m_local += 4*4 + (xdim-2)*10 + (ydim-2)*10 + ((xdim-2)*(ydim-2))*6;
+      
+      if(z_per_proc > 2) dist_graph->m_local+= (z_per_proc-2)*(4*4 + (xdim-2)*10 + (ydim-2)*10 + ((xdim-2)*(ydim-2))*6);
+      std::cout<<procid<<": m "<<dist_graph->m<<" m_local "<<dist_graph->m_local<<"\n";
+      if(procid==0 || procid==nprocs-1) dist_graph->n_ghost = xdim*ydim;
+      else dist_graph->n_ghost=xdim*ydim*2;
+
+      dist_graph->n_total = dist_graph->n_local+dist_graph->n_ghost;
+      dist_graph->n_offset = dist_graph->n_local;
+      dist_graph->ghost_unmap = new uint64_t[dist_graph->n_ghost];
+      dist_graph->ghost_tasks = new uint64_t[dist_graph->n_ghost];
+      dist_graph->out_edges = new uint64_t[dist_graph->m_local];
+      dist_graph->out_offsets = new uint64_t[dist_graph->n_local+1];
+      dist_graph->local_unmap = new uint64_t[dist_graph->n_local];
+      dist_graph->map = (color_fast_map*) malloc(sizeof(color_fast_map));
+      init_map(dist_graph->map,dist_graph->n_total);
+      uint64_t gid_offset = xdim*ydim*z_per_proc*procid;
+      std::cout<<comm->getRank()<<": GIDs start at "<<gid_offset<<" and end at "<<gid_offset+dist_graph->n_local<<"\n";
+      uint64_t adj_idx = 0;
+      uint64_t ghost_idx = 0;
+      uint64_t offset_idx = 1;
+      dist_graph->out_offsets[0] = 0;
+      for(uint64_t z = 0; z < z_per_proc; z++){
+        for(uint64_t y = 0; y < ydim; y++){
+	  for(uint64_t x = 0; x < xdim; x++){
+	    uint64_t gid = gid_offset + z*xdim*ydim + y*xdim + x;
+            dist_graph->local_unmap[z*xdim*ydim + y*xdim + x] = gid;
+	    set_value(dist_graph->map, gid, z*xdim*ydim+y*xdim+x);
+	    int degree = 0;
+	    if (z > 0 || procid > 0){
+	      //add edge in -z dir
+	      uint64_t adj = gid-xdim*ydim;
+	      if(procid==3){
+	        //std::cout<<"3: adding adjacency "<<adj<<" in negative z direction\n";
+	      }
+	      if(adj < gid_offset) {
+	        dist_graph->ghost_unmap[ghost_idx] = adj;
+		dist_graph->ghost_tasks[ghost_idx] = procid-1;
+		set_value(dist_graph->map,adj, dist_graph->n_local+ghost_idx++);
+	      }
+	      dist_graph->out_edges[adj_idx++] = adj; //global id, needs translated to lids
+	      degree++;
+	    }
+	    if(z < z_per_proc-1 || procid < nprocs-1){
+	      //add edge in +z dir
+	      uint64_t adj = gid+xdim*ydim;
+	      if(procid==3 && adj<dist_graph->n_local){
+	        std::cout<<"3: adding adjacency "<<adj<<" in positive z direction\n";
+	      }
+	      if(adj >= gid_offset+dist_graph->n_local){
+	        dist_graph->ghost_unmap[ghost_idx] = adj;
+		dist_graph->ghost_tasks[ghost_idx] = procid+1;
+		set_value(dist_graph->map, adj, dist_graph->n_local+ ghost_idx++);
+	      }
+	      dist_graph->out_edges[adj_idx++] = adj;
+	      degree++;
+	    }
+            if(y > 0){
+	      uint64_t adj = gid-xdim;
+	      if(procid==3 && adj<dist_graph->n_local){
+	        std::cout<<"3: adding adjacency "<<adj<<" in negative y direction\n";
+	      }
+	      if(adj < gid_offset){
+	        dist_graph->ghost_unmap[ghost_idx] = adj;
+                dist_graph->ghost_tasks[ghost_idx] = procid-1;
+		set_value(dist_graph->map,adj,dist_graph->n_local+ghost_idx++);
+	      }
+	      dist_graph->out_edges[adj_idx++] = adj;
+	      degree++;
+	    }
+            if(y < ydim - 1){
+	      uint64_t adj = gid + xdim;
+	      if(procid==3 && adj< dist_graph->n_local){
+	        std::cout<<"3: adding adjacency "<<adj<<" in positive y direction\n";
+	      }
+	      if(adj >= gid_offset+dist_graph->n_local){
+	        dist_graph->ghost_unmap[ghost_idx] = adj;
+		dist_graph->ghost_tasks[ghost_idx] = procid+1;
+		set_value(dist_graph->map, adj, dist_graph->n_local+ghost_idx++);
+	      }
+	      dist_graph->out_edges[adj_idx++] = adj;
+	      degree++;
+	    }
+            if(x > 0){
+	      uint64_t adj = gid -1;
+	      if(procid==3 && adj<dist_graph->n_local){
+	        std::cout<<"3: adding adjacency "<<adj<<" in negative x direction\n";
+	      }
+	      dist_graph->out_edges[adj_idx++] = adj;
+	      degree++;
+	    }
+            if(x < xdim-1){
+	      uint64_t adj = gid + 1;
+	      if(procid==3 && adj<dist_graph->n_local){
+	        std::cout<<"3: adding adjacency "<<adj<<" in positive x direction\n";
+	      }
+	      dist_graph->out_edges[adj_idx++] = adj;
+	      degree++;
+	    }
+            dist_graph->out_offsets[offset_idx] = dist_graph->out_offsets[offset_idx-1] + degree;
+	    offset_idx++;
+	  }
+	}
+      }
+      std::cout<<procid<<": wrote "<<adj_idx<<" adjs out of "<<dist_graph->m_local<<" expected; mapping from global to local...\n";
+      //map adjs back to lids.
+      uint64_t nullkeys = 0;
+      for(uint64_t i = 0; i < dist_graph->m_local; i++){
+	if(get_value(dist_graph->map, dist_graph->out_edges[i]) == NULL_KEY){
+	    //std::cout<<procid<<": mapped vtx "<<dist_graph->out_edges[i]<<" to NULL_KEY, so something's wrong\n";
+	    nullkeys++;
+	} else {
+          dist_graph->out_edges[i] = get_value(dist_graph->map,dist_graph->out_edges[i]);
+	}
+      }
+      if(nullkeys) std::cout<<procid<<": unable to map "<<nullkeys<<" adjacencies\n";
+      std::cout<<procid<<": done mapping\n";
+    } else {
+      graph_gen_data_t* ggi = new graph_gen_data_t;
+      //char* filename = new char[inputFile.length()+2];
+      //strncpy(filename, inputFile.c_str(),inputFile.length());
+      //filename[inputFile.length()+1] = '\0';
+      //debug = true;
+      printf("--Rank %d: Reading File %s\n",comm->getRank(), inputFile.c_str());
+      if(comm->getSize() > 1) load_graph_edges(inputFile.c_str(), ggi);
+      else load_graph_edges_threaded(inputFile.c_str(), ggi);
+      //delete [] filename;
+      if(comm->getSize() > 1) {
+        printf("--Rank %d: going to exchange edges\n",comm->getRank());
+        exchange_edges(ggi);
+      }
+      /*color_dist_graph_t**/ dist_graph = new color_dist_graph_t;
+      printf("--Rank %d: creating graph\n", comm->getRank());
+      if(comm->getSize() > 1) {
+        create_graph(ggi,dist_graph);
+        printf("--Rank %d: relabeling edges\n",comm->getRank());
+        relabel_edges(dist_graph);
+      } else if (comm->getSize() == 1){
+        create_graph_serial(ggi,dist_graph);
+      }
+      delete ggi;
     }
-    color_dist_graph_t* dist_graph = new color_dist_graph_t;
-    printf("--Rank %d: creating graph\n", comm->getRank());
-    if(comm->getSize() > 1) {
-      create_graph(ggi,dist_graph);
-      printf("--Rank %d: relabeling edges\n",comm->getRank());
-      relabel_edges(dist_graph);
-    } else if (comm->getSize() == 1){
-      create_graph_serial(ggi,dist_graph);
-    }
-    delete ggi;
     if(prepartition_rows||prepartition_nonzeros && comm->getSize() > 1){  
       //xtrapulp partitioning
       printf("--Rank %d: creating XtraPuLP inputs\n",comm->getRank()); 
@@ -498,6 +633,7 @@ int main(int narg, char** arg)
         relabel_edges(dist_graph);
       }
     }
+    printf("--Rank %d: constructing the GraphAdapter input\n",comm->getRank());
     graph_adapter = rcp(new myAdapter(dist_graph));
     Tpetra::global_size_t globalVtx = dist_graph->n;
     std::vector<map_t::global_ordinal_type> gids;
@@ -505,6 +641,7 @@ int main(int narg, char** arg)
       gids.push_back(dist_graph->local_unmap[i]);
     }
     //printf("\n");
+    /*printf("--Rank %d: constructing the Tpetra rowMap\n",comm->getRank());
     Tpetra::global_size_t dummy = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
     RCP<map_t> rowMap = rcp(new map_t(dummy, Teuchos::arrayViewFromVector(gids), 0, comm));
 
@@ -512,18 +649,22 @@ int main(int narg, char** arg)
       gids.push_back(dist_graph->ghost_unmap[i]);
     } 
     //printf("--Rank %d: maxGID = %llu minGID = %llu\n",comm->getRank(),maxGID,minGID);
+    printf("--Rank %d: constructing the Tpetra colMap\n",comm->getRank());
     dummy = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
     RCP<map_t> colMap = rcp(new map_t(dummy, Teuchos::arrayViewFromVector(gids), 0, comm));
+    printf("--Rank %d: copying the CSR representation to Tpetra structures\n",comm->getRank());
     row_map_t::non_const_type rowPointers = row_map_t::non_const_type("offsets",dist_graph->n_local+1);
     entries_t adjacencies = entries_t("adjs", dist_graph->m_local);
     for(int i = 0; i < dist_graph->n_local+1; i++) rowPointers(i) = dist_graph->out_offsets[i];
     for(int i = 0; i < dist_graph->m_local; i++) {
       adjacencies(i) = dist_graph->out_edges[i];
     }
+    printf("--Rank %d: constructing csr_graph\n",comm->getRank());
     crs_graph = rcp(new CrsGraph(rowMap, colMap, rowPointers, adjacencies));
     crs_graph->fillComplete(); 
+    printf("--Rank %d: constructing Matrix\n",comm->getRank());
     Matrix = rcp(new SparseMatrix(crs_graph));
-    Matrix->fillComplete();
+    Matrix->fillComplete();*/
     if(colorMethod == "Zoltan"){
       int error;
       float version;
@@ -576,14 +717,14 @@ int main(int narg, char** arg)
       uinput = rcp(new UserInputForTests(xdim, ydim, zdim, matrixType,
                                          comm, true, true));
     }
-    Matrix = uinput->getUITpetraCrsMatrix();
+    //Matrix = uinput->getUITpetraCrsMatrix();
   }
-  if (me == 0)
+  /*if (me == 0)
     std::cout << "NumRows     = " << Matrix->getGlobalNumRows() << std::endl
          << "NumNonzeros = " << Matrix->getGlobalNumEntries() << std::endl
-         << "NumProcs = " << comm->getSize() << std::endl;
+         << "NumProcs = " << comm->getSize() << std::endl;*/
 
-  if (prepartition != "" && inputFile.find("ebin") == string::npos) {
+  /*if (prepartition != "" && inputFile.find("ebin") == string::npos) {
     std::cout<<comm->getRank()<<": Starting to pre-partition, creating adapter\n";
     // Compute new partition of matrix
     std::unique_ptr<SparseMatrixAdapter> zadapter;
@@ -626,7 +767,7 @@ int main(int narg, char** arg)
     //std::cout<<comm->getRank()<<": done applying, replacing old matrix with new one\n";
     //Matrix = newMatrix;
     std::cout<<comm->getRank()<<": done replacing, finished partitioning\n";
-  }
+  }*/
 
   
 
@@ -701,13 +842,13 @@ int main(int narg, char** arg)
     std::cout << "Going to validate the soln" << std::endl;
     // Verify that checkColoring is a coloring
     if(colorAlg=="D2"){
-      testReturn = validateDistributedDistance2Coloring(*Matrix,checkColoring,me);
+      //testReturn = validateDistributedDistance2Coloring(*Matrix,checkColoring,me);
       //testReturn += validateDistributedColoring(Matrix,checkColoring,me);
     }else if(colorAlg=="2GL" ||colorAlg == "Hybrid"){
       //need to check a distributed coloring
-      testReturn = validateDistributedColoring(Matrix, checkColoring, me);
+      //testReturn = validateDistributedColoring(Matrix, checkColoring, me);
     } else if (checkLength > 0){
-      testReturn = validateColoring(Matrix, checkColoring);
+      //testReturn = validateColoring(Matrix, checkColoring);
     }
       // Check balance (not part of pass/fail for now)
     if(checkLength > 0) checkBalance((zlno_t)checkLength, checkColoring);

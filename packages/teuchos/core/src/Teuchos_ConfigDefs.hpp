@@ -139,7 +139,6 @@ const double Teuchos_Underflow = 2.23E-308;
  * 64 bit machine it will be an unsigned 64 bit integer.  Just what I want!
 */
 typedef TEUCHOS_ORDINAL_TYPE Teuchos_Ordinal;
-
 #ifdef __cplusplus
 namespace Teuchos { typedef Teuchos_Ordinal Ordinal; }
 #endif /* __cplusplus */

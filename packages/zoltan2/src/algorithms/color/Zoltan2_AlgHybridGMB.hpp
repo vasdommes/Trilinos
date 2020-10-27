@@ -63,20 +63,20 @@ class AlgHybridGMB : public Algorithm<Adapter>
     template <class ExecutionSpace, typename TempMemorySpace, 
               typename MemorySpace>
     void colorInterior(const size_t nVtx, 
-                       Kokkos::View<lno_t*, device_type> adjs_view,
-                       Kokkos::View<offset_t*, device_type > offset_view, 
+                       Kokkos::View<lno_t*, Kokkos::Device<ExecutionSpace,MemorySpace> > adjs_view,
+                       Kokkos::View<offset_t*, Kokkos::Device<ExecutionSpace, MemorySpace> > offset_view, 
                        Teuchos::ArrayRCP<int> colors,
                        Teuchos::RCP<femv_t> femv,
-		       Kokkos::View<lno_t*, device_type> vertex_list,
+		       Kokkos::View<lno_t*, Kokkos::Device<ExecutionSpace, MemorySpace> > vertex_list,
 		       size_t vertex_list_size = 0,
                        bool recolor=false){
       
 
       using KernelHandle =  KokkosKernels::Experimental::KokkosKernelsHandle
-          <offset_t, lno_t, lno_t, execution_space, memory_space, 
-           memory_space>;
-      using lno_row_view_t = Kokkos::View<offset_t*, device_type>;
-      using lno_nnz_view_t = Kokkos::View<lno_t*, device_type>;
+          <offset_t, lno_t, lno_t, ExecutionSpace, MemorySpace, 
+           MemorySpace>;
+      using lno_row_view_t = Kokkos::View<offset_t*, Kokkos::Device<ExecutionSpace, MemorySpace>>;
+      using lno_nnz_view_t = Kokkos::View<lno_t*, Kokkos::Device<ExecutionSpace, MemorySpace>>;
 
       KernelHandle kh;
 
@@ -96,15 +96,15 @@ class AlgHybridGMB : public Algorithm<Adapter>
       //the data view from the femv.
       Kokkos::View<int**, Kokkos::LayoutLeft> femvColors = femv->template getLocalView<MemorySpace>();
       Kokkos::View<int*, Tpetra::Map<>::device_type >  sv = subview(femvColors, Kokkos::ALL, 0);
-      Kokkos::View<int*,device_type> color_view("Colors",sv.size());
-      Kokkos::deep_copy(color_view,sv);
-      kh.get_graph_coloring_handle()->set_vertex_colors(color_view);
+      //Kokkos::View<int*,Kokkos::Device<ExecutionSpace, MemorySpace> > color_view("Colors",sv.size());
+      //Kokkos::deep_copy(color_view,sv);
+      kh.get_graph_coloring_handle()->set_vertex_colors(sv);
       kh.get_graph_coloring_handle()->set_tictoc(true);
       KokkosGraph::Experimental::graph_color_symbolic<KernelHandle, lno_row_view_t, lno_nnz_view_t>
                                                      (&kh, nVtx, nVtx, offset_view, adjs_view);
        
       numColors = kh.get_graph_coloring_handle()->get_num_colors();
-      Kokkos::deep_copy(sv,color_view);
+      //Kokkos::deep_copy(sv,color_view);
       std::cout<<"\nKokkosKernels Coloring: "<<kh.get_graph_coloring_handle()->get_overall_coloring_time()<<" iterations: "<<kh.get_graph_coloring_handle()->get_num_phases()<<"\n\n";
     }
     
@@ -116,7 +116,8 @@ class AlgHybridGMB : public Algorithm<Adapter>
 			 Kokkos::View<lno_t*,device_type> verts_to_send,
 			 Kokkos::View<lno_t[1],device_type> verts_to_send_size,
                          ArrayView<int> owners,
-                         Kokkos::View<int*, device_type>& colors){
+                         Kokkos::View<int*, device_type>& colors,
+                         gno_t& recv, gno_t& send){
       
       int nprocs = comm->getSize();
       int* sendcnts = new int[nprocs];
@@ -162,6 +163,8 @@ class AlgHybridGMB : public Algorithm<Adapter>
         std::cout<<comm->getRank()<<": sending "<<sendcnts[i-1]<<" GIDs to proc "<<i-1<<"\n";
         std::cout<<comm->getRank()<<": receiving "<<recvcnts[i-1]<<" GIDs from proc "<<i-1<<"\n";
       }
+      recv = recvsize;
+      send = sendsize;
       int* sendbuf = new int[sendsize];
       int* recvbuf = new int[recvsize];
       
@@ -186,7 +189,7 @@ class AlgHybridGMB : public Algorithm<Adapter>
 	  }
 	}
       }
-
+      comm->barrier();
       double comm_total = 0.0;
       double comm_temp = timer();
       status = MPI_Alltoallv(sendbuf, sendcnts, sdispls, MPI_INT, recvbuf,recvcnts,rdispls,MPI_INT,MPI_COMM_WORLD);
@@ -280,7 +283,7 @@ class AlgHybridGMB : public Algorithm<Adapter>
             
         }
       }
-        
+      std::cout<<comm->getRank()<<": vec.max_size() = "<<finalAdjs_vec.max_size()<<", adjs.size() = "<<adjs.size()<<"\n";  
       finalAdjs_vec.resize(adjs.size()); 
       for(size_t i = 0; i < finalAdjs_vec.size();i++){
         finalAdjs_vec[i] = globalToLocal[adjs[i]];
@@ -486,9 +489,9 @@ class AlgHybridGMB : public Algorithm<Adapter>
       Kokkos::View<lno_t*, device_type, Kokkos::MemoryTraits<Kokkos::Atomic> > recoloringQueue_atomic=recoloringQueue;*/
 
 
-      Kokkos::View<int[1], device_type> recoloringSize("Recoloring Queue Size");
+      Kokkos::View<gno_t[1], device_type> recoloringSize("Recoloring Queue Size");
       recoloringSize(0) = 0;
-      Kokkos::View<int[1], device_type, Kokkos::MemoryTraits<Kokkos::Atomic> > recoloringSize_atomic = recoloringSize; 
+      Kokkos::View<gno_t[1], device_type, Kokkos::MemoryTraits<Kokkos::Atomic> > recoloringSize_atomic = recoloringSize; 
       Kokkos::View<int*,device_type> rand_dev("randVec",rand.size());
       typename Kokkos::View<int*, device_type>::HostMirror rand_host = Kokkos::create_mirror(rand_dev);
       for(size_t i = 0; i < rand.size(); i++){
@@ -534,8 +537,11 @@ class AlgHybridGMB : public Algorithm<Adapter>
       Kokkos::fence();
       offset_t max_uncolored_degree = 0;
       Kokkos::View<int*, device_type> ghost_colors("ghost color backups", rand.size()-nVtx);
+      //typename Kokkos::View<int*, device_type>::HostMirror ghost_colors_host = Kokkos::create_mirror(ghost_colors);
       std::cout<<comm->getRank()<<": Done initializing\n";
       //bootstrap distributed coloring, add conflicting vertices to the recoloring queue.
+      gno_t sentPerRound[100];
+      gno_t recvPerRound[100];
       if(comm->getSize() > 1){
         comm->barrier();
         Kokkos::View<int**, Kokkos::LayoutLeft> femvColors = femv->template getLocalView<memory_space>();
@@ -546,7 +552,10 @@ class AlgHybridGMB : public Algorithm<Adapter>
           if(verts_to_send_view(i) < 0 || verts_to_send_view(i) >= nVtx) std::cout<<comm->getRank()<<": found a vert_to_send that is "<<verts_to_send_view(i)<<"\n";
         }
         std::cout<<comm->getRank()<<": going to communicate\n";
-        comm_time = doOwnedToGhosts(mapOwnedPlusGhosts,nVtx,offsets,adjs,verts_to_send_view,verts_to_send_size, owners,femv_colors);
+        gno_t recv, sent;
+        comm_time = doOwnedToGhosts(mapOwnedPlusGhosts,nVtx,offsets,adjs,verts_to_send_view,verts_to_send_size, owners,femv_colors,recv,sent);
+        sentPerRound[0] = sent;
+        recvPerRound[0] = recv;
         std::cout<<comm->getRank()<<": done communicating\n";
 	verts_to_send_size(0) = 0;
         //femv->doOwnedToOwnedPlusShared(Tpetra::REPLACE);
@@ -558,10 +567,13 @@ class AlgHybridGMB : public Algorithm<Adapter>
         Kokkos::parallel_for(rand.size()-nVtx,KOKKOS_LAMBDA(const int& i){
           ghost_colors(i) = femv_colors(i+nVtx);
         });
+        //Kokkos::deep_copy(ghost_colors_host, ghost_colors);
 
         comm->barrier();
+        Kokkos::View<int, device_type, Kokkos::MemoryTraits<Kokkos::Atomic>> boolean_checks("check yoself");
+        boolean_checks() = 0;
         double temp = timer();
-        Kokkos::parallel_for(nVtx, KOKKOS_LAMBDA (const int& i){
+        /*Kokkos::parallel_for(nVtx, KOKKOS_LAMBDA (const int& i){
           int currColor = femv_colors(i);
           for(offset_t j = dist_offsets(i); j < dist_offsets(i+1); j++){
             int nborColor = femv_colors(dist_adjs(j));
@@ -587,9 +599,56 @@ class AlgHybridGMB : public Algorithm<Adapter>
               }
             }
           }
+        });*/
+        Kokkos::parallel_reduce(rand.size()-nVtx, KOKKOS_LAMBDA(const int& i,gno_t& recoloring_size){
+          lno_t lid = i+nVtx;
+          int currColor = femv_colors(lid);
+          for(offset_t j = dist_offsets(lid); j < dist_offsets(lid+1); j++){
+            int nborColor = femv_colors(dist_adjs(j));
+            //boolean_checks()++;
+            if(currColor == nborColor ){
+              //boolean_checks()++;
+              if(rand_dev(lid) > rand_dev(dist_adjs(j))){
+                //boolean_checks()+=2;
+                femv_colors(lid) = 0;
+                recoloring_size++;
+                //recoloringSize_atomic(0)++;
+                //verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+                break;
+              }else if (rand_dev(dist_adjs(j)) > rand_dev(lid)){
+                //boolean_checks()+=2;
+                femv_colors(dist_adjs(j)) = 0;
+                recoloring_size++;
+                //recoloringSize_atomic(0)++;
+              } else {
+                //boolean_checks()++;
+                if (gid_dev(lid) >= gid_dev(dist_adjs(j))){// && rand_dev(i) == rand_dev(dist_adjs(j))){
+                  //boolean_checks()+=2;
+                  femv_colors(lid) = 0;
+                  recoloring_size++;
+                  //recoloringSize_atomic(0)++;
+                  //verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+                  break;
+                } else {
+                  //boolean_checks()+=2;
+                  femv_colors(dist_adjs(j)) = 0;
+                  recoloring_size++;
+                  //recoloringSize_atomic(0)++;
+                }
+              }
+            }
+          }
+        },recoloringSize(0));
+        Kokkos::fence();
+        Kokkos::parallel_for(nVtx, KOKKOS_LAMBDA(const int& i){
+          if(femv_colors(i) == 0){
+            //boolean_checks()++;
+            verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+          }
         });
         //ensure the parallel_for has completed before continuing.
         Kokkos::fence();
+        std::cout<<comm->getRank()<<": boolean_checks = "<<boolean_checks()<<"\n";
         conflict_detection += timer() - temp;
         total_time += conflict_detection;
         comp_time += conflict_detection;
@@ -600,6 +659,7 @@ class AlgHybridGMB : public Algorithm<Adapter>
       double compPerRound[100];
       double recoloringPerRound[100];
       double conflictDetectionPerRound[100];
+      double serialRecoloringPerRound[100];
       int vertsPerRound[100];
       bool done = false; //We're only done when all processors are done
       if(comm->getSize() == 1) done = true;
@@ -610,7 +670,11 @@ class AlgHybridGMB : public Algorithm<Adapter>
       conflictDetectionPerRound[0] = conflict_detection;
       recoloringPerRound[0] = 0;
       vertsPerRound[0] = 0;
+      //sentPerRound[0] = 0;
+      //recvPerRound[0] = 0;
       int distributedRounds = 1; //this is the same across all processors
+      //typename Kokkos::View<offset_t*, device_type>::HostMirror verts_to_send_host = Kokkos::create_mirror(verts_to_send_view);
+      //bool serial = false;
       //while the queue is not empty
       while(recoloringSize(0) > 0 || !done){
         //get a subview of the colors:
@@ -631,15 +695,51 @@ class AlgHybridGMB : public Algorithm<Adapter>
         }
         std::cout<<comm->getRank()<<": max_uncolored_degree = "<<max_uncolored_degree<<"\n";
 	Kokkos::View<lno_t*, device_type> verts_to_recolor("verts_to_recolor", boundary_size);
+        //typename Kokkos::View<offset_t*, device_type>::HostMirror verts_to_recolor_host = Kokkos::create_mirror(verts_to_recolor);        
 	Kokkos::deep_copy(verts_to_recolor, verts_to_send_view);
+        /*if(!serial && verts_to_send_size(0) <= 5000){
+          serial = true;
+        }
+        if(!serial){
+          Kokkos::deep_copy(verts_to_recolor_host, verts_to_send_view);
+          Kokkos::deep_copy(verts_to_send_host, verts_to_send_view);
+        }*/
+        //Kokkos::deep_copy(verts_to_recolor_host, verts_to_send_view);
+        //std::vector<int> old_colors;
+        /*for(int i = 0; i < femv_colors.size(); i++){
+          old_colors.push_back(femv_colors(i));
+        }
+
+
+        comm->barrier();
+        double recolor_serial = timer();
+        if(verts_to_send_size(0) > 0){
+          this->colorInterior<Kokkos::DefaultHostExecutionSpace,
+                              Kokkos::CudaUVMSpace::memory_space,
+                              Kokkos::CudaUVMSpace::memory_space>
+                             (femv_colors.size(), dist_adjs_host, dist_offsets_host, colors, femv, verts_to_recolor_host, verts_to_send_size(0),use_vbbit);
+        }
+        serialRecoloringPerRound[distributedRounds] = timer() - recolor_serial;
+
+        for(int i = 0; i < femv_colors.size(); i++){
+          femv_colors(i) = old_colors[i];
+        }*/
+
         comm->barrier();
         double recolor_temp = timer();
         //use KokkosKernels to recolor the conflicting vertices.  
 	if(verts_to_send_size(0) > 0){
-          this->colorInterior<execution_space,
-                              memory_space,
-                              memory_space>
-                             (femv_colors.size(),dist_adjs,dist_offsets,colors,femv,verts_to_recolor,verts_to_send_size(0),use_vbbit);
+          //if(/*verts_to_send_size(0) > 5000*/true){
+            this->colorInterior<execution_space,
+                                memory_space,
+                                memory_space>
+                               (femv_colors.size(),dist_adjs,dist_offsets,colors,femv,verts_to_recolor,verts_to_send_size(0),use_vbbit);
+          /*} else {
+            this->colorInterior<Kokkos::DefaultHostExecutionSpace,
+                                Kokkos::CudaUVMSpace::memory_space,
+                                Kokkos::CudaUVMSpace::memory_space>
+                               (femv_colors.size(), dist_adjs_host, dist_offsets_host, colors, femv, verts_to_recolor_host, verts_to_send_size(0),use_vbbit);    
+          }*/
 	}
         recoloringPerRound[distributedRounds] = timer() - recolor_temp;
         recoloring_time += recoloringPerRound[distributedRounds];
@@ -647,21 +747,36 @@ class AlgHybridGMB : public Algorithm<Adapter>
         comp_time += recoloringPerRound[distributedRounds];
         compPerRound[distributedRounds] = recoloringPerRound[distributedRounds];
         totalPerRound[distributedRounds] = recoloringPerRound[distributedRounds];
+	
+        
         std::cout<<comm->getRank()<<": done recoloring\n";
         recoloringSize(0) = 0;
 
         //replace old ghost colors
-        Kokkos::parallel_for(rand.size()-nVtx, KOKKOS_LAMBDA(const int& i){
-          femv_colors(i+nVtx) = ghost_colors(i);
-        });
+        //if(/*verts_to_send_size(0) > 5000*/true){
+          Kokkos::parallel_for(rand.size()-nVtx, KOKKOS_LAMBDA(const int& i){
+            femv_colors(i+nVtx) = ghost_colors(i);
+          });
+          Kokkos::fence();
+        /*} else {
+          for(int i = 0; i < ghost_colors_host.size(); i++){
+            femv_colors(i+nVtx) = ghost_colors_host(i);
+          }
+        }*/
         //communicate
+        typename Kokkos::View<lno_t*, device_type>::HostMirror verts_to_send_host = Kokkos::create_mirror(verts_to_send_view);
+        Kokkos::deep_copy(verts_to_send_host, verts_to_send_view);
         comm->barrier();
         //femv->switchActiveMultiVector();
         double comm_temp = timer();
         //femv->doOwnedToOwnedPlusShared(Tpetra::REPLACE);
 	//comm_time = doGhostUpdate(mapOwnedPlusGhosts,nVtx,inst_to_req,owners,femv_colors);
-        commPerRound[distributedRounds] = doOwnedToGhosts(mapOwnedPlusGhosts,nVtx,offsets,adjs,verts_to_send_view, verts_to_send_size, owners,femv_colors); 	
-	verts_to_send_size(0) = 0;
+	gno_t sent,recv;
+        commPerRound[distributedRounds] = doOwnedToGhosts(mapOwnedPlusGhosts,nVtx,offsets,adjs,verts_to_send_host, verts_to_send_size, owners,femv_colors,recv,sent); 	
+        std::cout<<comm->getRank()<<": total sent in round "<<distributedRounds<<" = "<<sent<<"\n";
+        std::cout<<comm->getRank()<<": total recv in round "<<distributedRounds<<" = "<<recv<<"\n";
+        sentPerRound[distributedRounds] = sent;
+        recvPerRound[distributedRounds] = recv;
         //commPerRound[distributedRounds] = doOwnedToGhosts(mapOwnedPlusGhosts,nVtx,offsets,adjs,verts_to_send,owners,femv_colors); 
 	//commPerRound[distributedRounds] += doGhostUpdate(mapOwnedPlusGhosts,nVtx,verts_to_req,owners,femv_colors);
         //commPerRound[distributedRounds] = timer() - comm_temp;
@@ -672,12 +787,22 @@ class AlgHybridGMB : public Algorithm<Adapter>
         //detect conflicts in parallel. For a detected conflict,
         //reset the vertex-to-be-recolored's color to 0, in order to
         //allow KokkosKernels to recolor correctly.
-        Kokkos::parallel_for(rand.size()-nVtx, KOKKOS_LAMBDA(const int& i){
-          ghost_colors(i) = femv_colors(i+nVtx);
-        });
+        //if(/*verts_to_send_size(0) > 5000*/true){
+          Kokkos::parallel_for(rand.size()-nVtx, KOKKOS_LAMBDA(const int& i){
+            ghost_colors(i) = femv_colors(i+nVtx);
+          });
+          Kokkos::fence();
+          //Kokkos::deep_copy(ghost_colors_host, ghost_colors);
+        /*} else {
+          for(int i = 0; i < ghost_colors_host.size(); i++){
+            ghost_colors_host(i) = femv_colors(i+nVtx);
+          }
+        }*/
+        //int prev_verts_to_send = verts_to_send_size(0);
+	verts_to_send_size(0) = 0;
         comm->barrier();
         double detection_temp = timer();
-        Kokkos::parallel_for(nVtx, KOKKOS_LAMBDA (const int& i){
+        /*Kokkos::parallel_for(nVtx, KOKKOS_LAMBDA (const int& i){
           int currColor = femv_colors(i);
           for(offset_t j = dist_offsets(i); j < dist_offsets(i+1); j++){
             int nborColor = femv_colors(dist_adjs(j));
@@ -703,10 +828,116 @@ class AlgHybridGMB : public Algorithm<Adapter>
               }
             }
           }
-        });
-        //For Cuda, this fence is necessary to ensure the Kokkos::parallel_for is finished
-        //before continuing with the coloring. 
-        Kokkos::fence();
+        });*/
+        //if verts to recolor > 5000
+        //if(/*prev_verts_to_send > 5000*/true){
+        /*  Kokkos::parallel_for(rand.size()-nVtx, KOKKOS_LAMBDA(const int& i){
+            lno_t lid = i+nVtx;
+            int currColor = femv_colors(lid);
+            for(offset_t j = dist_offsets(lid); j < dist_offsets(lid+1); j++){
+              int nborColor = femv_colors(dist_adjs(j));
+              if(currColor == nborColor ){
+                if(rand_dev(lid) > rand_dev(dist_adjs(j))){
+                  femv_colors(lid) = 0;
+                  recoloringSize_atomic(0)++;
+                  //verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+                  break;
+                }else if (rand_dev(dist_adjs(j)) > rand_dev(lid)){
+                  femv_colors(dist_adjs(j)) = 0;
+                  recoloringSize_atomic(0)++;
+                } else {
+                  if (gid_dev(lid) >= gid_dev(dist_adjs(j))){// && rand_dev(i) == rand_dev(dist_adjs(j))){
+                    femv_colors(lid) = 0;
+                    recoloringSize_atomic(0)++;
+                    //verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+                    break;
+                  } else {
+                    femv_colors(dist_adjs(j)) = 0;
+                    recoloringSize_atomic(0)++;
+                  }
+                }
+              }
+            }
+          });
+          Kokkos::fence();*/
+        Kokkos::parallel_reduce(rand.size()-nVtx, KOKKOS_LAMBDA(const int& i,gno_t& recoloring_size){
+          lno_t lid = i+nVtx;
+          int currColor = femv_colors(lid);
+          for(offset_t j = dist_offsets(lid); j < dist_offsets(lid+1); j++){
+            int nborColor = femv_colors(dist_adjs(j));
+            //boolean_checks()++;
+            if(currColor == nborColor ){
+              //boolean_checks()++;
+              if(rand_dev(lid) > rand_dev(dist_adjs(j))){
+                //boolean_checks()+=2;
+                femv_colors(lid) = 0;
+                recoloring_size++;
+                //recoloringSize_atomic(0)++;
+                //verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+                break;
+              }else if (rand_dev(dist_adjs(j)) > rand_dev(lid)){
+                //boolean_checks()+=2;
+                femv_colors(dist_adjs(j)) = 0;
+                recoloring_size++;
+                //recoloringSize_atomic(0)++;
+              } else {
+                //boolean_checks()++;
+                if (gid_dev(lid) >= gid_dev(dist_adjs(j))){// && rand_dev(i) == rand_dev(dist_adjs(j))){
+                  //boolean_checks()+=2;
+                  femv_colors(lid) = 0;
+                  recoloring_size++;
+                  //recoloringSize_atomic(0)++;
+                  //verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+                  break;
+                } else {
+                  //boolean_checks()+=2;
+                  femv_colors(dist_adjs(j)) = 0;
+                  recoloring_size++;
+                  //recoloringSize_atomic(0)++;
+                }
+              }
+            }
+          }
+        },recoloringSize(0));
+          Kokkos::parallel_for(nVtx, KOKKOS_LAMBDA(const int& i){
+            if(femv_colors(i) == 0){
+              verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+            }
+          });
+        
+          //For Cuda, this fence is necessary to ensure the Kokkos::parallel_for is finished
+          //before continuing with the coloring. 
+          Kokkos::fence();
+        /*} else {
+          for(int i = nVtx; i < rand.size(); i++){
+            lno_t lid = i;
+            int currColor = femv_colors(lid);
+            for(offset_t j = dist_offsets_host(lid); j < dist_offsets_host(lid+1); j++){
+              int nborColor = femv_colors(dist_adjs_host(j));
+              if(currColor == nborColor){
+                if(rand[lid] > rand[dist_adjs_host(j)]){
+                  femv_colors(lid) = 0;
+                  recoloringSize_atomic(0)++;
+                  verts_to_send_host(verts_to_send_size(0)++) = lid;
+                  break;
+                } else if (rand[dist_adjs_host(j)] > rand[lid]){
+                  femv_colors(dist_adjs_host(j)) = 0;
+                  recoloringSize_atomic(0)++;
+                } else {
+                  if(gid_host(lid) >= gid_host(dist_adjs_host(j))){
+                    femv_colors(lid) = 0;
+                    recoloringSize_atomic(0)++;
+                    verts_to_send_host(verts_to_send_size(0)++) = lid;
+                    break;
+                  } else {
+                    femv_colors(dist_adjs_host(j)) = 0;
+                    recoloringSize_atomic(0)++;
+                  }
+                }
+              }
+            }
+          }
+        }*/
         conflictDetectionPerRound[distributedRounds] = timer() - detection_temp;
         conflict_detection += conflictDetectionPerRound[distributedRounds];
         compPerRound[distributedRounds] += conflictDetectionPerRound[distributedRounds];
@@ -743,10 +974,13 @@ class AlgHybridGMB : public Algorithm<Adapter>
       int totalBoundarySize = 0;
       double finalTotalPerRound[100];
       double maxRecoloringPerRound[100];
+      double finalSerialRecoloringPerRound[100];
       double minRecoloringPerRound[100];
       double finalCommPerRound[100];
       double finalCompPerRound[100];
       double finalConflictDetectionPerRound[100];
+      gno_t finalRecvPerRound[100];
+      gno_t finalSentPerRound[100];
       for(int i = 0; i < 100; i++) {
         totalVertsPerRound[i] = 0;
         finalTotalPerRound[i] = 0.0;
@@ -755,24 +989,32 @@ class AlgHybridGMB : public Algorithm<Adapter>
         finalCommPerRound[i] = 0.0;
         finalCompPerRound[i] = 0.0;
         finalConflictDetectionPerRound[i] = 0.0;
+        finalSentPerRound[i] = 0;
+        finalRecvPerRound[i] = 0;
       }
       Teuchos::reduceAll<int,int>(*comm, Teuchos::REDUCE_SUM,1, &localBoundaryVertices,&totalBoundarySize);
       Teuchos::reduceAll<int,int>(*comm, Teuchos::REDUCE_SUM,100,vertsPerRound,totalVertsPerRound);
       Teuchos::reduceAll<int,double>(*comm, Teuchos::REDUCE_MAX,100,totalPerRound,finalTotalPerRound);
       Teuchos::reduceAll<int,double>(*comm, Teuchos::REDUCE_MAX,100,recoloringPerRound,maxRecoloringPerRound);
       Teuchos::reduceAll<int,double>(*comm, Teuchos::REDUCE_MIN,100,recoloringPerRound,minRecoloringPerRound);
+      Teuchos::reduceAll<int,double>(*comm, Teuchos::REDUCE_MAX,100,serialRecoloringPerRound,finalSerialRecoloringPerRound);
       Teuchos::reduceAll<int,double>(*comm, Teuchos::REDUCE_MAX,100,commPerRound,finalCommPerRound);
       Teuchos::reduceAll<int,double>(*comm, Teuchos::REDUCE_MAX,100,compPerRound,finalCompPerRound);
       Teuchos::reduceAll<int,double>(*comm, Teuchos::REDUCE_MAX,100,conflictDetectionPerRound, finalConflictDetectionPerRound);
+      Teuchos::reduceAll<int,gno_t> (*comm, Teuchos::REDUCE_SUM,100,recvPerRound, finalRecvPerRound);
+      Teuchos::reduceAll<int,gno_t> (*comm, Teuchos::REDUCE_SUM,100,sentPerRound, finalSentPerRound);
       printf("Rank %d: boundary size: %d\n",comm->getRank(),localBoundaryVertices);
       for(int i = 0; i < std::min(distributedRounds,100); i++){
         printf("Rank %d: recolor %d vertices in round %d\n",comm->getRank(),vertsPerRound[i],i);
         if(comm->getRank()==0) printf("recolored %d vertices in round %d\n",totalVertsPerRound[i],i);
         if(comm->getRank()==0) printf("total time in round %d: %f\n",i,finalTotalPerRound[i]);
         if(comm->getRank()==0) printf("recoloring time in round %d: %f\n",i,maxRecoloringPerRound[i]);
+        if(comm->getRank()==0) printf("serial recoloring time in round %d: %f\n",i,finalSerialRecoloringPerRound[i]);
         if(comm->getRank()==0) printf("min recoloring time in round %d: %f\n",i,minRecoloringPerRound[i]);
         if(comm->getRank()==0) printf("conflict detection time in round %d: %f\n",i,finalConflictDetectionPerRound[i]);
         if(comm->getRank()==0) printf("comm time in round %d: %f\n",i,finalCommPerRound[i]);
+        if(comm->getRank()==0) printf("total sent in round %d: %d\n",i,finalSentPerRound[i]);
+        if(comm->getRank()==0) printf("total recv in round %d: %d\n",i,finalRecvPerRound[i]);
         if(comm->getRank()==0) printf("comp time in round %d: %f\n",i,finalCompPerRound[i]);
       }
       double global_total_time = 0.0;
