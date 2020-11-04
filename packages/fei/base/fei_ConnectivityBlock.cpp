@@ -174,7 +174,11 @@ fei::ConnectivityBlock::~ConnectivityBlock()
 //----------------------------------------------------------------------------
 const int* fei::ConnectivityBlock::getRowConnectivity(int ID) const
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::const_iterator
+#else
+  std::map<>::const_iterator
+#endif
     iter = connIDsOffsetMap_.find(ID);
   if (iter == connIDsOffsetMap_.end()) {
     return(NULL);
@@ -188,7 +192,11 @@ const int* fei::ConnectivityBlock::getRowConnectivity(int ID) const
 //----------------------------------------------------------------------------
 int* fei::ConnectivityBlock::getRowConnectivity(int ID)
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::const_iterator
+#else
+  std::map<>::const_iterator
+#endif
     iter = connIDsOffsetMap_.find(ID);
   if (iter == connIDsOffsetMap_.end()) {
     return(NULL);
@@ -202,7 +210,11 @@ int* fei::ConnectivityBlock::getRowConnectivity(int ID)
 //----------------------------------------------------------------------------
 const int* fei::ConnectivityBlock::getColConnectivity(int ID) const
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::const_iterator
+#else
+  std::map<>::const_iterator
+#endif
     iter = connIDsOffsetMap_.find(ID);
   if (iter == connIDsOffsetMap_.end()) {
     return(NULL);
@@ -216,7 +228,11 @@ const int* fei::ConnectivityBlock::getColConnectivity(int ID) const
 //----------------------------------------------------------------------------
 int* fei::ConnectivityBlock::getColConnectivity(int ID)
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::const_iterator
+#else
+  std::map<>::const_iterator
+#endif
     iter = connIDsOffsetMap_.find(ID);
   if (iter == connIDsOffsetMap_.end()) {
     return(NULL);

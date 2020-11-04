@@ -79,8 +79,13 @@
 
 namespace MueLu {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
  RCP<const ParameterList> RepartitionFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::GetValidParameterList() const {
+#else
+ template <class Scalar, class Node>
+ RCP<const ParameterList> RepartitionFactory<Scalar, Node>::GetValidParameterList() const {
+#endif
     RCP<ParameterList> validParamList = rcp(new ParameterList());
 
 #define SET_VALID_ENTRY(name) validParamList->setEntry(name, MasterList::getEntry(name))
@@ -98,15 +103,25 @@ namespace MueLu {
     return validParamList;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void RepartitionFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level &currentLevel) const {
+#else
+  template <class Scalar, class Node>
+  void RepartitionFactory<Scalar, Node>::DeclareInput(Level &currentLevel) const {
+#endif
     Input(currentLevel, "A");
     Input(currentLevel, "number of partitions");
     Input(currentLevel, "Partition");
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void RepartitionFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(Level& currentLevel) const {
+#else
+  template <class Scalar, class Node>
+  void RepartitionFactory<Scalar, Node>::Build(Level& currentLevel) const {
+#endif
     FactoryMonitor m(*this, "Build", currentLevel);
 
     const Teuchos::ParameterList & pL = GetParameterList();
@@ -297,8 +312,13 @@ namespace MueLu {
     RCP<Map>    partsIOwn   = MapFactory   ::Build(lib,                                                 numProcs,  myPart(), partsIndexBase, comm);
     RCP<Export> partsExport = ExportFactory::Build(partsIHave, partsIOwn);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<GOVector> partsISend    = Xpetra::VectorFactory<GO, LO, GO, NO>::Build(partsIHave);
     RCP<GOVector> numPartsIRecv = Xpetra::VectorFactory<GO, LO, GO, NO>::Build(partsIOwn);
+#else
+    RCP<GOVector> partsISend    = Xpetra::VectorFactory<GO, NO>::Build(partsIHave);
+    RCP<GOVector> numPartsIRecv = Xpetra::VectorFactory<GO, NO>::Build(partsIOwn);
+#endif
     if (numSend) {
       ArrayRCP<GO> partsISendData = partsISend->getDataNonConst(0);
       for (int i = 0; i < numSend; i++)
@@ -373,7 +393,11 @@ namespace MueLu {
     // If we're running BlockedCrs we should chop up the newRowMap into a newBlockedRowMap here (and do likewise for importers)
     if(!blockedRowMap.is_null()) {
       SubFactoryMonitor m1(*this, "Blocking newRowMap and Importer", currentLevel);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       RCP<const BlockedMap> blockedTargetMap = MueLu::UtilitiesBase<Scalar,LocalOrdinal,GlobalOrdinal,Node>::GeneratedBlockedTargetMap(*blockedRowMap,*rowMapImporter);
+#else
+      RCP<const BlockedMap> blockedTargetMap = MueLu::UtilitiesBase<Scalar,Node>::GeneratedBlockedTargetMap(*blockedRowMap,*rowMapImporter);
+#endif
 
       // NOTE: This code qualifies as "correct but not particularly performant"  If this needs to be sped up, we can probably read data from the existing importer to 
       // build sub-importers rather than generating new ones ex nihilo
@@ -432,8 +456,13 @@ namespace MueLu {
     return (a.v > b.v); // descending order
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void RepartitionFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  template <class Scalar, class Node>
+  void RepartitionFactory<Scalar, Node>::
+#endif
   DeterminePartitionPlacement(const Matrix& A, GOVector& decomposition, GO numPartitions, bool willAcceptPartition, bool allSubdomainsAcceptPartitions) const {
     RCP<const Map> rowMap = A.getRowMap();
 
@@ -497,7 +526,11 @@ namespace MueLu {
     // Step 3: Construct mapping
 
     // Construct the set of triplets
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::Array<Triplet<int,int> > gEdges(numProcs * maxLocal);
+#else
+    Teuchos::Array<Triplet<> > gEdges(numProcs * maxLocal);
+#endif
     Teuchos::Array<bool> procWillAcceptPartition(numProcs, allSubdomainsAcceptPartitions);
     size_t k = 0;
     for (LO i = 0; i < gData.size(); i += 2) {
@@ -516,13 +549,25 @@ namespace MueLu {
 
     // Sort edges by weight
     // NOTE: compareTriplets is actually a reverse sort, so the edges weight is in decreasing order
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::sort(gEdges.begin(), gEdges.end(), compareTriplets<int,int>);
+#else
+    std::sort(gEdges.begin(), gEdges.end(), compareTriplets<>);
+#endif
 
     // Do matching
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::map<int,int> match;
+#else
+    std::map<> match;
+#endif
     Teuchos::Array<char> matchedRanks(numProcs, 0), matchedParts(numPartitions, 0);
     int numMatched = 0;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     for (typename Teuchos::Array<Triplet<int,int> >::const_iterator it = gEdges.begin(); it != gEdges.end(); it++) {
+#else
+    for (typename Teuchos::Array<Triplet<> >::const_iterator it = gEdges.begin(); it != gEdges.end(); it++) {
+#endif
       GO rank = it->i;
       GO part = it->j;
       if (matchedRanks[rank] == 0 && matchedParts[part] == 0) {
@@ -541,7 +586,11 @@ namespace MueLu {
     // need to know which parts are valid.
     if (numPartitions - numMatched > 0) {
       Teuchos::Array<char> partitionCounts(numPartitions, 0);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       for (typename std::map<int,int>::const_iterator it = match.begin(); it != match.end(); it++)
+#else
+      for (typename std::map<>::const_iterator it = match.begin(); it != match.end(); it++)
+#endif
         partitionCounts[it->first] += 1;
       for (int part = 0, matcher = 0; part < numPartitions; part++) {
         if (partitionCounts[part] == 0) {

@@ -63,10 +63,21 @@ namespace { // (anonymous)
   //
 
   // See Github Issue #601.  This test is really only useful if run with > 2 MPI processes.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( CrsGraph, GlobalAssembleOverlappingRowMap, LO, GO, NT )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( CrsGraph, GlobalAssembleOverlappingRowMap, NT )
+#endif
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::CrsGraph<LO, GO, NT> crs_graph_type;
     typedef Tpetra::Map<LO, GO, NT> map_type;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef Tpetra::CrsGraph<NT> crs_graph_type;
+    typedef Tpetra::Map<NT> map_type;
+#endif
     int lclSuccess = 1;
     int gblSuccess = 0;
 
@@ -210,8 +221,13 @@ namespace { // (anonymous)
   // INSTANTIATIONS
   //
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define UNIT_TEST_GROUP( LO, GO, NT ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( CrsGraph, GlobalAssembleOverlappingRowMap, LO, GO, NT )
+#else
+#define UNIT_TEST_GROUP(NT ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( CrsGraph, GlobalAssembleOverlappingRowMap, NT )
+#endif
 
   TPETRA_ETI_MANGLING_TYPEDEFS()
 

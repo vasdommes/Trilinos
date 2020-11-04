@@ -55,9 +55,15 @@ namespace Amesos2 {
   AMESOS2_SOLVER_EPETRA_INST(KLU2);
 #endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   #define AMESOS2_KLU2_LOCAL_INSTANT(S,LO,GO,N) \
   template class Amesos2::KLU2<Tpetra::CrsMatrix<S, LO, GO, N>, \
                               Tpetra::MultiVector<S, LO, GO, N> >;
+#else
+  #define AMESOS2_KLU2_LOCAL_INSTANT(S,N) \
+  template class Amesos2::KLU2<Tpetra::CrsMatrix<S, N>, \
+                              Tpetra::MultiVector<S, N> >;
+#endif
 
   TPETRA_ETI_MANGLING_TYPEDEFS()
 

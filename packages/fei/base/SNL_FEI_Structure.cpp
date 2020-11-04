@@ -53,7 +53,11 @@ SNL_FEI_Structure::SNL_FEI_Structure(MPI_Comm comm)
    numProcs_(1),
    fieldIDs_(),
    fieldSizes_(),
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
    fieldDatabase_(new std::map<int,int>),
+#else
+   fieldDatabase_(new std::map<>),
+#endif
    fieldDofMap_(),
    workarray_(),
    blockIDs_(),
@@ -1256,10 +1260,18 @@ int SNL_FEI_Structure::getMatrixStructure(int** ptColIndices,
     //There are block-equations with more than 1 point-equation, so let's
     //calculate the actual block-structure.
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::map<int,int>* ptEqns = blkEqnMapper_->getPtEqns();
+#else
+    std::map<>* ptEqns = blkEqnMapper_->getPtEqns();
+#endif
     int numPtEqns = ptEqns->size();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::map<int,int>::const_iterator
+#else
+    std::map<>::const_iterator
+#endif
       pteq = ptEqns->begin();
 
     int lastBlkRow = -1;

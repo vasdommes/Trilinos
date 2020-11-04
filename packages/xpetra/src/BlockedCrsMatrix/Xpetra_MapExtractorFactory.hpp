@@ -55,14 +55,20 @@ namespace Xpetra {
 
   // factory class
   template <class Scalar,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
             class LocalOrdinal,
             class GlobalOrdinal,
+#endif
             class Node>
   class MapExtractorFactory {
 #undef XPETRA_MAPEXTRACTORFACTORY_SHORT
 #include "Xpetra_UseShortNames.hpp"
 
   private:
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     //! Private construtor, since this is a static class
     MapExtractorFactory() = delete;
 
@@ -72,12 +78,20 @@ namespace Xpetra {
 
       The Maps indirectly specify the linear algebra library to use (Tpetra or Epetra).
     */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP<Xpetra::MapExtractor<Scalar,LocalOrdinal,GlobalOrdinal,Node> >
+#else
+    static Teuchos::RCP<Xpetra::MapExtractor<Scalar,Node> >
+#endif
     Build (const Teuchos::RCP<const Map>& fullmap,
            const std::vector<Teuchos::RCP<const Map> >& maps,
            bool bThyraMode = false)
     {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       return rcp (new Xpetra::MapExtractor<Scalar,LocalOrdinal,GlobalOrdinal,Node> (fullmap, maps, bThyraMode));
+#else
+      return rcp (new Xpetra::MapExtractor<Scalar,Node> (fullmap, maps, bThyraMode));
+#endif
     }
 
     /*!
@@ -85,8 +99,13 @@ namespace Xpetra {
 
       The Maps indirectly specify the linear algebra library to use (Tpetra or Epetra).
     */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP<Xpetra::MapExtractor<Scalar,LocalOrdinal,GlobalOrdinal,Node> >
     Build (const Teuchos::RCP<const Xpetra::BlockedMap<LocalOrdinal,GlobalOrdinal,Node>>& blockedMap)
+#else
+    static Teuchos::RCP<Xpetra::MapExtractor<Scalar,Node> >
+    Build (const Teuchos::RCP<const Xpetra::BlockedMap<Node>>& blockedMap)
+#endif
     {
       return rcp(new MapExtractor(blockedMap));
     }

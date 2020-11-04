@@ -75,13 +75,23 @@
 
 namespace MueLu {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal, class GlobalOrdinal, class Node>
   UncoupledAggregationFactory<LocalOrdinal, GlobalOrdinal, Node>::UncoupledAggregationFactory()
+#else
+  template <class Node>
+  UncoupledAggregationFactory<Node>::UncoupledAggregationFactory()
+#endif
   : bDefinitionPhase_(true)
   { }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal, class GlobalOrdinal, class Node>
   RCP<const ParameterList> UncoupledAggregationFactory<LocalOrdinal, GlobalOrdinal, Node>::GetValidParameterList() const {
+#else
+  template <class Node>
+  RCP<const ParameterList> UncoupledAggregationFactory<Node>::GetValidParameterList() const {
+#endif
     RCP<ParameterList> validParamList = rcp(new ParameterList());
 
     // Aggregation parameters (used in aggregation algorithms)
@@ -127,8 +137,13 @@ namespace MueLu {
     return validParamList;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal, class GlobalOrdinal, class Node>
   void UncoupledAggregationFactory<LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level& currentLevel) const {
+#else
+  template <class Node>
+  void UncoupledAggregationFactory<Node>::DeclareInput(Level& currentLevel) const {
+#endif
     Input(currentLevel, "Graph");
     Input(currentLevel, "DofsPerNode");
 
@@ -166,8 +181,13 @@ namespace MueLu {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal, class GlobalOrdinal, class Node>
   void UncoupledAggregationFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(Level &currentLevel) const {
+#else
+  template <class Node>
+  void UncoupledAggregationFactory<Node>::Build(Level &currentLevel) const {
+#endif
     FactoryMonitor m(*this, "Build", currentLevel);
 
     ParameterList pL = GetParameterList();
@@ -298,7 +318,11 @@ namespace MueLu {
     Set(currentLevel, "Aggregates", aggregates);
 
     if (pL.get<bool>("aggregation: compute aggregate qualities")) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 	RCP<Xpetra::MultiVector<double,LO,GO,Node>> aggQualities = Get<RCP<Xpetra::MultiVector<double,LO,GO,Node>>>(currentLevel, "AggregateQualities");
+#else
+	RCP<Xpetra::MultiVector<double,Node>> aggQualities = Get<RCP<Xpetra::MultiVector<double,Node>>>(currentLevel, "AggregateQualities");
+#endif
     }
 
     if (IsPrint(Statistics1))

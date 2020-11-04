@@ -49,7 +49,11 @@
 #include <Epetra_ConfigDefs.h>
 
 namespace Xpetra {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template<class GO, class NO> class EpetraCrsMatrixT;
+#else
+  template<class NO> class EpetraCrsMatrixT;
+#endif
 }
 
 #ifndef XPETRA_EPETRACRSMATRIX_SHORT

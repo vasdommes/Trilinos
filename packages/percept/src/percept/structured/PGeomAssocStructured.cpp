@@ -102,14 +102,26 @@ void PGeomAssocStructured::create_node_association_data(std::shared_ptr<PGeom> p
                                                         double associate_tolerance,
                                                         unsigned block_num)
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::multimap< int, int > surface_to_node_index;
   std::multimap< int, int > curve_to_node_index;
   std::multimap< int, int > vertex_to_node_index;
+#else
+  std::multimap< > surface_to_node_index;
+  std::multimap< > curve_to_node_index;
+  std::multimap< > vertex_to_node_index;
+#endif
 
   std::map<int, NodeAssociationData> &node_map = mBlockAssociation[block_num].node_to_geom_map;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::multimap<int, int> &surf_map = mBlockAssociation[block_num].surface_to_node_map;
   std::multimap<int, int> &curve_map = mBlockAssociation[block_num].curve_to_node_map;
   std::multimap<int, int> &vertex_map = mBlockAssociation[block_num].vertex_to_node_map;
+#else
+  std::multimap<> &surf_map = mBlockAssociation[block_num].surface_to_node_map;
+  std::multimap<> &curve_map = mBlockAssociation[block_num].curve_to_node_map;
+  std::multimap<> &vertex_map = mBlockAssociation[block_num].vertex_to_node_map;
+#endif
 
   std::array<unsigned,3> indx{{0,0,0}};
 
@@ -145,17 +157,29 @@ void PGeomAssocStructured::create_node_association_data(std::shared_ptr<PGeom> p
 
               for(int cur_surf : close_surfs)
               {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                 surface_to_node_index.insert( std::multimap<int, int>::value_type( cur_surf, local_node_index));
+#else
+                surface_to_node_index.insert( std::multimap<>::value_type( cur_surf, local_node_index));
+#endif
               }
 
               for(int cur_curve : close_curves )
               {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                 curve_to_node_index.insert( std::multimap<int, int>::value_type( cur_curve, local_node_index));
+#else
+                curve_to_node_index.insert( std::multimap<>::value_type( cur_curve, local_node_index));
+#endif
               }
 
               for(int cur_vert : close_vertices )
               {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                 vertex_to_node_index.insert( std::multimap<int, int>::value_type( cur_vert, local_node_index));
+#else
+                vertex_to_node_index.insert( std::multimap<>::value_type( cur_vert, local_node_index));
+#endif
               }
 
             }
@@ -178,11 +202,20 @@ CubitVector PGeomAssocStructured::node_coordinates(std::shared_ptr<percept::Stru
 }
 
 void PGeomAssocStructured::gather_node_coordinates(std::shared_ptr<percept::StructuredBlock> sgi,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                                    const std::multimap<int,int>::const_iterator lower,
                                                    const std::multimap<int,int>::const_iterator upper,
+#else
+                                                   const std::multimap<>::const_iterator lower,
+                                                   const std::multimap<>::const_iterator upper,
+#endif
                                                    std::vector<CubitVector> &node_positions)
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::multimap< int, int >::const_iterator iter;
+#else
+    std::multimap< >::const_iterator iter;
+#endif
 
     for(iter = lower; iter!=upper; ++iter)
     {
@@ -195,11 +228,23 @@ void PGeomAssocStructured::gather_node_coordinates(std::shared_ptr<percept::Stru
 
 void PGeomAssocStructured::get_surfaces_close_to_nodes(std::shared_ptr<percept::StructuredBlock> sgi,
                                                        std::shared_ptr<PGeom> pgeom,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                                        const std::multimap< int, int > &candidate_surf_map,
+#else
+                                                       const std::multimap< > &candidate_surf_map,
+#endif
                                                        std::map<int, NodeAssociationData> &node_map,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                                        std::multimap< int, int > &surface_map)
+#else
+                                                       std::multimap< > &surface_map)
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::multimap< int, int >::const_iterator iter, lower_iter, upper_iter, key_iter, tmp_iter;
+#else
+  std::multimap< >::const_iterator iter, lower_iter, upper_iter, key_iter, tmp_iter;
+#endif
   iter = candidate_surf_map.begin();
 
   while( iter != candidate_surf_map.end() )
@@ -229,7 +274,11 @@ void PGeomAssocStructured::get_surfaces_close_to_nodes(std::shared_ptr<percept::
         if (dist < nd.edge_len_tol)
         {
             nd.add_surface(surface_id, dist);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
             surface_map.insert(std::multimap<int,int>::value_type(surface_id, node_index));
+#else
+            surface_map.insert(std::multimap<>::value_type(surface_id, node_index));
+#endif
         }
     }
   }
@@ -240,11 +289,23 @@ void PGeomAssocStructured::get_surfaces_close_to_nodes(std::shared_ptr<percept::
 // refactor!
 void PGeomAssocStructured::get_curves_close_to_nodes(std::shared_ptr<percept::StructuredBlock> sgi,
                                                          std::shared_ptr<PGeom> pgeom,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                                          const std::multimap< int, int > &candidate_curve_map,
+#else
+                                                         const std::multimap< > &candidate_curve_map,
+#endif
                                                          std::map<int, NodeAssociationData> &node_map,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                                          std::multimap< int, int > &curve_map)
+#else
+                                                         std::multimap< > &curve_map)
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::multimap< int, int >::const_iterator iter, lower_iter, upper_iter, key_iter, tmp_iter;
+#else
+  std::multimap< >::const_iterator iter, lower_iter, upper_iter, key_iter, tmp_iter;
+#endif
   iter = candidate_curve_map.begin();
 
   while( iter != candidate_curve_map.end() )
@@ -277,7 +338,11 @@ void PGeomAssocStructured::get_curves_close_to_nodes(std::shared_ptr<percept::St
           if (dist < nd.edge_len_tol)
           {
               nd.add_curve(curve_id, dist);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
               curve_map.insert(std::multimap<int, int>::value_type(curve_id, node_index));
+#else
+              curve_map.insert(std::multimap<>::value_type(curve_id, node_index));
+#endif
           }
       }
     }
@@ -286,12 +351,24 @@ void PGeomAssocStructured::get_curves_close_to_nodes(std::shared_ptr<percept::St
 
 void PGeomAssocStructured::get_vertices_close_to_nodes(std::shared_ptr<percept::StructuredBlock> sgi,
                                                            std::shared_ptr<PGeom> pgeom,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                                            const std::multimap<int, int> &candidate_vertex_map,
+#else
+                                                           const std::multimap<> &candidate_vertex_map,
+#endif
                                                            std::map<int, NodeAssociationData> &node_map,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                                            std::multimap< int, int > &vertex_map)
+#else
+                                                           std::multimap< > &vertex_map)
+#endif
 {
   //get the closest points for each curve
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::multimap< int, int >::const_iterator iter, lower_iter, upper_iter, key_iter, tmp_iter;
+#else
+  std::multimap< >::const_iterator iter, lower_iter, upper_iter, key_iter, tmp_iter;
+#endif
   iter = candidate_vertex_map.begin();
 
   while( iter != candidate_vertex_map.end() )
@@ -318,7 +395,11 @@ void PGeomAssocStructured::get_vertices_close_to_nodes(std::shared_ptr<percept::
           if (dist < nd.edge_len_tol)
           {
               nd.add_vertex(vertex_id, dist);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
               vertex_map.insert(std::multimap<int, int>::value_type(vertex_id, node_index));
+#else
+              vertex_map.insert(std::multimap<>::value_type(vertex_id, node_index));
+#endif
           }
       }
   }
@@ -463,8 +544,13 @@ void PGeomAssocStructured::create_edge_association_data(std::shared_ptr<percept:
     std::map<int, NodeAssociationData> &node_map = mBlockAssociation[block_num].node_to_geom_map;
 
     std::map<int, EdgeAssociationData> &edge_map = mBlockAssociation[block_num].edge_to_geom_map[edge_direction];
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::multimap<int, int> &curve_map = mBlockAssociation[block_num].curve_to_edge_map[edge_direction];
     std::multimap<int, int> &surf_map = mBlockAssociation[block_num].surface_to_edge_map[edge_direction];
+#else
+    std::multimap<> &curve_map = mBlockAssociation[block_num].curve_to_edge_map[edge_direction];
+    std::multimap<> &surf_map = mBlockAssociation[block_num].surface_to_edge_map[edge_direction];
+#endif
 
     // create an array with the correct i,j,k increment to get the second node on the edge
     std::array<unsigned, 3> edge_delta{{0, 0, 0}};
@@ -508,7 +594,11 @@ void PGeomAssocStructured::create_edge_association_data(std::shared_ptr<percept:
                         ed.close_curves = common_curves;
 
                         for (int i_curve : common_curves)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                             curve_map.insert(std::multimap<int, int>::value_type(i_curve, edge_id));
+#else
+                            curve_map.insert(std::multimap<>::value_type(i_curve, edge_id));
+#endif
                     }
 
                     if (common_surfs.size())
@@ -516,7 +606,11 @@ void PGeomAssocStructured::create_edge_association_data(std::shared_ptr<percept:
                         ed.close_surfs = common_surfs;
 
                         for (int i_surf : common_surfs)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                             surf_map.insert(std::multimap<int, int>::value_type(i_surf, edge_id));
+#else
+                            surf_map.insert(std::multimap<>::value_type(i_surf, edge_id));
+#endif
                     }
 
                     edge_map[edge_id] = ed;
@@ -657,7 +751,11 @@ void PGeomAssocStructured::create_face_association_data(std::shared_ptr<percept:
 {
     std::map<int, NodeAssociationData> &node_map = mBlockAssociation[block_num].node_to_geom_map;
     std::map<int, FaceAssociationData> &face_map = mBlockAssociation[block_num].face_to_geom_map[face_direction];
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::multimap<int, int> &surf_map = mBlockAssociation[block_num].surface_to_face_map[face_direction];
+#else
+    std::multimap<> &surf_map = mBlockAssociation[block_num].surface_to_face_map[face_direction];
+#endif
 
     std::array<uint64_t,3> indx{{0,0,0}};
 
@@ -684,7 +782,11 @@ void PGeomAssocStructured::create_face_association_data(std::shared_ptr<percept:
                     face_map[face_id] = fd;
 
                     for (int i_surf : common_surfs)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                         surf_map.insert(std::multimap<int, int>::value_type(i_surf, face_id));
+#else
+                        surf_map.insert(std::multimap<>::value_type(i_surf, face_id));
+#endif
                 }
 
             }
@@ -1052,9 +1154,17 @@ void PGeomAssocStructured::print_face_association_map(const std::map<int, FaceAs
 void PGeomAssocStructured::print_geometry_association(const std::string &key_name,
                                                       const std::string &value_name,
                                                       const std::string &direction_string,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                                       const std::multimap< int, int > &geometry_map)
+#else
+                                                      const std::multimap< > &geometry_map)
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::multimap< int, int >::const_iterator iter, upper_iter;
+#else
+    std::multimap< >::const_iterator iter, upper_iter;
+#endif
 
     iter = geometry_map.begin();
     while (iter != geometry_map.end())
@@ -1081,10 +1191,19 @@ void PGeomAssocStructured::print_ids(const std::string &label,
 }
 
 void PGeomAssocStructured::print_multimap_ids(const std::string &label,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                               const std::multimap<int,int>::const_iterator lower,
                                               const std::multimap<int,int>::const_iterator upper)
+#else
+                                              const std::multimap<>::const_iterator lower,
+                                              const std::multimap<>::const_iterator upper)
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::multimap< int, int >::const_iterator iter;
+#else
+    std::multimap< >::const_iterator iter;
+#endif
 
     std::cout << label;
     for (iter=lower ; iter!=upper; iter++)

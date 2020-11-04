@@ -64,9 +64,17 @@
 
 namespace MueLuTests {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(StructuredAggregation, GlobalLexiTentative1D, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(StructuredAggregation, GlobalLexiTentative1D, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -74,8 +82,13 @@ namespace MueLuTests {
     using magnitude_type        = typename TST::magnitudeType;
     using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
     using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
     using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+    using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+    using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
 
@@ -100,7 +113,11 @@ namespace MueLuTests {
     }
 
     RCP<RealValuedMultiVector> Coordinates =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       TestHelpers::TestFactory<SC,LO,GO,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#else
+      TestHelpers::TestFactory<SC,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#endif
                                                                  lNodesPerDir, meshData,
                                                                  meshLayout);
 
@@ -158,8 +175,13 @@ namespace MueLuTests {
     coarseLevel.Release("Nullspace",TentativePFact.get());
 
     // check normalization and orthogonality of prolongator columns
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::RCP<Xpetra::Matrix<SC,LO,GO,Node> > PtentTPtent = Xpetra::MatrixMatrix<SC,LO,GO,Node>::Multiply(*Ptent,true,*Ptent,false,out);
     Teuchos::RCP<Xpetra::Vector<SC,LO,GO,Node> > diagVec = Xpetra::VectorFactory<SC,LO,GO,Node>::Build(PtentTPtent->getRowMap());
+#else
+    Teuchos::RCP<Xpetra::Matrix<SC,Node> > PtentTPtent = Xpetra::MatrixMatrix<SC,Node>::Multiply(*Ptent,true,*Ptent,false,out);
+    Teuchos::RCP<Xpetra::Vector<SC,Node> > diagVec = Xpetra::VectorFactory<SC,Node>::Build(PtentTPtent->getRowMap());
+#endif
     PtentTPtent->getLocalDiagCopy(*diagVec);
     if (TST::name().find("complex") == std::string::npos) //skip check for Scalar=complex
       TEST_FLOATING_EQUALITY(diagVec->norm1(), Teuchos::as<magnitude_type>(diagVec->getGlobalLength()), 100*TMT::eps());
@@ -168,9 +190,17 @@ namespace MueLuTests {
 
   } // GlobalLexiTentative1D
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(StructuredAggregation, GlobalLexiTentative2D, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(StructuredAggregation, GlobalLexiTentative2D, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -178,8 +208,13 @@ namespace MueLuTests {
     using magnitude_type        = typename TST::magnitudeType;
     using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
     using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
     using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+    using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+    using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
 
@@ -203,7 +238,11 @@ namespace MueLuTests {
     }
 
     RCP<RealValuedMultiVector> Coordinates =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       TestHelpers::TestFactory<SC,LO,GO,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#else
+      TestHelpers::TestFactory<SC,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#endif
                                                                  lNodesPerDir, meshData,
                                                                  meshLayout);
 
@@ -261,8 +300,13 @@ namespace MueLuTests {
     coarseLevel.Release("Nullspace",TentativePFact.get());
 
     // check normalization and orthogonality of prolongator columns
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Multiply(*Ptent,true,*Ptent,false,out);
     Teuchos::RCP<Xpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> > diagVec = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(PtentTPtent->getRowMap());
+#else
+    Teuchos::RCP<Xpetra::Matrix<Scalar,Node> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,Node>::Multiply(*Ptent,true,*Ptent,false,out);
+    Teuchos::RCP<Xpetra::Vector<Scalar,Node> > diagVec = Xpetra::VectorFactory<Scalar,Node>::Build(PtentTPtent->getRowMap());
+#endif
     PtentTPtent->getLocalDiagCopy(*diagVec);
     if (TST::name().find("complex") == std::string::npos) //skip check for Scalar=complex
       TEST_FLOATING_EQUALITY(diagVec->norm1(), Teuchos::as<magnitude_type>(diagVec->getGlobalLength()), 100*TMT::eps());
@@ -271,9 +315,17 @@ namespace MueLuTests {
 
   } // GlobalLexiTentative2D
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(StructuredAggregation, GlobalLexiTentative3D, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(StructuredAggregation, GlobalLexiTentative3D, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -281,8 +333,13 @@ namespace MueLuTests {
     using magnitude_type        = typename TST::magnitudeType;
     using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
     using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
     using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+    using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+    using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
 
@@ -306,7 +363,11 @@ namespace MueLuTests {
     }
 
     RCP<RealValuedMultiVector> Coordinates =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       TestHelpers::TestFactory<SC,LO,GO,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#else
+      TestHelpers::TestFactory<SC,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#endif
                                                                  lNodesPerDir, meshData,
                                                                  meshLayout);
 
@@ -364,8 +425,13 @@ namespace MueLuTests {
     coarseLevel.Release("Nullspace",TentativePFact.get());
 
     // check normalization and orthogonality of prolongator columns
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Multiply(*Ptent,true,*Ptent,false,out);
     Teuchos::RCP<Xpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> > diagVec = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(PtentTPtent->getRowMap());
+#else
+    Teuchos::RCP<Xpetra::Matrix<Scalar,Node> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,Node>::Multiply(*Ptent,true,*Ptent,false,out);
+    Teuchos::RCP<Xpetra::Vector<Scalar,Node> > diagVec = Xpetra::VectorFactory<Scalar,Node>::Build(PtentTPtent->getRowMap());
+#endif
     PtentTPtent->getLocalDiagCopy(*diagVec);
     if (TST::name().find("complex") == std::string::npos) //skip check for Scalar=complex
       TEST_FLOATING_EQUALITY(diagVec->norm1(), Teuchos::as<magnitude_type>(diagVec->getGlobalLength()), 100*TMT::eps());
@@ -374,9 +440,17 @@ namespace MueLuTests {
 
   } // GlobalLexiTentative3D
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(StructuredAggregation, LocalLexiTentative1D, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(StructuredAggregation, LocalLexiTentative1D, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -384,8 +458,13 @@ namespace MueLuTests {
     using magnitude_type        = typename TST::magnitudeType;
     using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
     using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
     using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+    using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+    using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
 
@@ -410,7 +489,11 @@ namespace MueLuTests {
     }
 
     RCP<RealValuedMultiVector> Coordinates =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       TestHelpers::TestFactory<SC,LO,GO,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#else
+      TestHelpers::TestFactory<SC,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#endif
                                                                  lNodesPerDir, meshData,
                                                                  meshLayout);
 
@@ -469,8 +552,13 @@ namespace MueLuTests {
     coarseLevel.Release("Nullspace",TentativePFact.get());
 
     // check normalization and orthogonality of prolongator columns
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Multiply(*Ptent,true,*Ptent,false,out);
     Teuchos::RCP<Xpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> > diagVec = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(PtentTPtent->getRowMap());
+#else
+    Teuchos::RCP<Xpetra::Matrix<Scalar,Node> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,Node>::Multiply(*Ptent,true,*Ptent,false,out);
+    Teuchos::RCP<Xpetra::Vector<Scalar,Node> > diagVec = Xpetra::VectorFactory<Scalar,Node>::Build(PtentTPtent->getRowMap());
+#endif
     PtentTPtent->getLocalDiagCopy(*diagVec);
     if (TST::name().find("complex") == std::string::npos) //skip check for Scalar=complex
       TEST_FLOATING_EQUALITY(diagVec->norm1(), Teuchos::as<magnitude_type>(diagVec->getGlobalLength()), 100*TMT::eps());
@@ -479,9 +567,17 @@ namespace MueLuTests {
 
   } // LocalLexiTentative1D
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(StructuredAggregation, LocalLexiTentative2D, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(StructuredAggregation, LocalLexiTentative2D, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -489,8 +585,13 @@ namespace MueLuTests {
     using magnitude_type        = typename TST::magnitudeType;
     using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
     using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
     using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+    using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+    using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
 
@@ -515,7 +616,11 @@ namespace MueLuTests {
     }
 
     RCP<RealValuedMultiVector> Coordinates =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       TestHelpers::TestFactory<SC,LO,GO,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#else
+      TestHelpers::TestFactory<SC,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#endif
                                                                  lNodesPerDir, meshData,
                                                                  meshLayout);
 
@@ -574,8 +679,13 @@ namespace MueLuTests {
     coarseLevel.Release("Nullspace",TentativePFact.get());
 
     // check normalization and orthogonality of prolongator columns
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Multiply(*Ptent,true,*Ptent,false,out);
     Teuchos::RCP<Xpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> > diagVec = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(PtentTPtent->getRowMap());
+#else
+    Teuchos::RCP<Xpetra::Matrix<Scalar,Node> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,Node>::Multiply(*Ptent,true,*Ptent,false,out);
+    Teuchos::RCP<Xpetra::Vector<Scalar,Node> > diagVec = Xpetra::VectorFactory<Scalar,Node>::Build(PtentTPtent->getRowMap());
+#endif
     PtentTPtent->getLocalDiagCopy(*diagVec);
     if (TST::name().find("complex") == std::string::npos) //skip check for Scalar=complex
       TEST_FLOATING_EQUALITY(diagVec->norm1(), Teuchos::as<magnitude_type>(diagVec->getGlobalLength()), 100*TMT::eps());
@@ -584,9 +694,17 @@ namespace MueLuTests {
 
   } // LocalLexiTentative2D
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(StructuredAggregation, LocalLexiTentative3D, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(StructuredAggregation, LocalLexiTentative3D, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -594,8 +712,13 @@ namespace MueLuTests {
     using magnitude_type        = typename TST::magnitudeType;
     using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
     using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
     using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+    using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+    using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
 
@@ -620,7 +743,11 @@ namespace MueLuTests {
     }
 
     RCP<RealValuedMultiVector> Coordinates =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       TestHelpers::TestFactory<SC,LO,GO,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#else
+      TestHelpers::TestFactory<SC,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#endif
                                                                  lNodesPerDir, meshData,
                                                                  meshLayout);
 
@@ -680,8 +807,13 @@ namespace MueLuTests {
     coarseLevel.Release("Nullspace",TentativePFact.get());
 
     // check normalization and orthogonality of prolongator columns
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Multiply(*Ptent,true,*Ptent,false,out);
     Teuchos::RCP<Xpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> > diagVec = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(PtentTPtent->getRowMap());
+#else
+    Teuchos::RCP<Xpetra::Matrix<Scalar,Node> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,Node>::Multiply(*Ptent,true,*Ptent,false,out);
+    Teuchos::RCP<Xpetra::Vector<Scalar,Node> > diagVec = Xpetra::VectorFactory<Scalar,Node>::Build(PtentTPtent->getRowMap());
+#endif
     PtentTPtent->getLocalDiagCopy(*diagVec);
     if (TST::name().find("complex") == std::string::npos) //skip check for Scalar=complex
       TEST_FLOATING_EQUALITY(diagVec->norm1(), Teuchos::as<magnitude_type>(diagVec->getGlobalLength()), 100*TMT::eps());
@@ -690,9 +822,17 @@ namespace MueLuTests {
 
   } // LocalLexiTentative3D
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(StructuredAggregation, UncoupledLocalLexiTentative1D, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(StructuredAggregation, UncoupledLocalLexiTentative1D, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -700,8 +840,13 @@ namespace MueLuTests {
     using magnitude_type        = typename TST::magnitudeType;
     using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
     using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
     using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+    using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+    using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
 
@@ -727,7 +872,11 @@ namespace MueLuTests {
     }
 
     RCP<RealValuedMultiVector> Coordinates =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       TestHelpers::TestFactory<SC,LO,GO,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#else
+      TestHelpers::TestFactory<SC,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#endif
                                                                  lNodesPerDir, meshData,
                                                                  meshLayout);
 
@@ -793,8 +942,13 @@ namespace MueLuTests {
     coarseLevel.Release("Nullspace",TentativePFact.get());
 
     // check normalization and orthogonality of prolongator columns
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Multiply(*Ptent,true,*Ptent,false,out);
     Teuchos::RCP<Xpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> > diagVec = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(PtentTPtent->getRowMap());
+#else
+    Teuchos::RCP<Xpetra::Matrix<Scalar,Node> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,Node>::Multiply(*Ptent,true,*Ptent,false,out);
+    Teuchos::RCP<Xpetra::Vector<Scalar,Node> > diagVec = Xpetra::VectorFactory<Scalar,Node>::Build(PtentTPtent->getRowMap());
+#endif
     PtentTPtent->getLocalDiagCopy(*diagVec);
     if (TST::name().find("complex") == std::string::npos) //skip check for Scalar=complex
       TEST_FLOATING_EQUALITY(diagVec->norm1(), Teuchos::as<magnitude_type>(diagVec->getGlobalLength()), 100*TMT::eps());
@@ -803,9 +957,17 @@ namespace MueLuTests {
 
   } // UncoupledLocalLexiTentative1D
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(StructuredAggregation, UncoupledLocalLexiTentative2D, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(StructuredAggregation, UncoupledLocalLexiTentative2D, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -813,8 +975,13 @@ namespace MueLuTests {
     using magnitude_type        = typename TST::magnitudeType;
     using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
     using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
     using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+    using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+    using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
 
@@ -840,7 +1007,11 @@ namespace MueLuTests {
     }
 
     RCP<RealValuedMultiVector> Coordinates =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       TestHelpers::TestFactory<SC,LO,GO,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#else
+      TestHelpers::TestFactory<SC,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#endif
                                                                  lNodesPerDir, meshData,
                                                                  meshLayout);
 
@@ -906,8 +1077,13 @@ namespace MueLuTests {
     coarseLevel.Release("Nullspace",TentativePFact.get());
 
     // check normalization and orthogonality of prolongator columns
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Multiply(*Ptent,true,*Ptent,false,out);
     Teuchos::RCP<Xpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> > diagVec = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(PtentTPtent->getRowMap());
+#else
+    Teuchos::RCP<Xpetra::Matrix<Scalar,Node> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,Node>::Multiply(*Ptent,true,*Ptent,false,out);
+    Teuchos::RCP<Xpetra::Vector<Scalar,Node> > diagVec = Xpetra::VectorFactory<Scalar,Node>::Build(PtentTPtent->getRowMap());
+#endif
     PtentTPtent->getLocalDiagCopy(*diagVec);
     if (TST::name().find("complex") == std::string::npos) //skip check for Scalar=complex
       TEST_FLOATING_EQUALITY(diagVec->norm1(), Teuchos::as<magnitude_type>(diagVec->getGlobalLength()), 100*TMT::eps());
@@ -916,9 +1092,17 @@ namespace MueLuTests {
 
   } // UncoupledLocalLexiTentative2D
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(StructuredAggregation, UncoupledLocalLexiTentative3D, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(StructuredAggregation, UncoupledLocalLexiTentative3D, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -926,8 +1110,13 @@ namespace MueLuTests {
     using magnitude_type        = typename TST::magnitudeType;
     using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
     using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
     using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+    using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+    using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
 
@@ -953,7 +1142,11 @@ namespace MueLuTests {
     }
 
     RCP<RealValuedMultiVector> Coordinates =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       TestHelpers::TestFactory<SC,LO,GO,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#else
+      TestHelpers::TestFactory<SC,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#endif
                                                                  lNodesPerDir, meshData,
                                                                  meshLayout);
 
@@ -1020,8 +1213,13 @@ namespace MueLuTests {
     coarseLevel.Release("Nullspace",TentativePFact.get());
 
     // check normalization and orthogonality of prolongator columns
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Multiply(*Ptent,true,*Ptent,false,out);
     Teuchos::RCP<Xpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> > diagVec = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(PtentTPtent->getRowMap());
+#else
+    Teuchos::RCP<Xpetra::Matrix<Scalar,Node> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,Node>::Multiply(*Ptent,true,*Ptent,false,out);
+    Teuchos::RCP<Xpetra::Vector<Scalar,Node> > diagVec = Xpetra::VectorFactory<Scalar,Node>::Build(PtentTPtent->getRowMap());
+#endif
     PtentTPtent->getLocalDiagCopy(*diagVec);
     if (TST::name().find("complex") == std::string::npos) //skip check for Scalar=complex
       TEST_FLOATING_EQUALITY(diagVec->norm1(), Teuchos::as<magnitude_type>(diagVec->getGlobalLength()), 100*TMT::eps());
@@ -1030,16 +1228,28 @@ namespace MueLuTests {
 
   } // UncoupledLocalLexiTentative3D
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(StructuredAggregation, UncoupledMultilevelScalar, Scalar,
                                     LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(StructuredAggregation, UncoupledMultilevelScalar, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
     using magnitude_type        = typename Teuchos::ScalarTraits<SC>::magnitudeType;
     using real_type             = typename Teuchos::ScalarTraits<SC>::coordinateType ;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
+#else
+    using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
 
@@ -1060,7 +1270,11 @@ namespace MueLuTests {
     }
 
     RCP<RealValuedMultiVector> Coordinates =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       TestHelpers::TestFactory<SC,LO,GO,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#else
+      TestHelpers::TestFactory<SC,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#endif
                                                                  lNodesPerDir, meshData,
                                                                  meshLayout);
 
@@ -1217,16 +1431,29 @@ namespace MueLuTests {
 
   } // UncoupledMultilevelScalar
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(StructuredAggregation, ProlongatorGraphUncoupled, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(StructuredAggregation, ProlongatorGraphUncoupled, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
     using TST                   = Teuchos::ScalarTraits<SC>;
     using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
     using test_factory          = TestHelpers::TestFactory<SC, LO, GO, Node>;
+#else
+    using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+    using test_factory          = TestHelpers::TestFactory<SC, Node>;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
 
@@ -1246,7 +1473,11 @@ namespace MueLuTests {
       Array<GO> gNodesPerDir = {{7, 7, 1}};
 
       RCP<RealValuedMultiVector> Coordinates =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         TestHelpers::TestFactory<SC,LO,GO,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#else
+        TestHelpers::TestFactory<SC,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#endif
                                                                    lNodesPerDir, meshData,
                                                                    meshLayout);
 
@@ -1411,7 +1642,11 @@ namespace MueLuTests {
       Array<GO> gNodesPerDir = {{7, 6, 1}};
 
       RCP<RealValuedMultiVector> Coordinates =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         TestHelpers::TestFactory<SC,LO,GO,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#else
+        TestHelpers::TestFactory<SC,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#endif
                                                                    lNodesPerDir, meshData,
                                                                    meshLayout);
 
@@ -1557,9 +1792,17 @@ namespace MueLuTests {
 
   } // ProlongatorGraphUncoupled
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(StructuredAggregation, UncoupledAggSingleCoarseNode, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(StructuredAggregation, UncoupledAggSingleCoarseNode, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -1567,8 +1810,13 @@ namespace MueLuTests {
     using magnitude_type        = typename TST::magnitudeType;
     using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
     using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
     using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+    using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+    using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
 
@@ -1594,7 +1842,11 @@ namespace MueLuTests {
     }
 
     RCP<RealValuedMultiVector> Coordinates =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       TestHelpers::TestFactory<SC,LO,GO,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#else
+      TestHelpers::TestFactory<SC,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#endif
                                                                  lNodesPerDir, meshData,
                                                                  meshLayout);
 
@@ -1662,8 +1914,13 @@ namespace MueLuTests {
     coarseLevel.Release("Nullspace",TentativePFact.get());
 
     // check normalization and orthogonality of prolongator columns
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Multiply(*Ptent,true,*Ptent,false,out);
     Teuchos::RCP<Xpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> > diagVec = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(PtentTPtent->getRowMap());
+#else
+    Teuchos::RCP<Xpetra::Matrix<Scalar,Node> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,Node>::Multiply(*Ptent,true,*Ptent,false,out);
+    Teuchos::RCP<Xpetra::Vector<Scalar,Node> > diagVec = Xpetra::VectorFactory<Scalar,Node>::Build(PtentTPtent->getRowMap());
+#endif
     PtentTPtent->getLocalDiagCopy(*diagVec);
     if (TST::name().find("complex") == std::string::npos) //skip check for Scalar=complex
       TEST_FLOATING_EQUALITY(diagVec->norm1(), Teuchos::as<magnitude_type>(diagVec->getGlobalLength()), 100*TMT::eps());
@@ -1672,16 +1929,29 @@ namespace MueLuTests {
 
   } // UncoupledAggSingleCoarseNode
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(StructuredAggregation, UncoupledGraphSingleCoarseNode, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(StructuredAggregation, UncoupledGraphSingleCoarseNode, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
     using TST                   = Teuchos::ScalarTraits<SC>;
     using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
     using test_factory          = TestHelpers::TestFactory<SC, LO, GO, Node>;
+#else
+    using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+    using test_factory          = TestHelpers::TestFactory<SC, Node>;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
     int interpolationOrder = 0;
@@ -1700,7 +1970,11 @@ namespace MueLuTests {
     Array<GO> gNodesPerDir = {{7, 7, 1}};
 
     RCP<RealValuedMultiVector> Coordinates =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       TestHelpers::TestFactory<SC,LO,GO,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#else
+      TestHelpers::TestFactory<SC,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#endif
                                                                  lNodesPerDir, meshData,
                                                                  meshLayout);
 
@@ -1827,6 +2101,7 @@ namespace MueLuTests {
 
   } // UncoupledGraphSingleCoarseNode
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #  define MUELU_ETI_GROUP(Scalar, LO, GO, Node) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(StructuredAggregation,GlobalLexiTentative1D,Scalar,LO,GO,Node) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(StructuredAggregation,GlobalLexiTentative2D,Scalar,LO,GO,Node) \
@@ -1841,6 +2116,22 @@ namespace MueLuTests {
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(StructuredAggregation,ProlongatorGraphUncoupled,Scalar,LO,GO,Node) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(StructuredAggregation,UncoupledAggSingleCoarseNode,Scalar,LO,GO,Node) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(StructuredAggregation,UncoupledGraphSingleCoarseNode,Scalar,LO,GO,Node)
+#else
+#  define MUELU_ETI_GROUP(Scalar, Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(StructuredAggregation,GlobalLexiTentative1D,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(StructuredAggregation,GlobalLexiTentative2D,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(StructuredAggregation,GlobalLexiTentative3D,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(StructuredAggregation,LocalLexiTentative1D,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(StructuredAggregation,LocalLexiTentative2D,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(StructuredAggregation,LocalLexiTentative3D,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(StructuredAggregation,UncoupledLocalLexiTentative1D,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(StructuredAggregation,UncoupledLocalLexiTentative2D,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(StructuredAggregation,UncoupledLocalLexiTentative3D,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(StructuredAggregation,UncoupledMultilevelScalar,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(StructuredAggregation,ProlongatorGraphUncoupled,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(StructuredAggregation,UncoupledAggSingleCoarseNode,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(StructuredAggregation,UncoupledGraphSingleCoarseNode,Scalar,Node)
+#endif
 
 #include <MueLu_ETI_4arg.hpp>
 

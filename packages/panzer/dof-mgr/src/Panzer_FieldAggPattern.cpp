@@ -145,7 +145,11 @@ void FieldAggPattern::print(std::ostream & os) const
    os << "]" << std::endl;
    os << "FieldPattern:    local offsets\n";
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
    std::map<int,int>::const_iterator itr;
+#else
+   std::map<>::const_iterator itr;
+#endif
    for(itr=fieldIdToPatternIdx_.begin();itr!=fieldIdToPatternIdx_.end();++itr) {
       int fieldId = itr->first;
       const std::vector<int> & offsets = localOffsets(fieldId);
@@ -158,7 +162,11 @@ void FieldAggPattern::print(std::ostream & os) const
 
 Teuchos::RCP<const FieldPattern> FieldAggPattern::getFieldPattern(int fieldId) const
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
    std::map<int,int>::const_iterator idxIter = fieldIdToPatternIdx_.find(fieldId);
+#else
+   std::map<>::const_iterator idxIter = fieldIdToPatternIdx_.find(fieldId);
+#endif
    TEUCHOS_TEST_FOR_EXCEPTION(idxIter==fieldIdToPatternIdx_.end(),std::logic_error,
                      "FieldID = " << fieldId << " not defined in this pattern");
 
@@ -167,7 +175,11 @@ Teuchos::RCP<const FieldPattern> FieldAggPattern::getFieldPattern(int fieldId) c
 
 FieldType FieldAggPattern::getFieldType(int fieldId) const
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
    std::map<int,int>::const_iterator idxIter = fieldIdToPatternIdx_.find(fieldId);
+#else
+   std::map<>::const_iterator idxIter = fieldIdToPatternIdx_.find(fieldId);
+#endif
    TEUCHOS_TEST_FOR_EXCEPTION(idxIter==fieldIdToPatternIdx_.end(),std::logic_error,
                      "FieldID = " << fieldId << " not defined in this pattern");
 

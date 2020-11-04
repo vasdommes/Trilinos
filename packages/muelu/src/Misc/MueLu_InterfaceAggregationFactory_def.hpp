@@ -58,8 +58,13 @@
 namespace MueLu
 {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
 RCP<const ParameterList> InterfaceAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::GetValidParameterList() const
+#else
+template <class Scalar, class Node>
+RCP<const ParameterList> InterfaceAggregationFactory<Scalar, Node>::GetValidParameterList() const
+#endif
 {
   RCP<ParameterList> validParamList = rcp(new ParameterList());
 
@@ -72,8 +77,13 @@ RCP<const ParameterList> InterfaceAggregationFactory<Scalar, LocalOrdinal, Globa
   return validParamList;
 } // GetValidParameterList()
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
 void InterfaceAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level &currentLevel) const
+#else
+template <class Scalar, class Node>
+void InterfaceAggregationFactory<Scalar, Node>::DeclareInput(Level &currentLevel) const
+#endif
 {
   Input(currentLevel, "A");
   Input(currentLevel, "Aggregates");
@@ -94,12 +104,23 @@ void InterfaceAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Dec
   }
 } // DeclareInput
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
 void InterfaceAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(Level &currentLevel) const
+#else
+template <class Scalar, class Node>
+void InterfaceAggregationFactory<Scalar, Node>::Build(Level &currentLevel) const
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using Map = Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node>;
   using MapFactory = Xpetra::MapFactory<LocalOrdinal, GlobalOrdinal, Node>;
   using Aggregates = Aggregates<LocalOrdinal, GlobalOrdinal, Node>;
+#else
+  using Map = Xpetra::Map<Node>;
+  using MapFactory = Xpetra::MapFactory<Node>;
+  using Aggregates = Aggregates<Node>;
+#endif
   using Dual2Primal_type = std::map<LocalOrdinal, LocalOrdinal>;
 
   const char prefix[] = "MueLu::InterfaceAggregationFactory::Build: ";

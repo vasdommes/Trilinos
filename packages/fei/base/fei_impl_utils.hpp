@@ -73,7 +73,11 @@ void separate_BC_eqns(const fei::FillableMat& mat,
                     std::vector<double>& bcVals);
 
 void create_col_to_row_map(const fei::FillableMat& mat,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                            std::multimap<int,int>& crmap);
+#else
+                           std::multimap<>& crmap);
+#endif
 
 int remove_couplings(fei::FillableMat& mat);
 

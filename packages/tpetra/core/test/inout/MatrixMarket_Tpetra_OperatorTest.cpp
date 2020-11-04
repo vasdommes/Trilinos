@@ -113,7 +113,11 @@ computeGatherMap (Teuchos::RCP<const MapType> map,
     // It could be that Map is one-to-one, but the class doesn't
     // give us a way to test this, other than to create the
     // one-to-one Map.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     oneToOneMap = createOneToOne<LO, GO, NT> (map);
+#else
+    oneToOneMap = createOneToOne<NT> (map);
+#endif
   }
 
   RCP<const MapType> gatherMap;
@@ -149,7 +153,11 @@ computeGatherMap (Teuchos::RCP<const MapType> map,
     const int myEltCount = static_cast<int> (oneToOneMap->getNodeNumElements ());
     Array<int> recvCounts (numProcs);
     const int rootProc = 0;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     gather<int, int> (&myEltCount, 1, recvCounts.getRawPtr (), 1, rootProc, *comm);
+#else
+    gather<> (&myEltCount, 1, recvCounts.getRawPtr (), 1, rootProc, *comm);
+#endif
 
     ArrayView<const GO> myGlobalElts = oneToOneMap->getNodeElementList ();
     const int numMyGlobalElts = static_cast<int> (myGlobalElts.size ());
@@ -174,7 +182,11 @@ computeGatherMap (Teuchos::RCP<const MapType> map,
     if (dbg) {
       *err << myRank << ": computeGatherMap: Calling MPI_Gatherv" << endl;
     }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     gatherv<int, GO> (myGlobalElts.getRawPtr (), numMyGlobalElts,
+#else
+    gatherv<> (myGlobalElts.getRawPtr (), numMyGlobalElts,
+#endif
                       allGlobalElts.getRawPtr (), recvCounts.getRawPtr (),
                       displs.getRawPtr (), rootProc, *comm);
     if (dbg) {
@@ -424,9 +436,15 @@ compareCrsMatrixValues (const CrsMatrixType& A_orig,
   return globalEqual == 1;
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class ScalarType, class LocalOrdinalType, class GlobalOrdinalType, class NodeType>
 Teuchos::RCP<Tpetra::CrsMatrix<ScalarType, LocalOrdinalType, GlobalOrdinalType, NodeType> >
 createSymRealSmall (const Teuchos::RCP<const Tpetra::Map<LocalOrdinalType, GlobalOrdinalType, NodeType> >& rowMap,
+#else
+template<class ScalarType, class NodeType>
+Teuchos::RCP<Tpetra::CrsMatrix<ScalarType, NodeType> >
+createSymRealSmall (const Teuchos::RCP<const Tpetra::Map<NodeType> >& rowMap,
+#endif
                     Teuchos::FancyOStream& out,
                     const bool dbg)
 {
@@ -440,9 +458,15 @@ createSymRealSmall (const Teuchos::RCP<const Tpetra::Map<LocalOrdinalType, Globa
   typedef GlobalOrdinalType GO;
   typedef NodeType NT;
   typedef Tpetra::global_size_t GST;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO, GO, NT> map_type;
   typedef Tpetra::Export<LO, GO, NT> export_type;
   typedef Tpetra::CrsMatrix<ST, LO, GO, NT> matrix_type;
+#else
+  typedef Tpetra::Map<NT> map_type;
+  typedef Tpetra::Export<NT> export_type;
+  typedef Tpetra::CrsMatrix<ST, NT> matrix_type;
+#endif
 
   RCP<const Teuchos::Comm<int> > comm = rowMap->getComm ();
   const int myRank = comm->getRank ();
@@ -495,7 +519,11 @@ createSymRealSmall (const Teuchos::RCP<const Tpetra::Map<LocalOrdinalType, Globa
   return A;
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class ScalarType, class LocalOrdinalType, class GlobalOrdinalType, class NodeType>
+#else
+template<class ScalarType, class NodeType>
+#endif
 bool
 testCrsMatrix (Teuchos::FancyOStream& out, const GlobalOrdinalType indexBase)
 {
@@ -504,8 +532,13 @@ testCrsMatrix (Teuchos::FancyOStream& out, const GlobalOrdinalType indexBase)
   typedef LocalOrdinalType LO;
   typedef GlobalOrdinalType GO;
   typedef NodeType NT;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO, GO, NT> map_type;
   typedef Tpetra::CrsMatrix<ST, LO, GO, NT> crs_matrix_type;
+#else
+  typedef Tpetra::Map<NT> map_type;
+  typedef Tpetra::CrsMatrix<ST, NT> crs_matrix_type;
+#endif
   bool result = true; // current Boolean result; reused below
   bool success = true;
 
@@ -527,7 +560,11 @@ testCrsMatrix (Teuchos::FancyOStream& out, const GlobalOrdinalType indexBase)
 
   out << "Creating original matrix" << endl;
   RCP<crs_matrix_type> A_orig =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     createSymRealSmall<ST, LO, GO, NT> (rowMap, out, debug);
+#else
+    createSymRealSmall<ST, NT> (rowMap, out, debug);
+#endif
 
   typedef Tpetra::MatrixMarket::Writer<crs_matrix_type> op_writer_type;
   Teuchos::ParameterList pl;
@@ -566,16 +603,40 @@ testCrsMatrix (Teuchos::FancyOStream& out, const GlobalOrdinalType indexBase)
 
 } // namespace (anonymous)
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( OperatorOutput, IndexBase0, ST, LO, GO, NT )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( OperatorOutput, IndexBase0, ST, NT )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   const GO indexBase = 0;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   success = testCrsMatrix<ST, LO, GO, NT> (out, indexBase);
+#else
+  success = testCrsMatrix<ST, NT> (out, indexBase);
+#endif
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( OperatorOutput, IndexBase1, ST, LO, GO, NT )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( OperatorOutput, IndexBase1, ST, NT )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   const GO indexBase = 1;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   success = testCrsMatrix<ST, LO, GO, NT> (out, indexBase);
+#else
+  success = testCrsMatrix<ST, NT> (out, indexBase);
+#endif
 }
 
 // We instantiate tests for all combinations of the following parameters:
@@ -583,17 +644,33 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( OperatorOutput, IndexBase1, ST, LO, GO, NT )
 //   - Scalar = {double, float}
 
 #if defined(HAVE_TPETRA_INST_DOUBLE)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #  define UNIT_TEST_GROUP( LO, GO, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( OperatorOutput, IndexBase0, double, LO, GO, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( OperatorOutput, IndexBase1, double, LO, GO, NODE )
+#else
+#  define UNIT_TEST_GROUP(NODE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( OperatorOutput, IndexBase0, double, NODE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( OperatorOutput, IndexBase1, double, NODE )
+#endif
 
 #elif defined(HAVE_TPETRA_INST_FLOAT)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #  define UNIT_TEST_GROUP( LO, GO, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( OperatorOutput, IndexBase0, float, LO, GO, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( OperatorOutput, IndexBase1, float, LO, GO, NODE )
+#else
+#  define UNIT_TEST_GROUP(NODE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( OperatorOutput, IndexBase0, float, NODE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( OperatorOutput, IndexBase1, float, NODE )
+#endif
 
 #else
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #  define UNIT_TEST_GROUP( LO, GO, NODE )
+#else
+#  define UNIT_TEST_GROUP(NODE )
+#endif
 #endif
 
 

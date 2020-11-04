@@ -747,7 +747,11 @@ void QueryObject::My_Edge_List_Multi(int num_gid_entries, int num_lid_entries, i
   bool use_weights = false;
   std::map<int, float> wgtMap;
   std::map<int, float>::iterator wgtIter;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int, int>::iterator procIter;
+#else
+  std::map<>::iterator procIter;
+#endif
 
   if ((weight_dim >= 1) && costs_->haveGraphEdgeWeights()){
     use_weights = true;

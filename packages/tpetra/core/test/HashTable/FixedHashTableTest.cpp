@@ -1149,6 +1149,7 @@ namespace { // (anonymous)
   // only the Kokkos execution spaces (DEVICE) that are actually
   // enabled.
 #define UNIT_TEST_GROUP_3( LO, GO, DEVICE ) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( FixedHashTable, Empty, LO, GO, DEVICE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( FixedHashTable_T, ContigKeysStartingValue, LO, GO, DEVICE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( FixedHashTable_K, ContigKeysStartingValue, LO, GO, DEVICE ) \
@@ -1158,6 +1159,17 @@ namespace { // (anonymous)
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( FixedHashTable_T, DuplicateKeys, LO, GO, DEVICE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( FixedHashTable_T, CopyCtorNoDupKeys, LO, GO, DEVICE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( FixedHashTable_T, CopyCtorDupKeys, LO, GO, DEVICE )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( FixedHashTable, Empty, DEVICE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( FixedHashTable_T, ContigKeysStartingValue, DEVICE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( FixedHashTable_K, ContigKeysStartingValue, DEVICE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( FixedHashTable_T, NoncontigKeysStartingValue, DEVICE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( FixedHashTable_K, NoncontigKeysStartingValue, DEVICE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( FixedHashTable_T, NoncontigKeysAndVals, DEVICE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( FixedHashTable_T, DuplicateKeys, DEVICE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( FixedHashTable_T, CopyCtorNoDupKeys, DEVICE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( FixedHashTable_T, CopyCtorDupKeys, DEVICE )
+#endif
 
   // The typedefs below are there because macros don't like arguments
   // with commas in them.

@@ -71,9 +71,17 @@ using Tpetra::Details::packCrsGraph;
 using std::endl;
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(CrsGraph, PackThenUnpackAndCombine, LO, GO, NT)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL(CrsGraph, PackThenUnpackAndCombine, NT)
+#endif
 {
 
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   // This is a relatively simple test.  We wish to create a tridiagonal graph
   // A by the following process:
   //
@@ -86,8 +94,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(CrsGraph, PackThenUnpackAndCombine, LO, GO, NT
   // This test exercises CrsGraph's ability to unpack in to a graph with static
   // profile.
   using Teuchos::tuple;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using map_type = Tpetra::Map<LO, GO, NT>;
   using graph_type = Tpetra::CrsGraph<LO, GO, NT>;
+#else
+  using map_type = Tpetra::Map<NT>;
+  using graph_type = Tpetra::CrsGraph<NT>;
+#endif
   using packet_type = typename graph_type::packet_type;
 //  using import_type = Tpetra::Import<LO,GO,NT>;
 
@@ -147,7 +160,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(CrsGraph, PackThenUnpackAndCombine, LO, GO, NT
     int local_op_ok;
     std::ostringstream msg;
     try {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       packCrsGraph<LO,GO,NT>(*B, exports, num_packets_per_lid(), export_lids(),
+#else
+      packCrsGraph<NT>(*B, exports, num_packets_per_lid(), export_lids(),
+#endif
           const_num_packets, distor);
       local_op_ok = 1;
     } catch (std::exception& e) {
@@ -177,7 +194,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(CrsGraph, PackThenUnpackAndCombine, LO, GO, NT
   {
     int local_op_ok;
     std::ostringstream msg;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     unpackCrsGraphAndCombine<LO,GO,NT>(*A, exports, num_packets_per_lid(),
+#else
+    unpackCrsGraphAndCombine<NT>(*A, exports, num_packets_per_lid(),
+#endif
         export_lids(), const_num_packets, distor, Tpetra::REPLACE);
     local_op_ok = 1;
 
@@ -289,8 +310,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(CrsGraph, PackThenUnpackAndCombine, LO, GO, NT
 }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define UNIT_TEST_GROUP( LO, GO, NT ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT(CrsGraph, PackThenUnpackAndCombine, LO, GO, NT)
+#else
+#define UNIT_TEST_GROUP(NT ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT(CrsGraph, PackThenUnpackAndCombine, NT)
+#endif
 
 TPETRA_ETI_MANGLING_TYPEDEFS()
 

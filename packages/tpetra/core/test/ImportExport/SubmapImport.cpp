@@ -194,7 +194,11 @@ TEUCHOS_UNIT_TEST( DistObject, SubMapImport2 )
   // Expected result:
   // destVector Processor 0: Values = 0 0 -1
   //            Processor 1: Values =   0 -1
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Tpetra::Vector<int,int> > destVector;
+#else
+  RCP<Tpetra::Vector<> > destVector;
+#endif
   if (MyPid == 0) {
     TEST_NOTHROW( destVector = TestTpetra(ArrayView<GO>(), tuple<GO>(0,1,2) ) )
     TEST_COMPARE_ARRAYS( tuple<int>(0,0,-1), destVector->get1dView() )
@@ -232,7 +236,11 @@ TEUCHOS_UNIT_TEST( DistObject, SubMapImport3 )
   // Expected result:
   // destVector Processor 0: Values = -1 -1
   //            Processor 1: Values = -1 -1
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Tpetra::Vector<int,int> > destVector;
+#else
+  RCP<Tpetra::Vector<> > destVector;
+#endif
   if (MyPid == 0) {
     TEST_NOTHROW( destVector = TestTpetra(ArrayView<GO>(), tuple<GO>(0,1) ) )
   }

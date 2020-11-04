@@ -137,10 +137,18 @@ private:
    Teuchos::RCP<const panzer::GlobalIndexer> globalIndexer_;
    bool applyDirichletToDerivative_;
    std::string prefix_;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 };
 
 template <typename LO,typename GO> 
+#else
+}; 
+#endif
 struct ExtremeValueResponse_Builder : public ResponseMESupportBuilderBase {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   MPI_Comm comm;
   int cubatureDegree;
   bool requiresCellExtreme;
@@ -174,7 +182,11 @@ struct ExtremeValueResponse_Builder : public ResponseMESupportBuilderBase {
 
   template <typename T>
   Teuchos::RCP<panzer::ResponseEvaluatorFactoryBase> build() const
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   { return Teuchos::rcp(new ResponseEvaluatorFactory_ExtremeValue<T,LO,GO>(comm,cubatureDegree,requiresCellExtreme,useMax,quadPointField,
+#else
+  { return Teuchos::rcp(new ResponseEvaluatorFactory_ExtremeValue<T>(comm,cubatureDegree,requiresCellExtreme,useMax,quadPointField,
+#endif
                                                                          linearObjFactory,globalIndexer,applyDirichletToDerivative,prefix)); }
 
   virtual Teuchos::RCP<panzer::ResponseEvaluatorFactoryBase> buildValueFactory() const

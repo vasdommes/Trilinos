@@ -81,25 +81,41 @@ namespace NOX {
 
     TMultiVector& getTpetraMultiVector(NOX::Abstract::MultiVector& v) {
       auto& v_thyra = *(dynamic_cast<NOX::Thyra::MultiVector&>(v).getThyraMultiVector());
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       auto& v_tpetra = *(dynamic_cast<::Thyra::TpetraMultiVector<ST,LO,GO,NT>&>(v_thyra).getTpetraMultiVector());
+#else
+      auto& v_tpetra = *(dynamic_cast<::Thyra::TpetraMultiVector<ST,NT>&>(v_thyra).getTpetraMultiVector());
+#endif
       return v_tpetra;
     }
 
     const TMultiVector& getTpetraMultiVector(const NOX::Abstract::MultiVector& v) {
       const auto& v_thyra = *(dynamic_cast<const NOX::Thyra::MultiVector&>(v).getThyraMultiVector());
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       const auto& v_tpetra = *(dynamic_cast<const ::Thyra::TpetraMultiVector<ST,LO,GO,NT>&>(v_thyra).getConstTpetraMultiVector());
+#else
+      const auto& v_tpetra = *(dynamic_cast<const ::Thyra::TpetraMultiVector<ST,NT>&>(v_thyra).getConstTpetraMultiVector());
+#endif
       return v_tpetra;
     }
 
     Teuchos::RCP<TMultiVector> getTpetraMultiVector(const Teuchos::RCP<NOX::Abstract::MultiVector>& v) {
       auto v_thyra = Teuchos::rcp_dynamic_cast<NOX::Thyra::MultiVector>(v)->getThyraMultiVector();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       auto v_tpetra = Teuchos::rcp_dynamic_cast<::Thyra::TpetraMultiVector<ST,LO,GO,NT>>(v_thyra)->getTpetraMultiVector();
+#else
+      auto v_tpetra = Teuchos::rcp_dynamic_cast<::Thyra::TpetraMultiVector<ST,NT>>(v_thyra)->getTpetraMultiVector();
+#endif
       return v_tpetra;
     }
 
     Teuchos::RCP<const TMultiVector> getTpetraMultiVector(const Teuchos::RCP<const NOX::Abstract::MultiVector>& v) {
       auto v_thyra = Teuchos::rcp_dynamic_cast<const NOX::Thyra::MultiVector>(v)->getThyraMultiVector();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       auto v_tpetra = Teuchos::rcp_dynamic_cast<const ::Thyra::TpetraMultiVector<ST,LO,GO,NT>>(v_thyra)->getConstTpetraMultiVector();
+#else
+      auto v_tpetra = Teuchos::rcp_dynamic_cast<const ::Thyra::TpetraMultiVector<ST,NT>>(v_thyra)->getConstTpetraMultiVector();
+#endif
       return v_tpetra;
     }
 
@@ -756,9 +772,15 @@ LOCA::BorderedSolver::TpetraHouseholder::solve(
 
   // Set operator for P as Jacobian in solver
   auto save_original_jacobian = grp->getNonconstJacobianOperator();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   auto P_thyra = Teuchos::rcp(new ::Thyra::TpetraLinearOp<ST,LO,GO,NT>);
   auto range_space = ::Thyra::tpetraVectorSpace<ST,LO,GO,NT>(tmpOp->getRangeMap());
   auto domain_space = ::Thyra::tpetraVectorSpace<ST,LO,GO,NT>(tmpOp->getDomainMap());
+#else
+  auto P_thyra = Teuchos::rcp(new ::Thyra::TpetraLinearOp<ST,NT>);
+  auto range_space = ::Thyra::tpetraVectorSpace<ST,NT>(tmpOp->getRangeMap());
+  auto domain_space = ::Thyra::tpetraVectorSpace<ST,NT>(tmpOp->getDomainMap());
+#endif
   P_thyra->initialize(range_space,domain_space,tmpOp);
   grp->setJacobianOperator(P_thyra);
 

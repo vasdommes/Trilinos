@@ -95,8 +95,13 @@ repartition(Teuchos::RefCountPtr<const Epetra_CrsGraph> input_graph,
 	    Teuchos::RefCountPtr<const Isorropia::Epetra::CostDescriber> costs,
 	    Teuchos::ParameterList& paramlist,
             std::vector<int>& myNewElements,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
             std::map<int,int>& exports,
             std::map<int,int>& imports);
+#else
+            std::map<>& exports,
+            std::map<>& imports);
+#endif
 
 
 /** Partition an Epetra_RowMatrix using Zoltan.
@@ -118,8 +123,13 @@ repartition(Teuchos::RefCountPtr<const Epetra_RowMatrix> input_matrix,
 	    Teuchos::RefCountPtr<const Isorropia::Epetra::CostDescriber> costs,
 	    Teuchos::ParameterList& paramlist,
             std::vector<int>& myNewElements,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
             std::map<int,int>& exports,
             std::map<int,int>& imports);
+#else
+            std::map<>& exports,
+            std::map<>& imports);
+#endif
 
 #ifdef HAVE_MPI
 /** load_balance() is called by Isorropia::Epetra::ZoltanLib::repartition().
@@ -142,8 +152,13 @@ load_balance(MPI_Comm &comm,
 	     Teuchos::ParameterList& paramlist,
 	     QueryObject & queryObject,
 	     std::vector<int>& myNewElements,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 	     std::map<int,int>& exports,
 	     std::map<int,int>& imports);
+#else
+	     std::map<>& exports,
+	     std::map<>& imports);
+#endif
 #endif
 
 #endif //HAVE_EPETRA

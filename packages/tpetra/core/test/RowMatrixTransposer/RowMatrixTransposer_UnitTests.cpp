@@ -69,20 +69,40 @@ namespace {
         " this option is ignored and a serial comm is always used." );
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( RowMatrixTransposer, RectangularTranspose, LO, GO, Node )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( RowMatrixTransposer, RectangularTranspose, Node )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     typedef CrsMatrix<>::scalar_type Scalar;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef CrsMatrix<Scalar,LO,GO,Node> MAT;
+#else
+    typedef CrsMatrix<Scalar,Node> MAT;
+#endif
     auto comm = Tpetra::getDefaultComm();
     int numProcs = comm->getSize();
     Tpetra::global_size_t numGlobal = 4*numProcs;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     auto rowMap = createUniformContigMapWithNode<LO,GO,Node>(numGlobal,comm);
+#else
+    auto rowMap = createUniformContigMapWithNode<Node>(numGlobal,comm);
+#endif
 
     RCP<MAT> matrix = Reader<MAT>::readSparseFile("a.mtx", comm);
     RCP<MAT> matrixT = Reader<MAT>::readSparseFile("atrans.mtx", comm);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RowMatrixTransposer<Scalar, LO, GO, Node> at (matrix);
+#else
+    RowMatrixTransposer<Scalar, Node> at (matrix);
+#endif
     RCP<MAT> calculated = at.createTranspose();
 
     RCP<MAT> diffMatrix = rcp(new MAT(matrixT->getRowMap(), matrixT->getNodeMaxNumRowEntries()));
@@ -100,8 +120,13 @@ namespace {
   }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define UNIT_TEST_GROUP( LO, GO, NODE ) \
             TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( RowMatrixTransposer, RectangularTranspose, LO, GO, NODE )
+#else
+#define UNIT_TEST_GROUP(NODE ) \
+            TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( RowMatrixTransposer, RectangularTranspose, NODE )
+#endif
 
   TPETRA_ETI_MANGLING_TYPEDEFS()
 

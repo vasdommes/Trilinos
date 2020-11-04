@@ -54,8 +54,16 @@ namespace {
   using Tpetra::global_size_t;
   using std::endl;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Map, getMinGlobalIndex_nonuniform, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST( Map, getMinGlobalIndex_nonuniform )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     out << "Test: Map, getMinGlobalIndex" << std::endl;
     Teuchos::OSTab tab0 (out);
 
@@ -69,7 +77,11 @@ namespace {
     const global_size_t numGlobal   = (numRanks - 1)*numLocalRef;
     const GO indexBase = 0;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Tpetra::Map<LO,GO> map (numGlobal, numLocal, indexBase, comm);
+#else
+    Tpetra::Map<> map (numGlobal, numLocal, indexBase, comm);
+#endif
     // create data to check validity of the map
     const GO myMinGID = (myRank == 0) ?
       std::numeric_limits<GO>::max () :
@@ -95,8 +107,16 @@ namespace {
   }
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Map, getMinGlobalIndex_noncontiguous, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST( Map, getMinGlobalIndex_noncontiguous )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     out << "Test: Map, getMinGlobalIndex" << std::endl;
     Teuchos::OSTab tab0 (out);
 
@@ -120,7 +140,11 @@ namespace {
       }
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Tpetra::Map<LO,GO> map (numGlobal, GIDs (), indexBase, comm);
+#else
+    Tpetra::Map<> map (numGlobal, GIDs (), indexBase, comm);
+#endif
     // create data to check validity of the map
     const GO myMinGID = (myRank == 0) ?
       std::numeric_limits<GO>::max() :
@@ -153,8 +177,11 @@ namespace {
   //
 
 #define UNIT_TEST_GROUP( LO, GO ) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Map, getMinGlobalIndex_nonuniform, LO, GO ) \
     TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Map, getMinGlobalIndex_noncontiguous, LO, GO )
+#else
+#endif
 
   TPETRA_ETI_MANGLING_TYPEDEFS()
 

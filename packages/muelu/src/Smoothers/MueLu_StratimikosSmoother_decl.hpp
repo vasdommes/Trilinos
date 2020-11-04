@@ -81,15 +81,24 @@ namespace MueLu {
     */
 
   template <class Scalar = SmootherPrototype<>::scalar_type,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
             class LocalOrdinal = typename SmootherPrototype<Scalar>::local_ordinal_type,
             class GlobalOrdinal = typename SmootherPrototype<Scalar, LocalOrdinal>::global_ordinal_type,
             class Node = typename SmootherPrototype<Scalar, LocalOrdinal, GlobalOrdinal>::node_type>
   class StratimikosSmoother : public SmootherPrototype<Scalar,LocalOrdinal,GlobalOrdinal,Node> {
+#else
+            class Node = typename SmootherPrototype<Scalar>::node_type>
+  class StratimikosSmoother : public SmootherPrototype<Scalar,Node> {
+#endif
 #undef MUELU_STRATIMIKOSSMOOTHER_SHORT
 #include "MueLu_UseShortNames.hpp"
 
   public:
 
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     //! @name Constructors / destructors
     //@{
     //TODO: update doc for Stratimikos.
@@ -104,7 +113,11 @@ namespace MueLu {
 
 #ifndef _MSC_VER
     // Avoid error C3772: invalid friend template declaration
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template<class Scalar2, class LocalOrdinal2, class GlobalOrdinal2, class Node2>
+#else
+    template<class Scalar2, class Node2>
+#endif
     friend class StratimikosSmoother;
 #endif
 
@@ -177,8 +190,15 @@ namespace MueLu {
   }; // class StratimikosSmoother
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template<class LocalOrdinal, class GlobalOrdinal, class Node>
   struct StratimikosSmoother<double,LocalOrdinal,GlobalOrdinal,Node> : public SmootherPrototype<double,LocalOrdinal,GlobalOrdinal,Node>  {
+#else
+  template<class Node>
+  struct StratimikosSmoother<double,Node> : public SmootherPrototype<double,Node>  {
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     typedef double Scalar;
 #undef MUELU_STRATIMIKOSSMOOTHER_SHORT
 #include "MueLu_UseShortNames.hpp"

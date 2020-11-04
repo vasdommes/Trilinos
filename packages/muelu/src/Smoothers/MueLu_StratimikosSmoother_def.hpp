@@ -71,8 +71,13 @@
 
 namespace MueLu {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal, class GlobalOrdinal, class Node>
   StratimikosSmoother<double, LocalOrdinal, GlobalOrdinal, Node>::StratimikosSmoother(const std::string type, const Teuchos::ParameterList& paramList)
+#else
+  template <class Node>
+  StratimikosSmoother<double, Node>::StratimikosSmoother(const std::string type, const Teuchos::ParameterList& paramList)
+#endif
   : type_(type)
   {
     bool isSupported = type == "STRATIMIKOS";
@@ -81,18 +86,33 @@ namespace MueLu {
       SetParameterList(paramList);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal, class GlobalOrdinal, class Node>
   void StratimikosSmoother<double, LocalOrdinal, GlobalOrdinal, Node>::SetParameterList(const Teuchos::ParameterList& paramList) {
+#else
+  template <class Node>
+  void StratimikosSmoother<double, Node>::SetParameterList(const Teuchos::ParameterList& paramList) {
+#endif
     Factory::SetParameterList(paramList);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal, class GlobalOrdinal, class Node>
   void StratimikosSmoother<double, LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level& currentLevel) const {
+#else
+  template <class Node>
+  void StratimikosSmoother<double, Node>::DeclareInput(Level& currentLevel) const {
+#endif
     this->Input(currentLevel, "A");
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal, class GlobalOrdinal, class Node>
   void StratimikosSmoother<double, LocalOrdinal, GlobalOrdinal, Node>::Setup(Level& currentLevel) {
+#else
+  template <class Node>
+  void StratimikosSmoother<double, Node>::Setup(Level& currentLevel) {
+#endif
     FactoryMonitor m(*this, "Setup Smoother", currentLevel);
 
     A_ = Factory::Get< RCP<Matrix> >(currentLevel, "A");
@@ -101,16 +121,29 @@ namespace MueLu {
     this->GetOStream(Statistics1) << description() << std::endl;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal, class GlobalOrdinal, class Node>
   void StratimikosSmoother<double, LocalOrdinal, GlobalOrdinal, Node>::SetupStratimikos(Level& /* currentLevel */) {
+#else
+  template <class Node>
+  void StratimikosSmoother<double, Node>::SetupStratimikos(Level& /* currentLevel */) {
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Thyra::LinearOpBase<Scalar> > thyraA = Xpetra::ThyraUtils<Scalar,LocalOrdinal,GlobalOrdinal,Node>::toThyra(Teuchos::rcp_dynamic_cast<CrsMatrixWrap>(A_)->getCrsMatrix());
+#else
+    RCP<const Thyra::LinearOpBase<Scalar> > thyraA = Xpetra::ThyraUtils<Scalar,Node>::toThyra(Teuchos::rcp_dynamic_cast<CrsMatrixWrap>(A_)->getCrsMatrix());
+#endif
 
     // Build Stratimikos solver
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
     typedef Thyra::PreconditionerFactoryBase<Scalar> Base;
 #if defined(HAVE_MUELU_THYRATPETRAADAPTERS) && defined(HAVE_MUELU_IFPACK2)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > Impl;
+#else
+    typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<Scalar, Node> > Impl;
+#endif
     linearSolverBuilder.setPreconditioningStrategyFactory(Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
 #endif
     linearSolverBuilder.setParameterList(rcpFromRef(const_cast<ParameterList&>(this->GetParameterList())));
@@ -121,15 +154,25 @@ namespace MueLu {
     solver_ = Thyra::linearOpWithSolve(*solverFactory, thyraA);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal, class GlobalOrdinal, class Node>
   void StratimikosSmoother<double, LocalOrdinal, GlobalOrdinal, Node>::Apply(MultiVector& X, const MultiVector& B, bool InitialGuessIsZero) const {
+#else
+  template <class Node>
+  void StratimikosSmoother<double, Node>::Apply(MultiVector& X, const MultiVector& B, bool InitialGuessIsZero) const {
+#endif
     TEUCHOS_TEST_FOR_EXCEPTION(SmootherPrototype::IsSetup() == false, Exceptions::RuntimeError, "MueLu::StratimikosSmoother::Apply(): Setup() has not been called");
 
     // Apply
     if (InitialGuessIsZero) {
       X.putScalar(0.0);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       RCP<      Thyra::VectorBase<Scalar> >thyraX = Teuchos::rcp_const_cast<Thyra::VectorBase<Scalar> >(Xpetra::ThyraUtils<Scalar,LocalOrdinal,GlobalOrdinal,Node>::toThyraVector(X.getVectorNonConst(0)));
       RCP<const Thyra::VectorBase<Scalar> >thyraB = Xpetra::ThyraUtils<Scalar,LocalOrdinal,GlobalOrdinal,Node>::toThyraVector(B.getVector(0));
+#else
+      RCP<      Thyra::VectorBase<Scalar> >thyraX = Teuchos::rcp_const_cast<Thyra::VectorBase<Scalar> >(Xpetra::ThyraUtils<Scalar,Node>::toThyraVector(X.getVectorNonConst(0)));
+      RCP<const Thyra::VectorBase<Scalar> >thyraB = Xpetra::ThyraUtils<Scalar,Node>::toThyraVector(B.getVector(0));
+#endif
       Thyra::SolveStatus<Scalar> status = Thyra::solve<Scalar>(*solver_, Thyra::NOTRANS, *thyraB, thyraX.ptr());
 
     } else {
@@ -137,8 +180,13 @@ namespace MueLu {
       RCP<MultiVector> Residual   = Utilities::Residual(*A_, X, B);
       RCP<MultiVector> Correction = MultiVectorFactory::Build(A_->getDomainMap(), X.getNumVectors());
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       RCP<      Thyra::VectorBase<Scalar> >thyraX = Teuchos::rcp_const_cast<Thyra::VectorBase<Scalar> >(Xpetra::ThyraUtils<Scalar,LocalOrdinal,GlobalOrdinal,Node>::toThyraVector(Correction->getVectorNonConst(0)));
       RCP<const Thyra::VectorBase<Scalar> >thyraB = Xpetra::ThyraUtils<Scalar,LocalOrdinal,GlobalOrdinal,Node>::toThyraVector(Residual->getVector(0));
+#else
+      RCP<      Thyra::VectorBase<Scalar> >thyraX = Teuchos::rcp_const_cast<Thyra::VectorBase<Scalar> >(Xpetra::ThyraUtils<Scalar,Node>::toThyraVector(Correction->getVectorNonConst(0)));
+      RCP<const Thyra::VectorBase<Scalar> >thyraB = Xpetra::ThyraUtils<Scalar,Node>::toThyraVector(Residual->getVector(0));
+#endif
       Thyra::SolveStatus<Scalar> status = Thyra::solve<Scalar>(*solver_, Thyra::NOTRANS, *thyraB, thyraX.ptr());
 
       X.update(TST::one(), *Correction, TST::one());
@@ -146,15 +194,25 @@ namespace MueLu {
 
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal, class GlobalOrdinal, class Node>
   RCP<MueLu::SmootherPrototype<double, LocalOrdinal, GlobalOrdinal, Node> > StratimikosSmoother<double, LocalOrdinal, GlobalOrdinal, Node>::Copy() const {
+#else
+  template <class Node>
+  RCP<MueLu::SmootherPrototype<double, Node> > StratimikosSmoother<double, Node>::Copy() const {
+#endif
     RCP<StratimikosSmoother> smoother = rcp(new StratimikosSmoother(*this) );
     smoother->SetParameterList(this->GetParameterList());
     return smoother;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal, class GlobalOrdinal, class Node>
   std::string StratimikosSmoother<double, LocalOrdinal, GlobalOrdinal, Node>::description() const {
+#else
+  template <class Node>
+  std::string StratimikosSmoother<double, Node>::description() const {
+#endif
     std::ostringstream out;
     if (SmootherPrototype::IsSetup()) {
       out << solver_->description();
@@ -164,8 +222,13 @@ namespace MueLu {
     return out.str();
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal, class GlobalOrdinal, class Node>
   void StratimikosSmoother<double, LocalOrdinal, GlobalOrdinal, Node>::print(Teuchos::FancyOStream &out, const VerbLevel verbLevel) const {
+#else
+  template <class Node>
+  void StratimikosSmoother<double, Node>::print(Teuchos::FancyOStream &out, const VerbLevel verbLevel) const {
+#endif
     MUELU_DESCRIBE;
 
     if (verbLevel & Parameters1) {
@@ -187,8 +250,13 @@ namespace MueLu {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal, class GlobalOrdinal, class Node>
   size_t StratimikosSmoother<double, LocalOrdinal, GlobalOrdinal, Node>::getNodeSmootherComplexity() const {
+#else
+  template <class Node>
+  size_t StratimikosSmoother<double, Node>::getNodeSmootherComplexity() const {
+#endif
     return Teuchos::OrdinalTraits<size_t>::invalid();
   }
 

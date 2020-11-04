@@ -726,8 +726,13 @@ int fei::Matrix_Impl<T>::sumIn(int blockID, int connectivityID,
 
   if (haveFEMatrix() || haveBlockMatrix()) {
     FieldDofMap<int>& fdofmap = rspace->getFieldDofMap();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     const std::map<int,int>& connIDs = cblock->getConnectivityIDs();
     std::map<int,int>::const_iterator
+#else
+    const std::map<>& connIDs = cblock->getConnectivityIDs();
+    std::map<>::const_iterator
+#endif
       iter = connIDs.find(connectivityID);
     if (iter == connIDs.end()) ERReturn(-1);
     int connOffset = iter->second;

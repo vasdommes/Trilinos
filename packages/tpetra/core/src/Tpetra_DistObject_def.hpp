@@ -93,8 +93,13 @@ namespace Tpetra {
   } // namespace (anonymous)
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Packet, class LocalOrdinal, class GlobalOrdinal, class Node>
   DistObject<Packet, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  template <class Packet, class Node>
+  DistObject<Packet, Node>::
+#endif
   DistObject (const Teuchos::RCP<const map_type>& map) :
     map_ (map)
   {
@@ -145,9 +150,17 @@ namespace Tpetra {
 #endif // HAVE_TPETRA_TRANSFER_TIMERS
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Packet, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+  template <class Packet, class Node>
+#endif
   std::string
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   DistObject<Packet, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  DistObject<Packet, Node>::
+#endif
   description () const
   {
     using Teuchos::TypeNameTraits;
@@ -165,9 +178,17 @@ namespace Tpetra {
     return os.str ();
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Packet, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+  template <class Packet, class Node>
+#endif
   void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   DistObject<Packet, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  DistObject<Packet, Node>::
+#endif
   describe (Teuchos::FancyOStream &out,
             const Teuchos::EVerbosityLevel verbLevel) const
   {
@@ -232,9 +253,17 @@ namespace Tpetra {
     } // if vl != VERB_NONE
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Packet, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+  template <class Packet, class Node>
+#endif
   void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   DistObject<Packet, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  DistObject<Packet, Node>::
+#endif
   removeEmptyProcessesInPlace (const Teuchos::RCP<const map_type>& /* newMap */)
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
@@ -270,11 +299,23 @@ namespace Tpetra {
   }
   */
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Packet, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+  template <class Packet, class Node>
+#endif
   void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   DistObject<Packet, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  DistObject<Packet, Node>::
+#endif
   doImport (const SrcDistObject& source,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
             const Import<LocalOrdinal, GlobalOrdinal, Node>& importer,
+#else
+            const Import<Node>& importer,
+#endif
             const CombineMode CM,
             const bool restrictedMode)
   {
@@ -302,11 +343,23 @@ namespace Tpetra {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Packet, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+  template <class Packet, class Node>
+#endif
   void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   DistObject<Packet, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  DistObject<Packet, Node>::
+#endif
   doExport (const SrcDistObject& source,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
             const Export<LocalOrdinal, GlobalOrdinal, Node>& exporter,
+#else
+            const Export<Node>& exporter,
+#endif
             const CombineMode CM,
             const bool restrictedMode)
   {
@@ -334,11 +387,23 @@ namespace Tpetra {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Packet, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+  template <class Packet, class Node>
+#endif
   void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   DistObject<Packet, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  DistObject<Packet, Node>::
+#endif
   doImport (const SrcDistObject& source,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
             const Export<LocalOrdinal, GlobalOrdinal, Node>& exporter,
+#else
+            const Export<Node>& exporter,
+#endif
             const CombineMode CM,
             const bool restrictedMode)
   {
@@ -366,11 +431,23 @@ namespace Tpetra {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Packet, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+  template <class Packet, class Node>
+#endif
   void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   DistObject<Packet, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  DistObject<Packet, Node>::
+#endif
   doExport (const SrcDistObject& source,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
             const Import<LocalOrdinal, GlobalOrdinal, Node> & importer,
+#else
+            const Import<Node> & importer,
+#endif
             const CombineMode CM,
             const bool restrictedMode)
   {
@@ -398,23 +475,47 @@ namespace Tpetra {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Packet, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+  template <class Packet, class Node>
+#endif
   bool
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   DistObject<Packet, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  DistObject<Packet, Node>::
+#endif
   isDistributed () const {
     return map_->isDistributed ();
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Packet, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+  template <class Packet, class Node>
+#endif
   size_t
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   DistObject<Packet, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  DistObject<Packet, Node>::
+#endif
   constantNumberOfPackets () const {
     return 0; // default implementation; subclasses may override
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Packet, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+  template <class Packet, class Node>
+#endif
   void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   DistObject<Packet, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  DistObject<Packet, Node>::
+#endif
   doTransfer (const SrcDistObject& src,
               const ::Tpetra::Details::Transfer<local_ordinal_type, global_ordinal_type, node_type>& transfer,
               const char modeString[],
@@ -563,9 +664,17 @@ namespace Tpetra {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Packet, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+  template <class Packet, class Node>
+#endif
   bool
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   DistObject<Packet, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  DistObject<Packet, Node>::
+#endif
   reallocImportsIfNeeded (const size_t newSize,
                           const bool verbose,
                           const std::string* prefix)
@@ -587,9 +696,17 @@ namespace Tpetra {
     return reallocated;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Packet, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+  template <class Packet, class Node>
+#endif
   bool
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   DistObject<Packet, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  DistObject<Packet, Node>::
+#endif
   reallocArraysForNumPacketsPerLid (const size_t numExportLIDs,
                                     const size_t numImportLIDs)
   {
@@ -659,9 +776,17 @@ namespace Tpetra {
     return firstReallocated || secondReallocated;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Packet, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+  template <class Packet, class Node>
+#endif
   void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   DistObject<Packet, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  DistObject<Packet, Node>::
+#endif
   doTransferNew (const SrcDistObject& src,
                  const CombineMode CM,
                  const size_t numSameIDs,
@@ -1207,9 +1332,17 @@ namespace Tpetra {
   }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Packet, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+  template <class Packet, class Node>
+#endif
   void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   DistObject<Packet, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  DistObject<Packet, Node>::
+#endif
   copyAndPermute
   (const SrcDistObject&,
    const size_t,
@@ -1222,9 +1355,17 @@ namespace Tpetra {
    const CombineMode CM)
   {}
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Packet, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+  template <class Packet, class Node>
+#endif
   void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   DistObject<Packet, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  DistObject<Packet, Node>::
+#endif
   packAndPrepare
   (const SrcDistObject&,
    const Kokkos::DualView<
@@ -1240,9 +1381,17 @@ namespace Tpetra {
    Distributor&)
   {}
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Packet, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+  template <class Packet, class Node>
+#endif
   void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   DistObject<Packet, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  DistObject<Packet, Node>::
+#endif
   unpackAndCombine
   (const Kokkos::DualView<
      const local_ordinal_type*,
@@ -1259,9 +1408,17 @@ namespace Tpetra {
   {}
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Packet, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+  template <class Packet, class Node>
+#endif
   void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   DistObject<Packet, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  DistObject<Packet, Node>::
+#endif
   print (std::ostream& os) const
   {
     using Teuchos::FancyOStream;
@@ -1274,9 +1431,17 @@ namespace Tpetra {
     this->describe (*out, Teuchos::VERB_DEFAULT);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Packet, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+  template <class Packet, class Node>
+#endif
   std::unique_ptr<std::string>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   DistObject<Packet, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  DistObject<Packet, Node>::
+#endif
   createPrefix(const char className[],
                const char methodName[]) const
   {
@@ -1290,10 +1455,14 @@ namespace Tpetra {
   void
   removeEmptyProcessesInPlace(
     Teuchos::RCP<DistObjectType>& input,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     const Teuchos::RCP<const Map<
       typename DistObjectType::local_ordinal_type,
       typename DistObjectType::global_ordinal_type,
       typename DistObjectType::node_type>>& newMap)
+#else
+    const Teuchos::RCP<const Map<typename DistObjectType::node_type>>& newMap)
+#endif
   {
     input->removeEmptyProcessesInPlace (newMap);
     if (newMap.is_null ()) { // my process is excluded
@@ -1310,13 +1479,23 @@ namespace Tpetra {
   }
 
 // Explicit instantiation macro for general DistObject.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define TPETRA_DISTOBJECT_INSTANT(SCALAR, LO, GO, NODE) \
   template class DistObject< SCALAR , LO , GO , NODE >;
+#else
+#define TPETRA_DISTOBJECT_INSTANT(SCALAR, NODE) \
+  template class DistObject< SCALAR , NODE >;
+#endif
 
 // Explicit instantiation macro for DistObject<char, ...>.
 // The "SLGN" stuff above doesn't work for Packet=char.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define TPETRA_DISTOBJECT_INSTANT_CHAR(LO, GO, NODE) \
   template class DistObject< char , LO , GO , NODE >;
+#else
+#define TPETRA_DISTOBJECT_INSTANT_CHAR(NODE) \
+  template class DistObject< char ,NODE >;
+#endif
 
 } // namespace Tpetra
 

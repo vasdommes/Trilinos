@@ -64,8 +64,16 @@ using Tpetra::global_size_t;
 typedef tif_utest::Node Node;
 
 //this macro declares the unit-test-class:
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Ifpack2CreateOverlapGraph, OverlapGraphTest0, LocalOrdinal, GlobalOrdinal)
+#else
+TEUCHOS_UNIT_TEST(Ifpack2CreateOverlapGraph, OverlapGraphTest0)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
 //we are now in a class method declared by the above macro, and
 //that method has these input arguments:
 //Teuchos::FancyOStream& out, bool& success
@@ -74,14 +82,23 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Ifpack2CreateOverlapGraph, OverlapGraphTest0, 
 
 //Create a Tpetra::CrsGraph:
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::RCP<const Tpetra::CrsGraph<LocalOrdinal,GlobalOrdinal,Node> > crsgraph = tif_utest::create_tridiag_graph<LocalOrdinal,GlobalOrdinal,Node>(num_rows_per_proc);
+#else
+  Teuchos::RCP<const Tpetra::CrsGraph<Node> > crsgraph = tif_utest::create_tridiag_graph<Node>(num_rows_per_proc);
+#endif
 
   TEST_EQUALITY( crsgraph->getMap()->getNodeNumElements(), num_rows_per_proc)
 
   LocalOrdinal overlap_levels = 2;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::RCP<const Tpetra::CrsGraph<LocalOrdinal,GlobalOrdinal,Node> > overlapgraph =
     Ifpack2::createOverlapGraph<Tpetra::CrsGraph<LocalOrdinal,GlobalOrdinal,Node> >(crsgraph, overlap_levels);
+#else
+  Teuchos::RCP<const Tpetra::CrsGraph<Node> > overlapgraph =
+    Ifpack2::createOverlapGraph<Tpetra::CrsGraph<Node> >(crsgraph, overlap_levels);
+#endif
 
   const int numProcs = overlapgraph->getMap()->getComm()->getSize();
   const int myProc   = overlapgraph->getMap()->getComm()->getRank();
@@ -109,7 +126,10 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Ifpack2CreateOverlapGraph, OverlapGraphTest0, 
 }
 
 #define UNIT_TEST_GROUP_LO_GO(LocalOrdinal,GlobalOrdinal) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Ifpack2CreateOverlapGraph, OverlapGraphTest0, LocalOrdinal,GlobalOrdinal)
+#else
+#endif
 
 #include "Ifpack2_ETIHelperMacros.h"
 

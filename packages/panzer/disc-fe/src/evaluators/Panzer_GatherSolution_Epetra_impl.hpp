@@ -73,7 +73,11 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 template<typename TRAITS, typename LO, typename GO>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 panzer::GatherSolution_Epetra<panzer::Traits::Residual, TRAITS, LO, GO>::
+#else
+panzer::GatherSolution_Epetra<panzer::Traits::Residual, TRAITS>::
+#endif
 GatherSolution_Epetra(
   const Teuchos::RCP<const panzer::GlobalIndexer>& indexer,
   const Teuchos::ParameterList& p)
@@ -143,7 +147,11 @@ GatherSolution_Epetra(
 ///////////////////////////////////////////////////////////////////////////////
 template<typename TRAITS, typename LO, typename GO>
 void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 panzer::GatherSolution_Epetra<panzer::Traits::Residual, TRAITS, LO, GO>::
+#else
+panzer::GatherSolution_Epetra<panzer::Traits::Residual, TRAITS>::
+#endif
 postRegistrationSetup(
   typename TRAITS::SetupData /* d  */,
   PHX::FieldManager<TRAITS>& /* fm */)
@@ -175,7 +183,11 @@ postRegistrationSetup(
 ///////////////////////////////////////////////////////////////////////////////
 template<typename TRAITS, typename LO, typename GO>
 void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 panzer::GatherSolution_Epetra<panzer::Traits::Residual, TRAITS, LO, GO>::
+#else
+panzer::GatherSolution_Epetra<panzer::Traits::Residual, TRAITS>::
+#endif
 preEvaluate(
   typename TRAITS::PreEvalData d)
 {
@@ -231,7 +243,11 @@ preEvaluate(
 ///////////////////////////////////////////////////////////////////////////////
 template<typename TRAITS, typename LO, typename GO>
 void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 panzer::GatherSolution_Epetra<panzer::Traits::Residual, TRAITS, LO, GO>::
+#else
+panzer::GatherSolution_Epetra<panzer::Traits::Residual, TRAITS>::
+#endif
 evaluateFields(
   typename TRAITS::EvalData workset)
 {
@@ -313,7 +329,11 @@ evaluateFields(
 //
 ///////////////////////////////////////////////////////////////////////////////
 template<typename TRAITS, typename LO, typename GO>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 panzer::GatherSolution_Epetra<panzer::Traits::Tangent, TRAITS, LO, GO>::
+#else
+panzer::GatherSolution_Epetra<panzer::Traits::Tangent, TRAITS>::
+#endif
 GatherSolution_Epetra(
   const Teuchos::RCP<const panzer::GlobalIndexer>& indexer,
   const Teuchos::ParameterList& p)
@@ -384,7 +404,11 @@ GatherSolution_Epetra(
 ///////////////////////////////////////////////////////////////////////////////
 template<typename TRAITS, typename LO, typename GO>
 void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 panzer::GatherSolution_Epetra<panzer::Traits::Tangent, TRAITS, LO, GO>::
+#else
+panzer::GatherSolution_Epetra<panzer::Traits::Tangent, TRAITS>::
+#endif
 postRegistrationSetup(
   typename TRAITS::SetupData /* d  */,
   PHX::FieldManager<TRAITS>& /* fm */)
@@ -416,7 +440,11 @@ postRegistrationSetup(
 ///////////////////////////////////////////////////////////////////////////////
 template<typename TRAITS, typename LO, typename GO>
 void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 panzer::GatherSolution_Epetra<panzer::Traits::Tangent, TRAITS, LO, GO>::
+#else
+panzer::GatherSolution_Epetra<panzer::Traits::Tangent, TRAITS>::
+#endif
 preEvaluate(
   typename TRAITS::PreEvalData d)
 {
@@ -472,7 +500,11 @@ preEvaluate(
 ///////////////////////////////////////////////////////////////////////////////
 template<typename TRAITS, typename LO, typename GO>
 void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 panzer::GatherSolution_Epetra<panzer::Traits::Tangent, TRAITS, LO, GO>::
+#else
+panzer::GatherSolution_Epetra<panzer::Traits::Tangent, TRAITS>::
+#endif
 evaluateFields(
   typename TRAITS::EvalData workset)
 {
@@ -582,7 +614,11 @@ evaluateFields(
 //
 ///////////////////////////////////////////////////////////////////////////////
 template<typename TRAITS, typename LO, typename GO>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 panzer::GatherSolution_Epetra<panzer::Traits::Jacobian, TRAITS, LO, GO>::
+#else
+panzer::GatherSolution_Epetra<panzer::Traits::Jacobian, TRAITS>::
+#endif
 GatherSolution_Epetra(
   const Teuchos::RCP<const panzer::GlobalIndexer>& indexer,
   const Teuchos::ParameterList& p)
@@ -634,7 +670,11 @@ GatherSolution_Epetra(
 ///////////////////////////////////////////////////////////////////////////////
 template<typename TRAITS, typename LO, typename GO>
 void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 panzer::GatherSolution_Epetra<panzer::Traits::Jacobian, TRAITS, LO, GO>::
+#else
+panzer::GatherSolution_Epetra<panzer::Traits::Jacobian, TRAITS>::
+#endif
 postRegistrationSetup(
   typename TRAITS::SetupData /* d  */,
   PHX::FieldManager<TRAITS>& /* fm */)
@@ -666,7 +706,11 @@ postRegistrationSetup(
 ///////////////////////////////////////////////////////////////////////////////
 template<typename TRAITS, typename LO, typename GO>
 void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 panzer::GatherSolution_Epetra<panzer::Traits::Jacobian, TRAITS, LO, GO>::
+#else
+panzer::GatherSolution_Epetra<panzer::Traits::Jacobian, TRAITS>::
+#endif
 preEvaluate(
   typename TRAITS::PreEvalData d)
 {
@@ -728,7 +772,11 @@ preEvaluate(
 ///////////////////////////////////////////////////////////////////////////////
 template<typename TRAITS, typename LO, typename GO>
 void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 panzer::GatherSolution_Epetra<panzer::Traits::Jacobian, TRAITS, LO, GO>::
+#else
+panzer::GatherSolution_Epetra<panzer::Traits::Jacobian, TRAITS>::
+#endif
 evaluateFields(
   typename TRAITS::EvalData workset)
 {

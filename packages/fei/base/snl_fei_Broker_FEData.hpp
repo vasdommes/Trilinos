@@ -193,7 +193,11 @@ namespace snl_fei {
         //Next we'll loop over the connectivity-lists in this block,
         //making a call to FiniteElementData::setConnectivity for each one.
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         std::map<int,int>& elemIDs = cblock->getConnectivityIDs();
+#else
+        std::map<>& elemIDs = cblock->getConnectivityIDs();
+#endif
         int numElems = elemIDs.size();
         int* nodes = &(cblock->getRowConnectivities()[0]);
 

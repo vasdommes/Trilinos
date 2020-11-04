@@ -39,7 +39,11 @@
 namespace
 {
 typedef stk::search::Box<double> Box;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 typedef stk::search::IdentProc<int, int> Id;
+#else
+typedef stk::search::IdentProc<> Id;
+#endif
 void assertPairInResults(Id a, Id b, const std::vector<std::pair<Id, Id> > &searchResults);
 TEST(StkSearchHowTo, useKdtreeSearch)
 {

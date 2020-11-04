@@ -206,14 +206,22 @@ int main(int argc, char *argv[])
 
   // validate Xpetra::CrsGraph
   BEGIN_CHECK    Xpetra::CrsGraph<signed int, long long>                          END_CHECK
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   BEGIN_CHECK    Xpetra::CrsGraph<int, long long>                                 END_CHECK
+#else
+  BEGIN_CHECK    Xpetra::CrsGraph<>                                 END_CHECK
+#endif
   BEGIN_CHECK    Xpetra::CrsGraph<signed long, unsigned int>                      END_CHECK
   BEGIN_CHECK    Xpetra::CrsGraph<signed long long, long>                         END_CHECK
   BEGIN_CHECK    Xpetra::CrsGraph<ssize_t, unsigned int>                          END_CHECK
 
   // validate Tpetra::CrsGraph
   BEGIN_CHECK    Tpetra::CrsGraph<signed int, long long>                          END_CHECK
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   BEGIN_CHECK    Tpetra::CrsGraph<int, long long>                                 END_CHECK
+#else
+  BEGIN_CHECK    Tpetra::CrsGraph<>                                 END_CHECK
+#endif
   BEGIN_CHECK    Tpetra::CrsGraph<signed long, unsigned int>                      END_CHECK
   BEGIN_CHECK    Tpetra::CrsGraph<signed long long, long>                         END_CHECK
   BEGIN_CHECK    Tpetra::CrsGraph<ssize_t, unsigned int>                          END_CHECK

@@ -81,7 +81,11 @@ TEUCHOS_UNIT_TEST( Map, Bug5399 )
   }
 #endif // HAVE_TPETRA_INT_LONG_LONG
   using LO = Tpetra::Map<>::local_ordinal_type;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using map_type = Tpetra::Map<LO, GO>;
+#else
+  using map_type = Tpetra::Map<>;
+#endif
 
   RCP<const Comm<int> > comm = Tpetra::getDefaultComm ();
   const int myRank = comm->getRank ();

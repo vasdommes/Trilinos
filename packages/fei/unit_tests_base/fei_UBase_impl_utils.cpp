@@ -155,7 +155,11 @@ TEUCHOS_UNIT_TEST(impl_utils, create_col_to_row_map)
   fm.putCoef(1, 1, 1.1);
   fm.putCoef(2, 2, 2.2);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::multimap<int,int> crmap;
+#else
+  std::multimap<> crmap;
+#endif
 
   fei::impl_utils::create_col_to_row_map(fm, crmap);
 
@@ -165,7 +169,11 @@ TEUCHOS_UNIT_TEST(impl_utils, create_col_to_row_map)
   }
 
   //next make sure that the col-to-row-map indicates that col 1 appears in 2 rows.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef std::multimap<int,int>::iterator MM_Iter;
+#else
+  typedef std::multimap<>::iterator MM_Iter;
+#endif
   std::pair<MM_Iter,MM_Iter> mm = crmap.equal_range(1);
   int num = 0;
   for(; mm.first!=mm.second; ++mm.first) ++num;

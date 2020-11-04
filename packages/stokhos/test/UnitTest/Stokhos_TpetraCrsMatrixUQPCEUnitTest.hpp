@@ -182,9 +182,18 @@ const int poly_ord = 3;
 //
 // Test vector addition
 //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   Tpetra_CrsMatrix_PCE, VectorAdd, Storage, LocalOrdinal, GlobalOrdinal, Node )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(
+  Tpetra_CrsMatrix_PCE, VectorAdd, Storage, Node )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   using Teuchos::RCP;
   using Teuchos::rcp;
   using Teuchos::ArrayView;
@@ -196,8 +205,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   typedef typename Scalar::cijk_type Cijk;
 
   typedef Teuchos::Comm<int> Tpetra_Comm;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> Tpetra_Map;
   typedef Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_Vector;
+#else
+  typedef Tpetra::Map<Node> Tpetra_Map;
+  typedef Tpetra::Vector<Scalar,Node> Tpetra_Vector;
+#endif
 
   // Ensure device is initialized
   if ( !Kokkos::is_initialized() )
@@ -214,7 +228,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   // Map
   GlobalOrdinal nrow = 10;
   RCP<const Tpetra_Map> map =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Tpetra::createUniformContigMapWithNode<LocalOrdinal,GlobalOrdinal,Node>(
+#else
+    Tpetra::createUniformContigMapWithNode<Node>(
+#endif
       nrow, comm);
   ArrayView<const GlobalOrdinal> myGIDs = map->getNodeElementList();
   const size_t num_my_row = myGIDs.size();
@@ -269,9 +287,18 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
 //
 // Test vector dot product
 //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   Tpetra_CrsMatrix_PCE, VectorDot, Storage, LocalOrdinal, GlobalOrdinal, Node )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(
+  Tpetra_CrsMatrix_PCE, VectorDot, Storage, Node )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   using Teuchos::RCP;
   using Teuchos::rcp;
   using Teuchos::ArrayView;
@@ -283,8 +310,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   typedef typename Scalar::cijk_type Cijk;
 
   typedef Teuchos::Comm<int> Tpetra_Comm;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> Tpetra_Map;
   typedef Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_Vector;
+#else
+  typedef Tpetra::Map<Node> Tpetra_Map;
+  typedef Tpetra::Vector<Scalar,Node> Tpetra_Vector;
+#endif
   typedef typename Tpetra_Vector::dot_type dot_type;
 
   // Ensure device is initialized
@@ -302,7 +334,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   // Map
   GlobalOrdinal nrow = 10;
   RCP<const Tpetra_Map> map =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Tpetra::createUniformContigMapWithNode<LocalOrdinal,GlobalOrdinal,Node>(
+#else
+    Tpetra::createUniformContigMapWithNode<Node>(
+#endif
       nrow, comm);
   ArrayView<const GlobalOrdinal> myGIDs = map->getNodeElementList();
   const size_t num_my_row = myGIDs.size();
@@ -358,9 +394,18 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
 //
 // Test multi-vector addition
 //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   Tpetra_CrsMatrix_PCE, MultiVectorAdd, Storage, LocalOrdinal, GlobalOrdinal, Node )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(
+  Tpetra_CrsMatrix_PCE, MultiVectorAdd, Storage, Node )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   using Teuchos::RCP;
   using Teuchos::rcp;
   using Teuchos::ArrayView;
@@ -372,8 +417,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   typedef typename Scalar::cijk_type Cijk;
 
   typedef Teuchos::Comm<int> Tpetra_Comm;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> Tpetra_Map;
   typedef Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_MultiVector;
+#else
+  typedef Tpetra::Map<Node> Tpetra_Map;
+  typedef Tpetra::MultiVector<Scalar,Node> Tpetra_MultiVector;
+#endif
 
   // Ensure device is initialized
   if ( !Kokkos::is_initialized() )
@@ -390,7 +440,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   // Map
   GlobalOrdinal nrow = 10;
   RCP<const Tpetra_Map> map =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Tpetra::createUniformContigMapWithNode<LocalOrdinal,GlobalOrdinal,Node>(
+#else
+    Tpetra::createUniformContigMapWithNode<Node>(
+#endif
       nrow, comm);
   ArrayView<const GlobalOrdinal> myGIDs = map->getNodeElementList();
   const size_t num_my_row = myGIDs.size();
@@ -454,9 +508,18 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
 //
 // Test multi-vector dot product
 //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   Tpetra_CrsMatrix_PCE, MultiVectorDot, Storage, LocalOrdinal, GlobalOrdinal, Node )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(
+  Tpetra_CrsMatrix_PCE, MultiVectorDot, Storage, Node )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   using Teuchos::RCP;
   using Teuchos::rcp;
   using Teuchos::ArrayView;
@@ -468,8 +531,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   typedef typename Scalar::cijk_type Cijk;
 
   typedef Teuchos::Comm<int> Tpetra_Comm;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> Tpetra_Map;
   typedef Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_MultiVector;
+#else
+  typedef Tpetra::Map<Node> Tpetra_Map;
+  typedef Tpetra::MultiVector<Scalar,Node> Tpetra_MultiVector;
+#endif
   typedef typename Tpetra_MultiVector::dot_type dot_type;
 
   // Ensure device is initialized
@@ -487,7 +555,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   // Map
   GlobalOrdinal nrow = 10;
   RCP<const Tpetra_Map> map =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Tpetra::createUniformContigMapWithNode<LocalOrdinal,GlobalOrdinal,Node>(
+#else
+    Tpetra::createUniformContigMapWithNode<Node>(
+#endif
       nrow, comm);
   ArrayView<const GlobalOrdinal> myGIDs = map->getNodeElementList();
   const size_t num_my_row = myGIDs.size();
@@ -554,9 +626,18 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
 //
 // Test multi-vector dot product using subviews
 //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   Tpetra_CrsMatrix_PCE, MultiVectorDotSub, Storage, LocalOrdinal, GlobalOrdinal, Node )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(
+  Tpetra_CrsMatrix_PCE, MultiVectorDotSub, Storage, Node )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   using Teuchos::RCP;
   using Teuchos::rcp;
   using Teuchos::ArrayView;
@@ -568,8 +649,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   typedef typename Scalar::cijk_type Cijk;
 
   typedef Teuchos::Comm<int> Tpetra_Comm;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> Tpetra_Map;
   typedef Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_MultiVector;
+#else
+  typedef Tpetra::Map<Node> Tpetra_Map;
+  typedef Tpetra::MultiVector<Scalar,Node> Tpetra_MultiVector;
+#endif
   typedef typename Tpetra_MultiVector::dot_type dot_type;
 
   // Ensure device is initialized
@@ -587,7 +673,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   // Map
   GlobalOrdinal nrow = 10;
   RCP<const Tpetra_Map> map =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Tpetra::createUniformContigMapWithNode<LocalOrdinal,GlobalOrdinal,Node>(
+#else
+    Tpetra::createUniformContigMapWithNode<Node>(
+#endif
       nrow, comm);
   ArrayView<const GlobalOrdinal> myGIDs = map->getNodeElementList();
   const size_t num_my_row = myGIDs.size();
@@ -662,9 +752,18 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
 //
 // Test matrix-vector multiplication for a simple banded upper-triangular matrix
 //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   Tpetra_CrsMatrix_PCE, MatrixVectorMultiply, Storage, LocalOrdinal, GlobalOrdinal, Node )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(
+  Tpetra_CrsMatrix_PCE, MatrixVectorMultiply, Storage, Node )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   using Teuchos::RCP;
   using Teuchos::rcp;
   using Teuchos::ArrayView;
@@ -676,10 +775,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   typedef typename Scalar::cijk_type Cijk;
 
   typedef Teuchos::Comm<int> Tpetra_Comm;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> Tpetra_Map;
   typedef Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_Vector;
   typedef Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_CrsMatrix;
   typedef Tpetra::CrsGraph<LocalOrdinal,GlobalOrdinal,Node> Tpetra_CrsGraph;
+#else
+  typedef Tpetra::Map<Node> Tpetra_Map;
+  typedef Tpetra::Vector<Scalar,Node> Tpetra_Vector;
+  typedef Tpetra::CrsMatrix<Scalar,Node> Tpetra_CrsMatrix;
+  typedef Tpetra::CrsGraph<Node> Tpetra_CrsGraph;
+#endif
 
   // Ensure device is initialized
   if ( !Kokkos::is_initialized() )
@@ -694,7 +800,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   GlobalOrdinal nrow = 13;
   RCP<const Tpetra_Comm> comm = Tpetra::getDefaultComm();
   RCP<const Tpetra_Map> map =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Tpetra::createUniformContigMapWithNode<LocalOrdinal,GlobalOrdinal,Node>(
+#else
+    Tpetra::createUniformContigMapWithNode<Node>(
+#endif
       nrow, comm);
   RCP<Tpetra_CrsGraph> graph =
     rcp(new Tpetra_CrsGraph(map, size_t(2), Tpetra::StaticProfile));
@@ -808,9 +918,18 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
 //
 // Test matrix-multi-vector multiplication for a simple banded upper-triangular matrix
 //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   Tpetra_CrsMatrix_PCE, MatrixMultiVectorMultiply, Storage, LocalOrdinal, GlobalOrdinal, Node )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(
+  Tpetra_CrsMatrix_PCE, MatrixMultiVectorMultiply, Storage, Node )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   using Teuchos::RCP;
   using Teuchos::rcp;
   using Teuchos::ArrayView;
@@ -822,10 +941,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   typedef typename Scalar::cijk_type Cijk;
 
   typedef Teuchos::Comm<int> Tpetra_Comm;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> Tpetra_Map;
   typedef Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_MultiVector;
   typedef Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_CrsMatrix;
   typedef Tpetra::CrsGraph<LocalOrdinal,GlobalOrdinal,Node> Tpetra_CrsGraph;
+#else
+  typedef Tpetra::Map<Node> Tpetra_Map;
+  typedef Tpetra::MultiVector<Scalar,Node> Tpetra_MultiVector;
+  typedef Tpetra::CrsMatrix<Scalar,Node> Tpetra_CrsMatrix;
+  typedef Tpetra::CrsGraph<Node> Tpetra_CrsGraph;
+#endif
 
   // Ensure device is initialized
   if ( !Kokkos::is_initialized() )
@@ -840,7 +966,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   GlobalOrdinal nrow = 10;
   RCP<const Tpetra_Comm> comm = Tpetra::getDefaultComm();
   RCP<const Tpetra_Map> map =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Tpetra::createUniformContigMapWithNode<LocalOrdinal,GlobalOrdinal,Node>(
+#else
+    Tpetra::createUniformContigMapWithNode<Node>(
+#endif
       nrow, comm);
   RCP<Tpetra_CrsGraph> graph =
     rcp(new Tpetra_CrsGraph(map, size_t(2), Tpetra::StaticProfile));
@@ -962,9 +1092,18 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
 //
 // Test flattening UQ::PCE matrix
 //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   Tpetra_CrsMatrix_PCE, Flatten, Storage, LocalOrdinal, GlobalOrdinal, Node )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(
+  Tpetra_CrsMatrix_PCE, Flatten, Storage, Node )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   using Teuchos::RCP;
   using Teuchos::rcp;
   using Teuchos::ArrayView;
@@ -976,13 +1115,25 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   typedef typename Scalar::cijk_type Cijk;
 
   typedef Teuchos::Comm<int> Tpetra_Comm;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> Tpetra_Map;
   typedef Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_Vector;
   typedef Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_CrsMatrix;
   typedef Tpetra::CrsGraph<LocalOrdinal,GlobalOrdinal,Node> Tpetra_CrsGraph;
+#else
+  typedef Tpetra::Map<Node> Tpetra_Map;
+  typedef Tpetra::Vector<Scalar,Node> Tpetra_Vector;
+  typedef Tpetra::CrsMatrix<Scalar,Node> Tpetra_CrsMatrix;
+  typedef Tpetra::CrsGraph<Node> Tpetra_CrsGraph;
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Vector<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> Flat_Tpetra_Vector;
   typedef Tpetra::CrsMatrix<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> Flat_Tpetra_CrsMatrix;
+#else
+  typedef Tpetra::Vector<BaseScalar,Node> Flat_Tpetra_Vector;
+  typedef Tpetra::CrsMatrix<BaseScalar,Node> Flat_Tpetra_CrsMatrix;
+#endif
 
   // Ensure device is initialized
   if ( !Kokkos::is_initialized() )
@@ -997,7 +1148,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   GlobalOrdinal nrow = 10;
   RCP<const Tpetra_Comm> comm = Tpetra::getDefaultComm();
   RCP<const Tpetra_Map> map =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Tpetra::createUniformContigMapWithNode<LocalOrdinal,GlobalOrdinal,Node>(
+#else
+    Tpetra::createUniformContigMapWithNode<Node>(
+#endif
       nrow, comm);
   RCP<Tpetra_CrsGraph> graph =
     rcp(new Tpetra_CrsGraph(map, size_t(2), Tpetra::StaticProfile));
@@ -1118,9 +1273,18 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
 //
 // Test simple CG solve without preconditioning for a 1-D Laplacian matrix
 //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   Tpetra_CrsMatrix_PCE, SimpleCG, Storage, LocalOrdinal, GlobalOrdinal, Node )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(
+  Tpetra_CrsMatrix_PCE, SimpleCG, Storage, Node )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   using Teuchos::RCP;
   using Teuchos::rcp;
   using Teuchos::ArrayView;
@@ -1133,10 +1297,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   typedef typename Scalar::cijk_type Cijk;
 
   typedef Teuchos::Comm<int> Tpetra_Comm;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> Tpetra_Map;
   typedef Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_Vector;
   typedef Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_CrsMatrix;
   typedef Tpetra::CrsGraph<LocalOrdinal,GlobalOrdinal,Node> Tpetra_CrsGraph;
+#else
+  typedef Tpetra::Map<Node> Tpetra_Map;
+  typedef Tpetra::Vector<Scalar,Node> Tpetra_Vector;
+  typedef Tpetra::CrsMatrix<Scalar,Node> Tpetra_CrsMatrix;
+  typedef Tpetra::CrsGraph<Node> Tpetra_CrsGraph;
+#endif
 
   // Ensure device is initialized
   if ( !Kokkos::is_initialized() )
@@ -1152,7 +1323,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   BaseScalar h = 1.0 / static_cast<BaseScalar>(nrow-1);
   RCP<const Tpetra_Comm> comm = Tpetra::getDefaultComm();
   RCP<const Tpetra_Map> map =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Tpetra::createUniformContigMapWithNode<LocalOrdinal,GlobalOrdinal,Node>(
+#else
+    Tpetra::createUniformContigMapWithNode<Node>(
+#endif
       nrow, comm);
   RCP<Tpetra_CrsGraph> graph =
     rcp(new Tpetra_CrsGraph(map, size_t(3), Tpetra::StaticProfile));
@@ -1239,8 +1414,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   //             Teuchos::VERB_EXTREME);
 
   // Check by solving flattened system
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Vector<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> Flat_Tpetra_Vector;
   typedef Tpetra::CrsMatrix<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> Flat_Tpetra_CrsMatrix;
+#else
+  typedef Tpetra::Vector<BaseScalar,Node> Flat_Tpetra_Vector;
+  typedef Tpetra::CrsMatrix<BaseScalar,Node> Flat_Tpetra_CrsMatrix;
+#endif
   RCP<const Tpetra_Map> flat_x_map, flat_b_map;
   RCP<const Tpetra_CrsGraph> flat_graph, cijk_graph;
   flat_graph =
@@ -1291,9 +1471,18 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
 // Currently requires ETI since the specializations needed for mean-based
 // are only brought in with ETI
 //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   Tpetra_CrsMatrix_PCE, SimplePCG_Muelu, Storage, LocalOrdinal, GlobalOrdinal, Node )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(
+  Tpetra_CrsMatrix_PCE, SimplePCG_Muelu, Storage, Node )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   using Teuchos::RCP;
   using Teuchos::rcp;
   using Teuchos::ArrayView;
@@ -1307,10 +1496,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   typedef typename Scalar::cijk_type Cijk;
 
   typedef Teuchos::Comm<int> Tpetra_Comm;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> Tpetra_Map;
   typedef Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_Vector;
   typedef Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_CrsMatrix;
   typedef Tpetra::CrsGraph<LocalOrdinal,GlobalOrdinal,Node> Tpetra_CrsGraph;
+#else
+  typedef Tpetra::Map<Node> Tpetra_Map;
+  typedef Tpetra::Vector<Scalar,Node> Tpetra_Vector;
+  typedef Tpetra::CrsMatrix<Scalar,Node> Tpetra_CrsMatrix;
+  typedef Tpetra::CrsGraph<Node> Tpetra_CrsGraph;
+#endif
 
   // Ensure device is initialized
   if ( !Kokkos::is_initialized() )
@@ -1326,7 +1522,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   BaseScalar h = 1.0 / static_cast<BaseScalar>(nrow-1);
   RCP<const Tpetra_Comm> comm = Tpetra::getDefaultComm();
   RCP<const Tpetra_Map> map =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Tpetra::createUniformContigMapWithNode<LocalOrdinal,GlobalOrdinal,Node>(
+#else
+    Tpetra::createUniformContigMapWithNode<Node>(
+#endif
       nrow, comm);
   RCP<Tpetra_CrsGraph> graph =
     rcp(new Tpetra_CrsGraph(map, size_t(3), Tpetra::StaticProfile));
@@ -1392,18 +1592,32 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   }
 
   // Create preconditioner
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Operator<Scalar,LocalOrdinal,GlobalOrdinal,Node> OP;
+#else
+  typedef Tpetra::Operator<Scalar,Node> OP;
+#endif
   RCP<ParameterList> muelu_params =
     getParametersFromXmlFile("muelu_cheby.xml");
 #if USE_SCALAR_MEAN_BASED_PREC
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Operator<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> Scalar_OP;
   typedef Tpetra::CrsMatrix<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> Scalar_Tpetra_CrsMatrix;
+#else
+  typedef Tpetra::Operator<BaseScalar,Node> Scalar_OP;
+  typedef Tpetra::CrsMatrix<BaseScalar,Node> Scalar_Tpetra_CrsMatrix;
+#endif
   RCP<Scalar_Tpetra_CrsMatrix> mean_matrix =
     Stokhos::build_mean_scalar_matrix(*matrix);
   RCP<Scalar_OP> mean_matrix_op = mean_matrix;
   RCP<Scalar_OP> M_s =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     MueLu::CreateTpetraPreconditioner<BaseScalar,LocalOrdinal,GlobalOrdinal,Node>(mean_matrix_op, *muelu_params);
   RCP<OP> M = rcp(new Stokhos::MeanBasedTpetraOperator<Scalar,LocalOrdinal,GlobalOrdinal,Node>(M_s));
+#else
+    MueLu::CreateTpetraPreconditioner<BaseScalar,Node>(mean_matrix_op, *muelu_params);
+  RCP<OP> M = rcp(new Stokhos::MeanBasedTpetraOperator<Scalar,Node>(M_s));
+#endif
 #else
   Cijk mean_cijk =
     Stokhos::create_mean_based_product_tensor<typename Storage::execution_space,typename Storage::ordinal_type,BaseScalar>();
@@ -1411,7 +1625,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   RCP<Tpetra_CrsMatrix> mean_matrix = Stokhos::build_mean_matrix(*matrix);
   RCP<OP> mean_matrix_op = mean_matrix;
   RCP<OP> M =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     MueLu::CreateTpetraPreconditioner<Scalar,LocalOrdinal,GlobalOrdinal,Node>(mean_matrix_op, *muelu_params);
+#else
+    MueLu::CreateTpetraPreconditioner<Scalar,Node>(mean_matrix_op, *muelu_params);
+#endif
   Kokkos::setGlobalCijkTensor(cijk);
 #endif
 
@@ -1431,8 +1649,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   //             Teuchos::VERB_EXTREME);
 
   // Check by solving flattened system
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
    typedef Tpetra::Vector<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> Flat_Tpetra_Vector;
   typedef Tpetra::CrsMatrix<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> Flat_Tpetra_CrsMatrix;
+#else
+   typedef Tpetra::Vector<BaseScalar,Node> Flat_Tpetra_Vector;
+  typedef Tpetra::CrsMatrix<BaseScalar,Node> Flat_Tpetra_CrsMatrix;
+#endif
   RCP<const Tpetra_Map> flat_x_map, flat_b_map;
   RCP<const Tpetra_CrsGraph> flat_graph, cijk_graph;
   flat_graph =
@@ -1482,8 +1705,15 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
 
 #else
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   Tpetra_CrsMatrix_PCE, SimplePCG_Muelu, Storage, LocalOrdinal, GlobalOrdinal, Node ) {}
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(
+  Tpetra_CrsMatrix_PCE, SimplePCG_Muelu, Storage, Node ) {using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+}
+#endif
 
 #endif
 
@@ -1492,9 +1722,18 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
 //
 // Test Belos GMRES solve for a simple banded upper-triangular matrix
 //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   Tpetra_CrsMatrix_PCE, BelosGMRES, Storage, LocalOrdinal, GlobalOrdinal, Node )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(
+  Tpetra_CrsMatrix_PCE, BelosGMRES, Storage, Node )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   using Teuchos::RCP;
   using Teuchos::rcp;
   using Teuchos::ArrayView;
@@ -1507,10 +1746,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   typedef typename Scalar::cijk_type Cijk;
 
   typedef Teuchos::Comm<int> Tpetra_Comm;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> Tpetra_Map;
   typedef Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_Vector;
   typedef Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_CrsMatrix;
   typedef Tpetra::CrsGraph<LocalOrdinal,GlobalOrdinal,Node> Tpetra_CrsGraph;
+#else
+  typedef Tpetra::Map<Node> Tpetra_Map;
+  typedef Tpetra::Vector<Scalar,Node> Tpetra_Vector;
+  typedef Tpetra::CrsMatrix<Scalar,Node> Tpetra_CrsMatrix;
+  typedef Tpetra::CrsGraph<Node> Tpetra_CrsGraph;
+#endif
 
   // Ensure device is initialized
   if ( !Kokkos::is_initialized() )
@@ -1525,7 +1771,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   GlobalOrdinal nrow = 10;
   RCP<const Tpetra_Comm> comm = Tpetra::getDefaultComm();
   RCP<const Tpetra_Map> map =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Tpetra::createUniformContigMapWithNode<LocalOrdinal,GlobalOrdinal,Node>(
+#else
+    Tpetra::createUniformContigMapWithNode<Node>(
+#endif
       nrow, comm);
   RCP<Tpetra_CrsGraph> graph =
     rcp(new Tpetra_CrsGraph(map, size_t(2), Tpetra::StaticProfile));
@@ -1573,8 +1823,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   // Solve
   typedef Teuchos::ScalarTraits<BaseScalar> ST;
   typedef BaseScalar BelosScalar;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> MV;
   typedef Tpetra::Operator<Scalar,LocalOrdinal,GlobalOrdinal,Node> OP;
+#else
+  typedef Tpetra::MultiVector<Scalar,Node> MV;
+  typedef Tpetra::Operator<Scalar,Node> OP;
+#endif
   typedef Belos::LinearProblem<BelosScalar,MV,OP> BLinProb;
   RCP<Tpetra_Vector> x = Tpetra::createVector<Scalar>(map);
   RCP< BLinProb > problem = rcp(new BLinProb(matrix, x, b));
@@ -1598,8 +1853,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   //             Teuchos::VERB_EXTREME);
 
   // Check by solving flattened system
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Vector<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> Flat_Tpetra_Vector;
   typedef Tpetra::CrsMatrix<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> Flat_Tpetra_CrsMatrix;
+#else
+  typedef Tpetra::Vector<BaseScalar,Node> Flat_Tpetra_Vector;
+  typedef Tpetra::CrsMatrix<BaseScalar,Node> Flat_Tpetra_CrsMatrix;
+#endif
   RCP<const Tpetra_Map> flat_x_map, flat_b_map;
   RCP<const Tpetra_CrsGraph> flat_graph, cijk_graph;
   flat_graph =
@@ -1612,8 +1872,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
     Stokhos::create_flat_vector_view(*x2, flat_x_map);
   RCP<Flat_Tpetra_Vector> flat_b =
     Stokhos::create_flat_vector_view(*b, flat_b_map);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::MultiVector<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> FMV;
   typedef Tpetra::Operator<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> FOP;
+#else
+  typedef Tpetra::MultiVector<BaseScalar,Node> FMV;
+  typedef Tpetra::Operator<BaseScalar,Node> FOP;
+#endif
   typedef Belos::LinearProblem<BelosScalar,FMV,FOP> FBLinProb;
   RCP< FBLinProb > flat_problem =
     rcp(new FBLinProb(flat_matrix, flat_x, flat_b));
@@ -1651,9 +1916,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
 
 #else
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   Tpetra_CrsMatrix_PCE, BelosGMRES, Storage, LocalOrdinal, GlobalOrdinal, Node )
 {}
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(
+  Tpetra_CrsMatrix_PCE, BelosGMRES, Storage, Node )
+{using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+}
+#endif
 
 #endif
 
@@ -1665,9 +1938,18 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
 // Test Belos GMRES solve with Ifpack2 RILUK preconditioning for a
 // simple banded upper-triangular matrix
 //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   Tpetra_CrsMatrix_PCE, BelosGMRES_RILUK, Storage, LocalOrdinal, GlobalOrdinal, Node )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(
+  Tpetra_CrsMatrix_PCE, BelosGMRES_RILUK, Storage, Node )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   using Teuchos::RCP;
   using Teuchos::rcp;
   using Teuchos::ArrayView;
@@ -1680,10 +1962,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   typedef typename Scalar::cijk_type Cijk;
 
   typedef Teuchos::Comm<int> Tpetra_Comm;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> Tpetra_Map;
   typedef Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_Vector;
   typedef Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_CrsMatrix;
   typedef Tpetra::CrsGraph<LocalOrdinal,GlobalOrdinal,Node> Tpetra_CrsGraph;
+#else
+  typedef Tpetra::Map<Node> Tpetra_Map;
+  typedef Tpetra::Vector<Scalar,Node> Tpetra_Vector;
+  typedef Tpetra::CrsMatrix<Scalar,Node> Tpetra_CrsMatrix;
+  typedef Tpetra::CrsGraph<Node> Tpetra_CrsGraph;
+#endif
 
   // Ensure device is initialized
   if ( !Kokkos::is_initialized() )
@@ -1698,7 +1987,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   GlobalOrdinal nrow = 10;
   RCP<const Tpetra_Comm> comm = Tpetra::getDefaultComm();
   RCP<const Tpetra_Map> map =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Tpetra::createUniformContigMapWithNode<LocalOrdinal,GlobalOrdinal,Node>(
+#else
+    Tpetra::createUniformContigMapWithNode<Node>(
+#endif
       nrow, comm);
   RCP<Tpetra_CrsGraph> graph =
     rcp(new Tpetra_CrsGraph(map, size_t(2), Tpetra::StaticProfile));
@@ -1747,7 +2040,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   }
 
   // Create preconditioner
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Ifpack2::Preconditioner<Scalar,LocalOrdinal,GlobalOrdinal,Node> Prec;
+#else
+  typedef Ifpack2::Preconditioner<Scalar,Node> Prec;
+#endif
   Ifpack2::Factory factory;
   RCP<Prec> M = factory.create<Tpetra_CrsMatrix>("RILUK", mean_matrix);
   M->initialize();
@@ -1756,8 +2053,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   // Solve
   typedef Teuchos::ScalarTraits<BaseScalar> ST;
   typedef BaseScalar BelosScalar;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> MV;
   typedef Tpetra::Operator<Scalar,LocalOrdinal,GlobalOrdinal,Node> OP;
+#else
+  typedef Tpetra::MultiVector<Scalar,Node> MV;
+  typedef Tpetra::Operator<Scalar,Node> OP;
+#endif
   typedef Belos::LinearProblem<BelosScalar,MV,OP> BLinProb;
   RCP<Tpetra_Vector> x = Tpetra::createVector<Scalar>(map);
   RCP< BLinProb > problem = rcp(new BLinProb(matrix, x, b));
@@ -1780,8 +2082,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   TEST_EQUALITY_CONST( ret, Belos::Converged );
 
   // Check by solving flattened system
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Vector<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> Flat_Tpetra_Vector;
   typedef Tpetra::CrsMatrix<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> Flat_Tpetra_CrsMatrix;
+#else
+  typedef Tpetra::Vector<BaseScalar,Node> Flat_Tpetra_Vector;
+  typedef Tpetra::CrsMatrix<BaseScalar,Node> Flat_Tpetra_CrsMatrix;
+#endif
   RCP<const Tpetra_Map> flat_x_map, flat_b_map;
   RCP<const Tpetra_CrsGraph> flat_graph, cijk_graph;
   flat_graph =
@@ -1794,8 +2101,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
     Stokhos::create_flat_vector_view(*x2, flat_x_map);
   RCP<Flat_Tpetra_Vector> flat_b =
     Stokhos::create_flat_vector_view(*b, flat_b_map);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::MultiVector<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> FMV;
   typedef Tpetra::Operator<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> FOP;
+#else
+  typedef Tpetra::MultiVector<BaseScalar,Node> FMV;
+  typedef Tpetra::Operator<BaseScalar,Node> FOP;
+#endif
   typedef Belos::LinearProblem<BelosScalar,FMV,FOP> FBLinProb;
   RCP< FBLinProb > flat_problem =
     rcp(new FBLinProb(flat_matrix, flat_x, flat_b));
@@ -1833,9 +2145,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
 
 #else
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   Tpetra_CrsMatrix_PCE, BelosGMRES_RILUK, Storage, LocalOrdinal, GlobalOrdinal, Node )
 {}
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(
+  Tpetra_CrsMatrix_PCE, BelosGMRES_RILUK, Storage, Node )
+{using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+}
+#endif
 
 #endif
 
@@ -1847,9 +2167,18 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
 // Currently requires ETI since the specializations needed for mean-based
 // are only brought in with ETI
 //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   Tpetra_CrsMatrix_PCE, BelosCG_Muelu, Storage, LocalOrdinal, GlobalOrdinal, Node )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(
+  Tpetra_CrsMatrix_PCE, BelosCG_Muelu, Storage, Node )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   using Teuchos::RCP;
   using Teuchos::rcp;
   using Teuchos::ArrayView;
@@ -1863,10 +2192,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   typedef typename Scalar::cijk_type Cijk;
 
   typedef Teuchos::Comm<int> Tpetra_Comm;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> Tpetra_Map;
   typedef Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_Vector;
   typedef Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_CrsMatrix;
   typedef Tpetra::CrsGraph<LocalOrdinal,GlobalOrdinal,Node> Tpetra_CrsGraph;
+#else
+  typedef Tpetra::Map<Node> Tpetra_Map;
+  typedef Tpetra::Vector<Scalar,Node> Tpetra_Vector;
+  typedef Tpetra::CrsMatrix<Scalar,Node> Tpetra_CrsMatrix;
+  typedef Tpetra::CrsGraph<Node> Tpetra_CrsGraph;
+#endif
 
   // Ensure device is initialized
   if ( !Kokkos::is_initialized() )
@@ -1882,7 +2218,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   BaseScalar h = 1.0 / static_cast<BaseScalar>(nrow-1);
   RCP<const Tpetra_Comm> comm = Tpetra::getDefaultComm();
   RCP<const Tpetra_Map> map =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Tpetra::createUniformContigMapWithNode<LocalOrdinal,GlobalOrdinal,Node>(
+#else
+    Tpetra::createUniformContigMapWithNode<Node>(
+#endif
       nrow, comm);
   RCP<Tpetra_CrsGraph> graph =
     rcp(new Tpetra_CrsGraph(map, size_t(3), Tpetra::StaticProfile));
@@ -1948,18 +2288,32 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   }
 
   // Create preconditioner
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Operator<Scalar,LocalOrdinal,GlobalOrdinal,Node> OP;
+#else
+  typedef Tpetra::Operator<Scalar,Node> OP;
+#endif
   RCP<ParameterList> muelu_params =
     getParametersFromXmlFile("muelu_cheby.xml");
 #if USE_SCALAR_MEAN_BASED_PREC
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Operator<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> Scalar_OP;
   typedef Tpetra::CrsMatrix<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> Scalar_Tpetra_CrsMatrix;
+#else
+  typedef Tpetra::Operator<BaseScalar,Node> Scalar_OP;
+  typedef Tpetra::CrsMatrix<BaseScalar,Node> Scalar_Tpetra_CrsMatrix;
+#endif
   RCP<Scalar_Tpetra_CrsMatrix> mean_matrix =
     Stokhos::build_mean_scalar_matrix(*matrix);
   RCP<Scalar_OP> mean_matrix_op = mean_matrix;
   RCP<Scalar_OP> M_s =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     MueLu::CreateTpetraPreconditioner<BaseScalar,LocalOrdinal,GlobalOrdinal,Node>(mean_matrix_op, *muelu_params);
   RCP<OP> M = rcp(new Stokhos::MeanBasedTpetraOperator<Scalar,LocalOrdinal,GlobalOrdinal,Node>(M_s));
+#else
+    MueLu::CreateTpetraPreconditioner<BaseScalar,Node>(mean_matrix_op, *muelu_params);
+  RCP<OP> M = rcp(new Stokhos::MeanBasedTpetraOperator<Scalar,Node>(M_s));
+#endif
 #else
   Cijk mean_cijk =
     Stokhos::create_mean_based_product_tensor<typename Storage::execution_space,typename Storage::ordinal_type,BaseScalar>();
@@ -1967,14 +2321,22 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   RCP<Tpetra_CrsMatrix> mean_matrix = Stokhos::build_mean_matrix(*matrix);
   RCP<OP> mean_matrix_op = mean_matrix;
   RCP<OP> M =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     MueLu::CreateTpetraPreconditioner<Scalar,LocalOrdinal,GlobalOrdinal,Node>(mean_matrix_op, *muelu_params);
+#else
+    MueLu::CreateTpetraPreconditioner<Scalar,Node>(mean_matrix_op, *muelu_params);
+#endif
   Kokkos::setGlobalCijkTensor(cijk);
 #endif
 
   // Solve
   typedef Teuchos::ScalarTraits<BaseScalar> ST;
   typedef BaseScalar BelosScalar;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> MV;
+#else
+  typedef Tpetra::MultiVector<Scalar,Node> MV;
+#endif
   typedef Belos::LinearProblem<BelosScalar,MV,OP> BLinProb;
   RCP<Tpetra_Vector> x = Tpetra::createVector<Scalar>(map);
   RCP< BLinProb > problem = rcp(new BLinProb(matrix, x, b));
@@ -2001,8 +2363,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   //             Teuchos::VERB_EXTREME);
 
   // Check by solving flattened system
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Vector<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> Flat_Tpetra_Vector;
   typedef Tpetra::CrsMatrix<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> Flat_Tpetra_CrsMatrix;
+#else
+  typedef Tpetra::Vector<BaseScalar,Node> Flat_Tpetra_Vector;
+  typedef Tpetra::CrsMatrix<BaseScalar,Node> Flat_Tpetra_CrsMatrix;
+#endif
   RCP<const Tpetra_Map> flat_x_map, flat_b_map;
   RCP<const Tpetra_CrsGraph> flat_graph, cijk_graph;
   flat_graph =
@@ -2015,8 +2382,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
     Stokhos::create_flat_vector_view(*x2, flat_x_map);
   RCP<Flat_Tpetra_Vector> flat_b =
     Stokhos::create_flat_vector_view(*b, flat_b_map);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::MultiVector<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> FMV;
   typedef Tpetra::Operator<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> FOP;
+#else
+  typedef Tpetra::MultiVector<BaseScalar,Node> FMV;
+  typedef Tpetra::Operator<BaseScalar,Node> FOP;
+#endif
   typedef Belos::LinearProblem<BelosScalar,FMV,FOP> FBLinProb;
   RCP< FBLinProb > flat_problem =
     rcp(new FBLinProb(flat_matrix, flat_x, flat_b));
@@ -2058,9 +2430,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
 
 #else
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   Tpetra_CrsMatrix_PCE, BelosCG_Muelu, Storage, LocalOrdinal, GlobalOrdinal, Node )
 {}
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(
+  Tpetra_CrsMatrix_PCE, BelosCG_Muelu, Storage, Node )
+{using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+}
+#endif
 
 #endif
 
@@ -2069,9 +2449,18 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
 //
 // Test Amesos2 solve for a 1-D Laplacian matrix
 //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   Tpetra_CrsMatrix_PCE, Amesos2, Storage, LocalOrdinal, GlobalOrdinal, Node )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(
+  Tpetra_CrsMatrix_PCE, Amesos2, Storage, Node )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   using Teuchos::RCP;
   using Teuchos::rcp;
   using Teuchos::ArrayView;
@@ -2084,11 +2473,19 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   typedef typename Scalar::cijk_type Cijk;
 
   typedef Teuchos::Comm<int> Tpetra_Comm;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> Tpetra_Map;
   typedef Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_Vector;
   typedef Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_MultiVector;
   typedef Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> Tpetra_CrsMatrix;
   typedef Tpetra::CrsGraph<LocalOrdinal,GlobalOrdinal,Node> Tpetra_CrsGraph;
+#else
+  typedef Tpetra::Map<Node> Tpetra_Map;
+  typedef Tpetra::Vector<Scalar,Node> Tpetra_Vector;
+  typedef Tpetra::MultiVector<Scalar,Node> Tpetra_MultiVector;
+  typedef Tpetra::CrsMatrix<Scalar,Node> Tpetra_CrsMatrix;
+  typedef Tpetra::CrsGraph<Node> Tpetra_CrsGraph;
+#endif
 
   // Ensure device is initialized
   if ( !Kokkos::is_initialized() )
@@ -2104,7 +2501,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   BaseScalar h = 1.0 / static_cast<BaseScalar>(nrow-1);
   RCP<const Tpetra_Comm> comm = Tpetra::getDefaultComm();
   RCP<const Tpetra_Map> map =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Tpetra::createUniformContigMapWithNode<LocalOrdinal,GlobalOrdinal,Node>(
+#else
+    Tpetra::createUniformContigMapWithNode<Node>(
+#endif
       nrow, comm);
   RCP<Tpetra_CrsGraph> graph = Tpetra::createCrsGraph(map, size_t(3));
   Array<GlobalOrdinal> columnIndices(3);
@@ -2202,9 +2603,15 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   //             Teuchos::VERB_EXTREME);
 
   // Check by solving flattened system
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Vector<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> Flat_Tpetra_Vector;
   typedef Tpetra::MultiVector<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> Flat_Tpetra_MultiVector;
   typedef Tpetra::CrsMatrix<BaseScalar,LocalOrdinal,GlobalOrdinal,Node> Flat_Tpetra_CrsMatrix;
+#else
+  typedef Tpetra::Vector<BaseScalar,Node> Flat_Tpetra_Vector;
+  typedef Tpetra::MultiVector<BaseScalar,Node> Flat_Tpetra_MultiVector;
+  typedef Tpetra::CrsMatrix<BaseScalar,Node> Flat_Tpetra_CrsMatrix;
+#endif
   RCP<const Tpetra_Map> flat_x_map, flat_b_map;
   RCP<const Tpetra_CrsGraph> flat_graph, cijk_graph;
   flat_graph =
@@ -2251,12 +2658,21 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
 
 #else
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   Tpetra_CrsMatrix_PCE, Amesos2, Storage, LocalOrdinal, GlobalOrdinal, Node )
 {}
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(
+  Tpetra_CrsMatrix_PCE, Amesos2, Storage, Node )
+{using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+}
+#endif
 
 #endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define CRSMATRIX_UQ_PCE_TESTS_SLGN(S, LO, GO, N)                    \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Tpetra_CrsMatrix_PCE, VectorAdd, S, LO, GO, N ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Tpetra_CrsMatrix_PCE, VectorDot, S, LO, GO, N ) \
@@ -2272,6 +2688,23 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Tpetra_CrsMatrix_PCE, BelosGMRES_RILUK, S, LO, GO, N ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Tpetra_CrsMatrix_PCE, BelosCG_Muelu, S, LO, GO, N ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Tpetra_CrsMatrix_PCE, Amesos2, S, LO, GO, N )
+#else
+#define CRSMATRIX_UQ_PCE_TESTS_SLGN(S, N)                    \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Tpetra_CrsMatrix_PCE, VectorAdd, S, N ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Tpetra_CrsMatrix_PCE, VectorDot, S, N ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Tpetra_CrsMatrix_PCE, MultiVectorAdd, S, N ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Tpetra_CrsMatrix_PCE, MultiVectorDot, S, N ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Tpetra_CrsMatrix_PCE, MultiVectorDotSub, S, N ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Tpetra_CrsMatrix_PCE, MatrixVectorMultiply, S, N ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Tpetra_CrsMatrix_PCE, MatrixMultiVectorMultiply, S, N ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Tpetra_CrsMatrix_PCE, Flatten, S, N ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Tpetra_CrsMatrix_PCE, SimpleCG, S, N ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Tpetra_CrsMatrix_PCE, SimplePCG_Muelu, S, N ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Tpetra_CrsMatrix_PCE, BelosGMRES, S, N ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Tpetra_CrsMatrix_PCE, BelosGMRES_RILUK, S, N ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Tpetra_CrsMatrix_PCE, BelosCG_Muelu, S, N ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Tpetra_CrsMatrix_PCE, Amesos2, S, N )
+#endif
 
 #define CRSMATRIX_UQ_PCE_TESTS_N(N)                                     \
   typedef Stokhos::DeviceForNode2<N>::type Device;                      \

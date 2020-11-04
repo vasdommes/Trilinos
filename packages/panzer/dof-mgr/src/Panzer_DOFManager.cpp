@@ -82,8 +82,14 @@ namespace panzer {
 
 ///////////////////////////////////////////////////////////////////////////////
 namespace {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <typename LocalOrdinal,typename GlobalOrdinal>
 class HashTieBreak : public Tpetra::Details::TieBreak<LocalOrdinal,GlobalOrdinal> {
+#else
+class HashTieBreak : public Tpetra::Details::TieBreak<> {
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   const unsigned int seed_;
 
 public:
@@ -104,10 +110,18 @@ public:
 
 ///////////////////////////////////////////////////////////////////////////////
 namespace {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <typename LocalOrdinal,typename GlobalOrdinal>
 class GreedyTieBreak : public Tpetra::Details::TieBreak<LocalOrdinal,GlobalOrdinal> {
+#else
+class GreedyTieBreak : public Tpetra::Details::TieBreak<> {
+#endif
 
 public:
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   GreedyTieBreak() { }
 
   virtual bool mayHaveSideEffects() const {

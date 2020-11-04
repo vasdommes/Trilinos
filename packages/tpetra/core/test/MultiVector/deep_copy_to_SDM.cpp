@@ -106,12 +106,24 @@ namespace { // (anonymous)
     return allSame == 1;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template<class ST, class LO, class GO, class NT>
+#else
+  template<class ST, class NT>
+#endif
   bool
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   serialDenseMatrix_multiVector_same (const Tpetra::MultiVector<ST, LO, GO, NT>& X,
+#else
+  serialDenseMatrix_multiVector_same (const Tpetra::MultiVector<ST, NT>& X,
+#endif
                                       const Teuchos::SerialDenseMatrix<int, ST>& Y)
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using MV = Tpetra::MultiVector<ST, LO, GO, NT>;
+#else
+    using MV = Tpetra::MultiVector<ST, NT>;
+#endif
     using IST = typename MV::impl_scalar_type;
     using sdm_view_type = Kokkos::View<const IST**, Kokkos::LayoutLeft,
       Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
@@ -209,12 +221,24 @@ namespace { // (anonymous)
        });
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template<class ST, class LO, class GO, class NT>
+#else
+  template<class ST, class NT>
+#endif
   void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   multiVectorIota (Tpetra::MultiVector<ST, LO, GO, NT>& X,
+#else
+  multiVectorIota (Tpetra::MultiVector<ST, NT>& X,
+#endif
                    const ST& startValue)
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using MV = Tpetra::MultiVector<ST, LO, GO, NT>;
+#else
+    using MV = Tpetra::MultiVector<ST, NT>;
+#endif
     using IST = typename MV::impl_scalar_type;
 
     const IST startValueIST = static_cast<IST> (startValue);
@@ -256,12 +280,25 @@ namespace { // (anonymous)
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( MultiVector, deep_copy_to_SDM, ST, LO, GO, NT )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MultiVector, deep_copy_to_SDM, ST, NT )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     using Teuchos::RCP;
     using Teuchos::rcp;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using map_type = Tpetra::Map<LO, GO, NT>;
     using MV = Tpetra::MultiVector<ST, LO, GO, NT>;
+#else
+    using map_type = Tpetra::Map<NT>;
+    using MV = Tpetra::MultiVector<ST, NT>;
+#endif
     using IST = typename MV::impl_scalar_type;
 
     out << "Test Tpetra::deep_copy from Tpetra::MultiVector "
@@ -343,8 +380,13 @@ namespace { // (anonymous)
   // INSTANTIATIONS
   //
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define UNIT_TEST_GROUP( ST, LO, GO, NT ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( MultiVector, deep_copy_to_SDM, ST, LO, GO, NT )
+#else
+#define UNIT_TEST_GROUP( ST, NT ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( MultiVector, deep_copy_to_SDM, ST, NT )
+#endif
 
   TPETRA_ETI_MANGLING_TYPEDEFS()
 

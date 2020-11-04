@@ -76,8 +76,13 @@ repartition(Teuchos::RefCountPtr<const Epetra_CrsGraph> input_graph,
 	    Teuchos::RefCountPtr<const Isorropia::Epetra::CostDescriber> costs,
             Teuchos::ParameterList& paramlist,
             std::vector<int>& myNewElements,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
             std::map<int,int>& exports,
             std::map<int,int>& imports)
+#else
+            std::map<>& exports,
+            std::map<>& imports)
+#endif
 {
   int inputType = QueryObject::hgraph_input_;
   std::string lb_method_str("LB_METHOD");
@@ -109,8 +114,13 @@ repartition(Teuchos::RefCountPtr<const Epetra_RowMatrix> input_matrix,
 	    Teuchos::RefCountPtr<const Isorropia::Epetra::CostDescriber> costs,
             Teuchos::ParameterList& paramlist,
             std::vector<int>& myNewElements,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
             std::map<int,int>& exports,
             std::map<int,int>& imports)
+#else
+            std::map<>& exports,
+            std::map<>& imports)
+#endif
 {
   int inputType = QueryObject::hgraph_input_;
   std::string lb_method_str("LB_METHOD");
@@ -143,8 +153,13 @@ load_balance(MPI_Comm &comm,
 	     Teuchos::ParameterList& paramlist,
 	     QueryObject& queryObject,
 	     std::vector<int>& myNewElements,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 	     std::map<int,int>& exports,
 	     std::map<int,int>& imports)
+#else
+	     std::map<>& exports,
+	     std::map<>& imports)
+#endif
 {
   float version;
   int argcTmp=0;

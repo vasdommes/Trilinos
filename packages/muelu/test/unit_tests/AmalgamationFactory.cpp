@@ -54,9 +54,17 @@
 
 namespace MueLuTests {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(AmalgamationFactory, Constructor, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(AmalgamationFactory, Constructor, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
@@ -67,9 +75,17 @@ namespace MueLuTests {
   } // Constructor
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(AmalgamationFactory, DOFGid2NodeId, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(AmalgamationFactory, DOFGid2NodeId, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
@@ -100,9 +116,15 @@ namespace MueLuTests {
   } // DOFGid2NodeId
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   # define MUELU_ETI_GROUP(Scalar, LO, GO, Node) \
     TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(AmalgamationFactory, Constructor, Scalar, LO, GO, Node) \
     TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(AmalgamationFactory, DOFGid2NodeId, Scalar, LO, GO, Node)
+#else
+  # define MUELU_ETI_GROUP(Scalar, Node) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(AmalgamationFactory, Constructor, Scalar, Node) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(AmalgamationFactory, DOFGid2NodeId, Scalar, Node)
+#endif
 
 # include <MueLu_ETI_4arg.hpp>
 

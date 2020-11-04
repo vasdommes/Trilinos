@@ -82,12 +82,17 @@ namespace bddc {
   
 template <class SX, class SM, class LO, class GO> 
   class PreconditionerBDDC : 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   public PreconditionerBase<SX,SM,LO,GO>
+#else
+  public PreconditionerBase<SX,SM>
+#endif
 {
 public:
   //
   // Convenience typedefs
   //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO,GO>                                 Map;
   typedef Tpetra::CrsGraph<LO,GO>                            CrsGraph;
   typedef Tpetra::CrsMatrix<SX,LO,GO>                        CrsMatrix;
@@ -101,6 +106,21 @@ public:
   typedef Tpetra::Vector<GO,LO,GO>                           VectorGO;
   typedef Tpetra::MultiVector<SX,LO,GO>                      MV;
   typedef Tpetra::MultiVector<double,LO,GO>                  MVD;
+#else
+  typedef Tpetra::Map<>                                 Map;
+  typedef Tpetra::CrsGraph<>                            CrsGraph;
+  typedef Tpetra::CrsMatrix<SX>                        CrsMatrix;
+  typedef Tpetra::CrsMatrix<LO>                        CrsMatrixLO;
+  typedef Tpetra::CrsMatrix<GO>                        CrsMatrixGO;
+  typedef Tpetra::Export<>                              Export;
+  typedef Tpetra::Import<>                              Import;
+  typedef Tpetra::Vector<SM>                           VectorSM;
+  typedef Tpetra::Vector<SX>                           Vector;
+  typedef Tpetra::Vector<LO>                           VectorLO;
+  typedef Tpetra::Vector<GO>                           VectorGO;
+  typedef Tpetra::MultiVector<SX>                      MV;
+  typedef Tpetra::MultiVector<double>                  MVD;
+#endif
 
   PreconditionerBDDC()
   {
@@ -127,7 +147,11 @@ public:
      RCP<const Map> dofMap=Teuchos::null,
      RCP<const Map> dofMap1to1=Teuchos::null
 #ifdef VERTEXCOARSESPACEBDDC
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
      , RCP< VertexCoarseSpace<SX,SM,LO,GO> > vertexCoarseSpaceIn=Teuchos::null
+#else
+     , RCP< VertexCoarseSpace<SX,SM> > vertexCoarseSpaceIn=Teuchos::null
+#endif
 #endif
      ) :
     m_numNodes(numNodes),
@@ -1316,11 +1340,19 @@ private:
   LO m_numDofs, m_numSub, m_numDofsB, m_numDofsB1to1;
   std::vector<int> m_coarseMpiRanks;
   std::vector< std::vector<LO> > m_subNodeBegin, m_subLocalDofs;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP< bddc::PartitionOfUnity<SX,SM,LO,GO> > m_Partition;
   std::vector< bddc::SubdomainBDDC<SX,SM,LO,GO>* > m_Subdomain;
   RCP< SubdomainBDDC<SX,SM,LO,GO> > m_coarseSub;
   RCP< bddc::WeightsBDDC<SX,SM,LO,GO> > m_Weights;
   RCP< bddc::ConstraintsBDDC<SX,SM,LO,GO> > m_Constraints;
+#else
+  RCP< bddc::PartitionOfUnity<SX,SM> > m_Partition;
+  std::vector< bddc::SubdomainBDDC<SX,SM>* > m_Subdomain;
+  RCP< SubdomainBDDC<SX,SM> > m_coarseSub;
+  RCP< bddc::WeightsBDDC<SX,SM> > m_Weights;
+  RCP< bddc::ConstraintsBDDC<SX,SM> > m_Constraints;
+#endif
   std::vector< std::vector<LO> > m_boundaryDofsLocal, m_subBoundaryDofs,
     m_subDofs, m_subInteriorDofs;
   std::vector<LO> m_boundaryDofs, m_globalToBoundaryMap, m_boundaryToAll1to1;
@@ -1347,7 +1379,11 @@ private:
   std::vector< std::vector<LO> > m_subNodesCoarse, m_subRowBeginCoarse, 
     m_subColumnsCoarse, m_subDofsCoarse;
   std::vector< std::vector<SX> > m_subValuesCoarse;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP< PreconditionerBDDC<SX,SM,LO,GO> > m_coarsePreconditioner;
+#else
+  RCP< PreconditionerBDDC<SX,SM> > m_coarsePreconditioner;
+#endif
   GO m_numCoarseDofs;
   const std::string m_defaultSolver{"SuperLU"};
   int m_level, m_myCoarseMpiRank;
@@ -1371,7 +1407,11 @@ private:
   bool m_usePComm;
   // vertex coarse space data
 #ifdef VERTEXCOARSESPACEBDDC
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP< VertexCoarseSpace<SX,SM,LO,GO> > m_vertexCoarseSpace, m_vertexCoarseSpaceIn;
+#else
+  RCP< VertexCoarseSpace<SX,SM> > m_vertexCoarseSpace, m_vertexCoarseSpaceIn;
+#endif
 #endif
 
   void checkVertexCoarseSpaceAvailability()
@@ -1429,7 +1469,11 @@ private:
   void determineNodeSend(std::vector<int>* nodeSend)
   {
     if (nodeSend == nullptr) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       bddc::getNodeSend<LO,GO>
+#else
+      bddc::getNodeSend<>
+#endif
 	(m_numNodes, m_nodeGlobalIDs, m_mpiComm, m_nodeSend);
     }
     else {
@@ -1560,7 +1604,11 @@ private:
 
     double startTime = GetTime();
     m_Partition =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       rcp( new bddc::PartitionOfUnity<SX,SM,LO,GO>
+#else
+      rcp( new bddc::PartitionOfUnity<SX,SM>
+#endif
 	   (m_numNodes, m_nodeGlobalIDs, m_subNodeBegin, m_subNodes, 
 	    m_spatialDim, m_Parameters, m_Comm, m_distributor, 
 	    m_nodeSend, m_xCoord, m_yCoord, m_zCoord) );
@@ -1569,7 +1617,11 @@ private:
     if (m_usePComm == false) {
       startTime = GetTime();
       if ((m_dofMap == Teuchos::null) || (m_dofMap1to1 == Teuchos::null)) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 	bddc::DofManager<LO,GO>::
+#else
+	bddc::DofManager<>::
+#endif
 	  determineGlobalIDs(m_numNodes, m_nodeGlobalIDs, m_nodeBegin, 
 			     m_localDofs, m_Comm, m_dofMap, m_dofMap1to1, 
 			     nodeGlobalIDs1to1);
@@ -1607,7 +1659,11 @@ private:
   void retrieveCoarseSizesAcrossLevels()
   {
     if (m_coarseMpiRanks.size() > 0) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Teuchos::broadcast<int, GO>
+#else
+      Teuchos::broadcast<>
+#endif
 	(*m_Comm, m_coarseMpiRanks[0], 1, &m_numCoarseDofs);
     }
     if (m_level == 0) {
@@ -1909,7 +1965,11 @@ private:
     else {
       SolverFactory<SX> Factory;
       m_coarseSub = rcp
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 	( new SubdomainBDDC<SX,SM,LO,GO>
+#else
+	( new SubdomainBDDC<SX,SM>
+#endif
 	  (m_numNodes, m_subNodes[0].data(), m_nodeBegin, m_localDofs,
 	   rowBegin, columns, values, m_xCoord, m_yCoord, m_zCoord,
 	   *m_Parameters) );
@@ -1920,13 +1980,21 @@ private:
   {
     if (m_usePComm) {
       m_Weights = 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 	rcp( new bddc::WeightsBDDC<SX,SM,LO,GO>
+#else
+	rcp( new bddc::WeightsBDDC<SX,SM>
+#endif
 	     (m_Subdomain, m_Partition, m_Comm, m_pCommB,
 	      m_subBoundaryDofs, m_diagBoundary, m_Parameters) );
     }
     else {
       m_Weights = 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 	rcp( new bddc::WeightsBDDC<SX,SM,LO,GO>
+#else
+	rcp( new bddc::WeightsBDDC<SX,SM>
+#endif
 	     (m_Subdomain, m_Partition, m_exporterB,
 	      m_subBoundaryDofs, m_diagBoundary, m_Parameters) );
     }
@@ -2196,13 +2264,21 @@ private:
       // the following sort is needed for consistency with m_myCoarseMpiRank
       std::sort(mpiRanks.begin(), mpiRanks.end());
     }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::broadcast<int, int> (*m_Comm, root, numCoarseProc, mpiRanks.data());
+#else
+    Teuchos::broadcast<> (*m_Comm, root, numCoarseProc, mpiRanks.data());
+#endif
     int myRankActive(0);
     for (int i=0; i<numMpiRanks; i++) {
       if (mpiRanks[i] == m_myPID) myRankActive = 1;
     }
     int myRankActiveSS;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::scan<int, int> (*m_Comm, Teuchos::REDUCE_SUM, 1, &myRankActive, 
+#else
+    Teuchos::scan<> (*m_Comm, Teuchos::REDUCE_SUM, 1, &myRankActive, 
+#endif
 			     &myRankActiveSS);
     myCoarseMpiRank = -1;
     if (myRankActive == 1) {
@@ -2318,7 +2394,11 @@ private:
     std::vector<LO> parts(numSubdomains, 0);
     RCP<Teuchos::ParameterList> params = rcp( new Teuchos::ParameterList() );
     params->set("Number of Parts", numParts);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     ZoltanPartition<LO, GO>* partition(nullptr);
+#else
+    ZoltanPartition<>* partition(nullptr);
+#endif
     params->set("Coordinates", elemCoords.data());
     std::vector<GO> globalIDs(numSubdomains);
     for (LO i=0; i<numSubdomains; i++) globalIDs[i] = i;
@@ -2334,7 +2414,11 @@ private:
 	params->set("LB Method", "RIB");
       }
     }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     partition = new ZoltanPartition<LO, GO>
+#else
+    partition = new ZoltanPartition<>
+#endif
       (numSubdomains, rowBegin.data(), columnGIDs.data(), columnPIDs.data(),
        elemCoords.data(), globalIDs.data(), mpiComm, params);
     partition->setDefaultWeights();
@@ -2361,7 +2445,11 @@ private:
       int numCoarseRanks = mpiRanks.size();
       params->set("Number of Parts", numCoarseRanks);
       params->set("Coordinates", subdomainCoords.data());
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       ZoltanPartition<LO, GO>* partition(nullptr);
+#else
+      ZoltanPartition<>* partition(nullptr);
+#endif
       const GO *subGIDs(0), *subConnGIDs(0), *subConnProcs(0);
       const LO *subConnBegin(0);
       const std::string coarsenOption = 
@@ -2374,7 +2462,11 @@ private:
 	const std::string graphPackage = 
 	  m_Parameters->get("Graph Package", "PHG");
 	params->set("Graph Package", graphPackage);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 	partition = new ZoltanPartition<LO, GO>
+#else
+	partition = new ZoltanPartition<>
+#endif
 	  (m_numSub, subConnBegin, subConnGIDs, subConnProcs, 
 	   subdomainCoords.data(), subGIDs, m_mpiComm, params);
       }
@@ -2388,7 +2480,11 @@ private:
 	else if (coarsenOption == "RIB") {
 	  params->set("LB Method", "RIB");
 	}
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 	partition = new ZoltanPartition<LO, GO>
+#else
+	partition = new ZoltanPartition<>
+#endif
 	  (m_numSub, subConnBegin, subConnGIDs, subConnProcs,
 	   subdomainCoords.data(), globalIDs.data(), m_mpiComm, params);
       }
@@ -3293,7 +3389,11 @@ private:
 	}
       }
     }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     bddc::unionData<LO,GO>
+#else
+    bddc::unionData<>
+#endif
       (numRows, activeCoarseNodeGIDs.data(), rowSend.data(),
        m_distributor, inputData, activeCoarseNodeParts);
     // check sizes
@@ -3646,7 +3746,11 @@ private:
       RCP<const Teuchos::Comm<int> > Comm = 
 	rcp( new Teuchos::MpiComm<int>(m_mpiCommSplit) );
       LO numNodesCoarse = nodeGlobalIDsCoarse.size();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       bddc::DofManager<LO,GO>::
+#else
+      bddc::DofManager<>::
+#endif
 	determineGlobalIDs(numNodesCoarse, nodeGlobalIDsCoarse.data(), 
 			   nodeBeginCoarse.data(), localDofsCoarse.data(), 
 			   Comm, dofMapCoarse, dofMapCoarse1to1);
@@ -4147,7 +4251,11 @@ private:
 	const bool useEconomicVersion = 
 	  m_Parameters->get("Economic Vertex Coarse Space", false);
 	m_vertexCoarseSpace = 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 	  rcp( new VertexCoarseSpace<SX,SM,LO,GO>
+#else
+	  rcp( new VertexCoarseSpace<SX,SM>
+#endif
 	       (m_Partition, m_pCommCoarse, m_numNodes, m_nodeGlobalIDs, m_nodeSend,
 		activeCoarseNodes, activeCoarseNodeGIDs, m_nodeGlobalIDsCoarse,
 		m_nodeBeginCoarse, m_localDofsCoarse, m_xCoordCoarse, m_yCoordCoarse, 
@@ -4179,7 +4287,11 @@ private:
 	(subRowBeginCoarse, subColumnsCoarse, subValuesCoarse,
 	 subRowBeginPtr, subColumnsPtr, subValuesPtr);
       m_coarsePreconditioner = 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 	rcp( new PreconditionerBDDC<SX,SM,LO,GO>
+#else
+	rcp( new PreconditionerBDDC<SX,SM>
+#endif
 	 (numNodesCoarse, nodeBeginCoarse, localDofsCoarse, 
 	  nodeGlobalIDsCoarse, xCoordCoarse, yCoordCoarse, zCoordCoarse, 
 	  *subNodesCoarse, subRowBeginPtr.data(), subColumnsPtr.data(), 
@@ -4217,7 +4329,11 @@ private:
     m_Subdomain.resize(m_numSub);
     for (LO i=0; i<m_numSub; i++) {
       m_Parameters->set("subdomain number", i);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       m_Subdomain[i] = new bddc::SubdomainBDDC<SX,SM,LO,GO>
+#else
+      m_Subdomain[i] = new bddc::SubdomainBDDC<SX,SM>
+#endif
 	(m_subNodes[i].size(), m_subNodes[i].data(), &m_subNodeBegin[i][0], 
 	 &m_subLocalDofs[i][0],
 	 &m_subRowBegin[i][0], &m_subColumns[i][0], &m_subValues[i][0],
@@ -4239,7 +4355,11 @@ private:
   {
     double startTime = GetTime();
     m_Constraints = 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       rcp( new bddc::ConstraintsBDDC<SX,SM,LO,GO>
+#else
+      rcp( new bddc::ConstraintsBDDC<SX,SM>
+#endif
 	   (m_numNodes, m_nodeBegin, m_localDofs, m_xCoord, m_yCoord, m_zCoord,
 	    m_subNodes, m_Subdomain, m_Partition, m_diagBoundary, m_Parameters) );
     m_Constraints->determineBaseConstraints();

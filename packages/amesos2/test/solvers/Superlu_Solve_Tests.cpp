@@ -120,8 +120,13 @@ namespace {
   // with a reasonably small tolerance.  While this could also produce
   // a false-positive, it is less likely.
 #define TEST_WITH_MATRIX(MATNAME, transpose)                            \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef CrsMatrix<SCALAR,LO,GO> MAT;                                  \
   typedef MultiVector<SCALAR,LO,GO> MV;                                 \
+#else
+  typedef CrsMatrix<SCALAR> MAT;                                  \
+  typedef MultiVector<SCALAR> MV;                                 \
+#endif
   typedef ScalarTraits<SCALAR> ST;                                      \
   typedef typename ST::magnitudeType Mag;                               \
   typedef ScalarTraits<Mag> MT;                                         \
@@ -134,8 +139,13 @@ namespace {
   RCP<MAT> AMat =                                                       \
     Tpetra::MatrixMarket::Reader<MAT>::readSparseFile(path,comm);       \
                                                                         \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<const Map<LO,GO> > dmnmap = AMat->getDomainMap();                 \
   RCP<const Map<LO,GO> > rngmap = AMat->getRangeMap();                  \
+#else
+  RCP<const Map<> > dmnmap = AMat->getDomainMap();                 \
+  RCP<const Map<> > rngmap = AMat->getRangeMap();                  \
+#endif
                                                                         \
   RCP<MV> X, B, Xhat;                                                   \
   if( transpose ){                                                      \
@@ -176,16 +186,32 @@ namespace {
    **************/
 
 #define SUPERLU_MATRIX_TEST_DECL(MATNAME)                               \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Superlu, MATNAME, LO, GO, SCALAR)   \
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL(Superlu, MATNAME, SCALAR)   \
+#endif
   {                                                                     \
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     string matfile = #MATNAME + string(".mtx");                         \
     TEST_WITH_MATRIX(matfile, false);                                   \
     Xhat->describe(out, Teuchos::VERB_EXTREME);                         \
     X->describe(out, Teuchos::VERB_EXTREME);                            \
   }                                                                     \
                                                                         \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Superlu, MATNAME##_trans, LO, GO, SCALAR) \
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL(Superlu, MATNAME##_trans, SCALAR) \
+#endif
   {                                                                     \
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     string matfile = #MATNAME + string(".mtx");                         \
     TEST_WITH_MATRIX(matfile, true);                                    \
     Xhat->describe(out, Teuchos::VERB_EXTREME);                         \
@@ -207,8 +233,13 @@ namespace {
 
 
 #define SUPERLU_MATRIX_TEST(MATNAME, L, G, S)                           \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT(Superlu, MATNAME, L, G, S)       \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT(Superlu, MATNAME##_trans, L, G, S)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT(Superlu, MATNAME, S)       \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT(Superlu, MATNAME##_trans, S)
+#endif
 
 
 #define ARC130_SOLVE(LO, GO, SCALAR)            \
@@ -248,7 +279,11 @@ namespace {
   // Currently, the transpose solve for complex problems is not
   // functioning, so we do just the standard solve
 #define YOUNG1C_SOLVE(LO, GO, COMPLEX)                                  \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT(Superlu, young1c, LO, GO, COMPLEX)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT(Superlu, young1c, COMPLEX)
+#endif
 
 
 

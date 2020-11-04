@@ -50,7 +50,11 @@
 
 #include <iomanip>
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 typedef stk::search::IdentProc<int,int> Ident;
+#else
+typedef stk::search::IdentProc<> Ident;
+#endif
 typedef stk::search::Point<double> Point;
 typedef stk::search::Sphere<double> Sphere;
 typedef stk::search::Box<double> StkBox;

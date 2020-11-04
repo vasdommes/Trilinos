@@ -67,17 +67,33 @@
 
 namespace MueLuTests {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(ThresholdAFilterFactory, Basic, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(ThresholdAFilterFactory, Basic, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
     Level aLevel;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<SC, LO, GO, NO>::createSingleLevelHierarchy(aLevel);
+#else
+    TestHelpers::TestFactory<SC, NO>::createSingleLevelHierarchy(aLevel);
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers::TestFactory<SC, LO, GO, NO>::Build1DPoisson(20); //can be an empty operator
+#else
+    RCP<Matrix> A = TestHelpers::TestFactory<SC, NO>::Build1DPoisson(20); //can be an empty operator
+#endif
 
     RCP<ThresholdAFilterFactory> AfilterFactory0 = rcp(new ThresholdAFilterFactory("A",0.1)); // keep all
     RCP<ThresholdAFilterFactory> AfilterFactory1 = rcp(new ThresholdAFilterFactory("A",1.1)); // keep only diagonal
@@ -113,8 +129,13 @@ namespace MueLuTests {
 
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define MUELU_ETI_GROUP(Scalar, LocalOrdinal, GlobalOrdinal, Node) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(ThresholdAFilterFactory, Basic, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+#define MUELU_ETI_GROUP(Scalar, Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(ThresholdAFilterFactory, Basic, Scalar, Node)
+#endif
 
 #include <MueLu_ETI_4arg.hpp>
 

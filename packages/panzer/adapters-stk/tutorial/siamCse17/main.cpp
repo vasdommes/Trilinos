@@ -348,7 +348,11 @@ main(
     RCP<GlobalIndexer> dofManager;
     RCP<LinearObjFactory<Traits>> linObjFactory;
     {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       DOFManagerFactory<int, int> globalIndexerFactory;
+#else
+      DOFManagerFactory<> globalIndexerFactory;
+#endif
       dofManager = globalIndexerFactory.buildGlobalIndexer(
         opaqueWrapper(MPI_COMM_WORLD), physicsBlocks, connManager);
       linObjFactory =

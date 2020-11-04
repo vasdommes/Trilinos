@@ -70,9 +70,17 @@
 
 namespace MueLuTests {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(TentativePFactory, Constructor, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(TentativePFactory, Constructor, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -85,9 +93,17 @@ namespace MueLuTests {
 
   //TODO test BuildP
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(TentativePFactory, MakeTentative_LapackQR, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(TentativePFactory, MakeTentative_LapackQR, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -95,8 +111,13 @@ namespace MueLuTests {
     using magnitude_type        = typename TST::magnitudeType;
     using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
     using real                  = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using RealValuedMultiVector = Xpetra::MultiVector<real,LO,GO,NO>;
     using test_factory          = TestHelpers::TestFactory<SC,LO,GO,NO>;
+#else
+    using RealValuedMultiVector = Xpetra::MultiVector<real,NO>;
+    using test_factory          = TestHelpers::TestFactory<SC,NO>;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
     out << "Test QR with user-supplied nullspace" << std::endl;
@@ -178,9 +199,17 @@ namespace MueLuTests {
 
   } //MakeTentative  Lapack QR
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(TentativePFactory, MakeTentative, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(TentativePFactory, MakeTentative, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -188,8 +217,13 @@ namespace MueLuTests {
     using magnitude_type        = typename TST::magnitudeType;
     using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
     using real                  = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using RealValuedMultiVector = Xpetra::MultiVector<real,LO,GO,NO>;
     using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+    using RealValuedMultiVector = Xpetra::MultiVector<real,NO>;
+    using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
     out << "Test QR with user-supplied nullspace" << std::endl;
@@ -263,8 +297,13 @@ namespace MueLuTests {
     }
 
     // check normalization and orthogonality of prolongator columns
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Multiply(*Ptent,true,*Ptent,false,out);
     Teuchos::RCP<Xpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> > diagVec = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(PtentTPtent->getRowMap());
+#else
+    Teuchos::RCP<Xpetra::Matrix<Scalar,Node> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,Node>::Multiply(*Ptent,true,*Ptent,false,out);
+    Teuchos::RCP<Xpetra::Vector<Scalar,Node> > diagVec = Xpetra::VectorFactory<Scalar,Node>::Build(PtentTPtent->getRowMap());
+#endif
     PtentTPtent->getLocalDiagCopy(*diagVec);
     if (TST::name().find("complex") == std::string::npos) //skip check for Scalar=complex
       TEST_EQUALITY(diagVec->norm1(), diagVec->getGlobalLength());
@@ -275,9 +314,17 @@ namespace MueLuTests {
 
   } //MakeTentative
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(TentativePFactory, MakeTentativeUsingDefaultNullSpace, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(TentativePFactory, MakeTentativeUsingDefaultNullSpace, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -285,8 +332,13 @@ namespace MueLuTests {
     using magnitude_type        = typename TST::magnitudeType;
     using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
     using real                  = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using RealValuedMultiVector = Xpetra::MultiVector<real,LO,GO,NO>;
     using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+    using RealValuedMultiVector = Xpetra::MultiVector<real,NO>;
+    using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
     out << "Test QR when nullspace isn't supplied by user" << std::endl;
@@ -344,9 +396,17 @@ namespace MueLuTests {
 
   } //MakeTentativeUsingDefaultNullSpace
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(TentativePFactory, NoQROption, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(TentativePFactory, NoQROption, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -354,8 +414,13 @@ namespace MueLuTests {
     using magnitude_type        = typename TST::magnitudeType;
     using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
     using real                  = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using RealValuedMultiVector = Xpetra::MultiVector<real,LO,GO,NO>;
     using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+    using RealValuedMultiVector = Xpetra::MultiVector<real,NO>;
+    using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
     out << "Test option that skips local QR factorizations" << std::endl;
@@ -367,9 +432,17 @@ namespace MueLuTests {
     galeriList.set("nx", nx);
     galeriList.set("ny", ny);
     RCP<const Teuchos::Comm<int> > comm = TestHelpers::Parameters::getDefaultComm();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map> map = Galeri::Xpetra::CreateMap<LocalOrdinal, GlobalOrdinal, Node>(TestHelpers::Parameters::getLib(), "Cartesian2D", comm, galeriList);
+#else
+    RCP<const Map> map = Galeri::Xpetra::CreateMap<Node>(TestHelpers::Parameters::getLib(), "Cartesian2D", comm, galeriList);
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     map = Xpetra::MapFactory<LocalOrdinal,GlobalOrdinal,Node>::Build(map, 2); //expand map for 2 DOFs per node
+#else
+    map = Xpetra::MapFactory<Node>::Build(map, 2); //expand map for 2 DOFs per node
+#endif
 
     galeriList.set("right boundary" , "Neumann");
     galeriList.set("bottom boundary", "Neumann");
@@ -447,9 +520,17 @@ namespace MueLuTests {
 
   } //NoQR
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(TentativePFactory, ConstantColumnSum, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(TentativePFactory, ConstantColumnSum, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -457,8 +538,13 @@ namespace MueLuTests {
     using magnitude_type        = typename TST::magnitudeType;
     using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
     using real                  = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using RealValuedMultiVector = Xpetra::MultiVector<real,LO,GO,NO>;
     using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+    using RealValuedMultiVector = Xpetra::MultiVector<real,NO>;
+    using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
     out << "Test option that skips local QR factorizations & uses constant column sum" << std::endl;
@@ -470,9 +556,17 @@ namespace MueLuTests {
     galeriList.set("nx", nx);
     galeriList.set("ny", ny);
     RCP<const Teuchos::Comm<int> > comm = TestHelpers::Parameters::getDefaultComm();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map> map = Galeri::Xpetra::CreateMap<LocalOrdinal, GlobalOrdinal, Node>(TestHelpers::Parameters::getLib(), "Cartesian2D", comm, galeriList);
+#else
+    RCP<const Map> map = Galeri::Xpetra::CreateMap<Node>(TestHelpers::Parameters::getLib(), "Cartesian2D", comm, galeriList);
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     map = Xpetra::MapFactory<LocalOrdinal,GlobalOrdinal,Node>::Build(map, 1);
+#else
+    map = Xpetra::MapFactory<Node>::Build(map, 1);
+#endif
 
     galeriList.set("right boundary" , "Neumann");
     galeriList.set("bottom boundary", "Neumann");
@@ -532,8 +626,16 @@ namespace MueLuTests {
   } //ConstColSum
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(TentativePFactory, NonStandardMaps, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(TentativePFactory, NonStandardMaps, Scalar, Node)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     //#warning Unit test PgPFactory NonStandardMaps disabled
     //  return;
 #   include "MueLu_UseShortNames.hpp"
@@ -721,9 +823,17 @@ namespace MueLuTests {
 
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(TentativePFactory, PtentEpetraVsTpetra, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(TentativePFactory, PtentEpetraVsTpetra, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_EPETRA_SCOPE_TPETRA_IS_DEFAULT(Scalar,GlobalOrdinal,Node);
 #if defined(HAVE_MUELU_TPETRA) && defined(HAVE_MUELU_EPETRA) && defined(HAVE_MUELU_EPETRAEXT) && defined(HAVE_MUELU_IFPACK) && defined(HAVE_MUELU_IFPACK2)
@@ -732,7 +842,11 @@ namespace MueLuTests {
     using magnitude_type = typename Teuchos::ScalarTraits<Scalar>::magnitudeType;
     using TMT            = Teuchos::ScalarTraits<magnitude_type>;
     using real           = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Xpetra::MultiVector<real,LO,GO,NO> RealValuedMultiVector;
+#else
+    typedef Xpetra::MultiVector<real,NO> RealValuedMultiVector;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
     out << "Test QR when nullspace isn't supplied by user" << std::endl;
@@ -834,8 +948,13 @@ namespace MueLuTests {
         TEST_EQUALITY(R2->getGlobalNumRows(), 7);
         TEST_EQUALITY(R2->getGlobalNumCols(), 21);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Multiply(*P1,true,*P1,false,out);
         Teuchos::RCP<Xpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> > diagVec = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(PtentTPtent->getRowMap());
+#else
+        Teuchos::RCP<Xpetra::Matrix<Scalar,Node> > PtentTPtent = Xpetra::MatrixMatrix<Scalar,Node>::Multiply(*P1,true,*P1,false,out);
+        Teuchos::RCP<Xpetra::Vector<Scalar,Node> > diagVec = Xpetra::VectorFactory<Scalar,Node>::Build(PtentTPtent->getRowMap());
+#endif
         PtentTPtent->getLocalDiagCopy(*diagVec);
         TEST_EQUALITY(diagVec->norm1()-diagVec->getGlobalLength() < 100*TMT::eps(), true);
         TEST_EQUALITY(diagVec->normInf()-TMT::one() < 100*TMT::eps(), true);
@@ -875,6 +994,7 @@ namespace MueLuTests {
 
   } // TentativePFactory_EpetraVsTpetra
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #  define MUELU_ETI_GROUP(Scalar, LO, GO, Node) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(TentativePFactory,Constructor,Scalar,LO,GO,Node) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(TentativePFactory,MakeTentative_LapackQR,Scalar,LO,GO,Node) \
@@ -884,6 +1004,17 @@ namespace MueLuTests {
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(TentativePFactory,ConstantColumnSum,Scalar,LO,GO,Node) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(TentativePFactory,NonStandardMaps,Scalar,LO,GO,Node) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(TentativePFactory,PtentEpetraVsTpetra,Scalar,LO,GO,Node)
+#else
+#  define MUELU_ETI_GROUP(Scalar, Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(TentativePFactory,Constructor,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(TentativePFactory,MakeTentative_LapackQR,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(TentativePFactory,MakeTentative,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(TentativePFactory,MakeTentativeUsingDefaultNullSpace,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(TentativePFactory,NoQROption,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(TentativePFactory,ConstantColumnSum,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(TentativePFactory,NonStandardMaps,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(TentativePFactory,PtentEpetraVsTpetra,Scalar,Node)
+#endif
 
 #include <MueLu_ETI_4arg.hpp>
 

@@ -54,8 +54,16 @@ namespace {
   // input mesh Map on a process, and if the block size is b, then the
   // GID g_point := g_mesh * b must be in the output point Map on that
   // process.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( BlockMap, HilbertsHotel, Scalar, LO, GO, Node )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( BlockMap, HilbertsHotel, Scalar, Node )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     using Teuchos::Array;
     using Teuchos::ArrayView;
     using Teuchos::Comm;
@@ -63,8 +71,13 @@ namespace {
     using Teuchos::REDUCE_MIN;
     using Teuchos::reduceAll;
     using Teuchos::RCP;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::BlockMultiVector<Scalar, LO, GO, Node> BMV;
     typedef Tpetra::Map<LO, GO, Node> map_type;
+#else
+    typedef Tpetra::BlockMultiVector<Scalar, Node> BMV;
+    typedef Tpetra::Map<Node> map_type;
+#endif
     typedef Tpetra::global_size_t GST;
     typedef typename Array<GO>::size_type size_type;
 
@@ -188,8 +201,13 @@ namespace {
 // INSTANTIATIONS
 //
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define UNIT_TEST_GROUP( SCALAR, LO, GO, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( BlockMap, HilbertsHotel, SCALAR, LO, GO, NODE )
+#else
+#define UNIT_TEST_GROUP( SCALAR, NODE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( BlockMap, HilbertsHotel, SCALAR, NODE )
+#endif
 
   TPETRA_ETI_MANGLING_TYPEDEFS()
 

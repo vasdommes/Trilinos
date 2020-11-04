@@ -527,10 +527,18 @@ int fei::MatrixGraph_Impl2::initConnectivity(int blockID,
 
   if (rowSpace_.get() == NULL) ERReturn(-1);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>& connectivityIDs = connblk->getConnectivityIDs();
+#else
+  std::map<>& connectivityIDs = connblk->getConnectivityIDs();
+#endif
 
   int idOffset = -1;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::iterator
+#else
+  std::map<>::iterator
+#endif
    iter = connectivityIDs.find(connectivityID);
   if (iter == connectivityIDs.end()) {
     idOffset = connectivityIDs.size();
@@ -779,10 +787,18 @@ int fei::MatrixGraph_Impl2::initConnectivity(int blockID,
     ERReturn(-1);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>& connectivityIDs = connblk->getConnectivityIDs();
+#else
+  std::map<>& connectivityIDs = connblk->getConnectivityIDs();
+#endif
 
   int i, idOffset = -1;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::iterator
+#else
+  std::map<>::iterator
+#endif
     iter = connectivityIDs.find(connectivityID);
   if (iter == connectivityIDs.end()) {
     idOffset = connectivityIDs.size();
@@ -2090,10 +2106,18 @@ int fei::MatrixGraph_Impl2::addBlockToGraph_multiField_symmetric(fei::Graph* gra
                                           colSpace_.get());
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>& connIDs = cblock->getConnectivityIDs();
+#else
+  std::map<>& connIDs = cblock->getConnectivityIDs();
+#endif
   std::vector<int>& values = cblock->getRowConnectivities();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::iterator
+#else
+  std::map<>::iterator
+#endif
     c_iter = connIDs.begin(),
     c_end  = connIDs.end();
 
@@ -2200,11 +2224,19 @@ int fei::MatrixGraph_Impl2::addBlockToGraph_multiField_nonsymmetric(fei::Graph* 
                                            colSpace_.get());
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>& connIDs = cblock->getConnectivityIDs();
+#else
+  std::map<>& connIDs = cblock->getConnectivityIDs();
+#endif
   std::vector<int>& rowrecords = cblock->getRowConnectivities();
   std::vector<int>& colrecords = cblock->getColConnectivities();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::iterator
+#else
+  std::map<>::iterator
+#endif
    c_iter = connIDs.begin(),
    c_end  = connIDs.end();
 
@@ -2317,10 +2349,18 @@ int fei::MatrixGraph_Impl2::addBlockToGraph_singleField_symmetric(fei::Graph* gr
   unsigned fieldSize = snl_fei::getFieldSize(fieldID, rowSpace_.get(),
                                              colSpace_.get());
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>& connIDs = cblock->getConnectivityIDs();
+#else
+  std::map<>& connIDs = cblock->getConnectivityIDs();
+#endif
   std::vector<int>& rowrecords = cblock->getRowConnectivities();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::iterator
+#else
+  std::map<>::iterator
+#endif
     c_iter = connIDs.begin(),
     c_end  = connIDs.end();
 
@@ -2396,7 +2436,11 @@ int fei::MatrixGraph_Impl2::addBlockToGraph_singleField_nonsymmetric(fei::Graph*
   int rowFieldSize = snl_fei::getFieldSize(rowFieldID, rowSpace_.get(),
                                            colSpace_.get());
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>& connIDs = cblock->getConnectivityIDs();
+#else
+  std::map<>& connIDs = cblock->getConnectivityIDs();
+#endif
   std::vector<int>& rowrecords = cblock->getRowConnectivities();
   std::vector<int>& colrecords = cblock->getColConnectivities();
 
@@ -2404,7 +2448,11 @@ int fei::MatrixGraph_Impl2::addBlockToGraph_singleField_nonsymmetric(fei::Graph*
   int colFieldSize = snl_fei::getFieldSize(colFieldID, rowSpace_.get(),
                                            colSpace_.get());
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::iterator
+#else
+  std::map<>::iterator
+#endif
     c_iter = connIDs.begin(),
     c_end  = connIDs.end();
 
@@ -2533,10 +2581,18 @@ int fei::MatrixGraph_Impl2::addBlockToGraph_noField_symmetric(fei::Graph* graph,
   std::vector<int> indices(numIndices);
   int* indicesPtr = &indices[0];
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>& connIDs = cblock->getConnectivityIDs();
+#else
+  std::map<>& connIDs = cblock->getConnectivityIDs();
+#endif
   std::vector<int>& rowrecords = cblock->getRowConnectivities();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::iterator
+#else
+  std::map<>::iterator
+#endif
     c_iter = connIDs.begin(),
     c_end  = connIDs.end();
 
@@ -2584,7 +2640,11 @@ int fei::MatrixGraph_Impl2::addBlockToGraph_sparse(fei::Graph* graph,
   fei::Pattern* pattern = cblock->getRowPattern();
   const snl_fei::RecordCollection*const* recordCollections = pattern->getRecordCollections();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>& connIDs = cblock->getConnectivityIDs();
+#else
+  std::map<>& connIDs = cblock->getConnectivityIDs();
+#endif
   std::vector<int>& connOffsets = cblock->getConnectivityOffsets();
   int* rowrecords = &(cblock->getRowConnectivities()[0]);
   int* colrecords = &(cblock->getColConnectivities()[0]);
@@ -2597,7 +2657,11 @@ int fei::MatrixGraph_Impl2::addBlockToGraph_sparse(fei::Graph* graph,
                                       colSpace_.get());
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::iterator
+#else
+  std::map<>::iterator
+#endif
     c_iter = connIDs.begin(),
     c_end  = connIDs.end();
 

@@ -55,9 +55,17 @@
 
 namespace MueLuTests {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(NotayAggregation, InitialAggregation1D, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(NotayAggregation, InitialAggregation1D, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -66,13 +74,21 @@ namespace MueLuTests {
     //    using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
     //    using real_type             = typename TST::coordinateType;
     //    using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using test_factory          = TestHelpers_kokkos::TestFactory<SC, LO, GO, NO>;
+#else
+    using test_factory          = TestHelpers_kokkos::TestFactory<SC, NO>;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
     RCP<const Teuchos::Comm<int> > comm = TestHelpers_kokkos::Parameters::getDefaultComm();
     int rank = comm->getRank();
     int numproc = comm->getSize();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Matrix> A = TestHelpers_kokkos::TestFactory<SC, LO, GO, NO>::Build1DPoisson(16*comm->getSize());
+#else
+    RCP<const Matrix> A = TestHelpers_kokkos::TestFactory<SC, NO>::Build1DPoisson(16*comm->getSize());
+#endif
     const int numRows = static_cast<int>(A->getNodeNumRows());
     RCP<Aggregates> aggregates = rcp(new Aggregates(A->getMap()));
     RCP<NotayAggregationFactory> NAF = rcp(new NotayAggregationFactory());
@@ -123,9 +139,17 @@ namespace MueLuTests {
 
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(NotayAggregation, InitialAggregation2D, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(NotayAggregation, InitialAggregation2D, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -134,7 +158,11 @@ namespace MueLuTests {
     //    using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
     //    using real_type             = typename TST::coordinateType;
     //    using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using test_factory          = TestHelpers_kokkos::TestFactory<SC, LO, GO, NO>;
+#else
+    using test_factory          = TestHelpers_kokkos::TestFactory<SC, NO>;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
     RCP<const Teuchos::Comm<int> > comm = TestHelpers_kokkos::Parameters::getDefaultComm();
@@ -152,7 +180,11 @@ namespace MueLuTests {
     mp.set("b",-0.1);  mp.set("c",-0.1);
     mp.set("d",-1.0); mp.set("e",-1.0);
     mp.set("z1",0.0);  mp.set("z2",0.0);  mp.set("z3",0.0);  mp.set("z4",0.0);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Matrix> A = TestHelpers_kokkos::TestFactory<SC, LO, GO, NO>::BuildMatrix(mp,lib);
+#else
+    RCP<const Matrix> A = TestHelpers_kokkos::TestFactory<SC, NO>::BuildMatrix(mp,lib);
+#endif
     const int numRows = static_cast<int>(A->getNodeNumRows());
 
     RCP<Aggregates> aggregates = rcp(new Aggregates(A->getMap()));
@@ -204,9 +236,17 @@ namespace MueLuTests {
   } // InitialAggregation2D
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(NotayAggregation, IntermediateProlongator2D, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(NotayAggregation, IntermediateProlongator2D, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -215,7 +255,11 @@ namespace MueLuTests {
     //    using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
     //    using real_type             = typename TST::coordinateType;
     //    using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using test_factory          = TestHelpers_kokkos::TestFactory<SC, LO, GO, NO>;
+#else
+    using test_factory          = TestHelpers_kokkos::TestFactory<SC, NO>;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
     RCP<const Teuchos::Comm<int> > comm = TestHelpers_kokkos::Parameters::getDefaultComm();
@@ -231,7 +275,11 @@ namespace MueLuTests {
     mp.set("b",-0.1);  mp.set("c",-0.1);
     mp.set("d",-1.0); mp.set("e",-1.0);
     mp.set("z1",0.0);  mp.set("z2",0.0);  mp.set("z3",0.0);  mp.set("z4",0.0);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Matrix> A = TestHelpers_kokkos::TestFactory<SC, LO, GO, NO>::BuildMatrix(mp,lib);
+#else
+    RCP<const Matrix> A = TestHelpers_kokkos::TestFactory<SC, NO>::BuildMatrix(mp,lib);
+#endif
     const int numRows = static_cast<int>(A->getNodeNumRows());
 
     RCP<Aggregates> aggregates = rcp(new Aggregates(A->getMap()));
@@ -266,13 +314,25 @@ namespace MueLuTests {
   } // IntermediateProlongator2D
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(NotayAggregation, CoarseLocalMatrix2D, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(NotayAggregation, CoarseLocalMatrix2D, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using test_factory          = TestHelpers_kokkos::TestFactory<SC, LO, GO, NO>;
+#else
+    using test_factory          = TestHelpers_kokkos::TestFactory<SC, NO>;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
     RCP<const Teuchos::Comm<int> > comm = TestHelpers_kokkos::Parameters::getDefaultComm();
@@ -288,7 +348,11 @@ namespace MueLuTests {
     mp.set("b", -0.1); mp.set("c", -0.1);
     mp.set("d", -1.0); mp.set("e", -1.0);
     mp.set("z1", 0.0); mp.set("z2", 0.0);  mp.set("z3", 0.0);  mp.set("z4", 0.0);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Matrix> A = TestHelpers_kokkos::TestFactory<SC, LO, GO, NO>::BuildMatrix(mp,lib);
+#else
+    RCP<const Matrix> A = TestHelpers_kokkos::TestFactory<SC, NO>::BuildMatrix(mp,lib);
+#endif
     const int numRows = static_cast<int>(A->getNodeNumRows());
 
     RCP<Aggregates> aggregates = rcp(new Aggregates(A->getMap()));
@@ -324,13 +388,25 @@ namespace MueLuTests {
   } // CoarseLocalMatrix2D
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(NotayAggregation, BuildNotayAggregates2D, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(NotayAggregation, BuildNotayAggregates2D, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using test_factory          = TestHelpers_kokkos::TestFactory<SC, LO, GO, NO>;
+#else
+    using test_factory          = TestHelpers_kokkos::TestFactory<SC, NO>;
+#endif
 
     out << "version: " << MueLu::Version() << std::endl;
     RCP<const Teuchos::Comm<int> > comm = TestHelpers_kokkos::Parameters::getDefaultComm();
@@ -346,7 +422,11 @@ namespace MueLuTests {
     mp.set("b",-0.1);  mp.set("c",-0.1);
     mp.set("d",-1.0); mp.set("e",-1.0);
     mp.set("z1",0.0);  mp.set("z2",0.0);  mp.set("z3",0.0);  mp.set("z4",0.0);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers_kokkos::TestFactory<SC, LO, GO, NO>::BuildMatrix(mp,lib);
+#else
+    RCP<Matrix> A = TestHelpers_kokkos::TestFactory<SC, NO>::BuildMatrix(mp,lib);
+#endif
 
     // Use default ordering
     {
@@ -454,12 +534,21 @@ namespace MueLuTests {
 
   } // BuildNotayAggregates2D
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #  define MUELU_ETI_GROUP(Scalar, LO, GO, Node) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(NotayAggregation,InitialAggregation1D,Scalar,LO,GO,Node) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(NotayAggregation,InitialAggregation2D,Scalar,LO,GO,Node) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(NotayAggregation,IntermediateProlongator2D,Scalar,LO,GO,Node) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(NotayAggregation,CoarseLocalMatrix2D,Scalar,LO,GO,Node) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(NotayAggregation,BuildNotayAggregates2D,Scalar,LO,GO,Node)
+#else
+#  define MUELU_ETI_GROUP(Scalar, Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(NotayAggregation,InitialAggregation1D,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(NotayAggregation,InitialAggregation2D,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(NotayAggregation,IntermediateProlongator2D,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(NotayAggregation,CoarseLocalMatrix2D,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(NotayAggregation,BuildNotayAggregates2D,Scalar,Node)
+#endif
 
 
 #include <MueLu_ETI_4arg.hpp>

@@ -55,17 +55,33 @@
 
 namespace MueLuTests {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoarseMap_kokkos, StandardCase, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(CoarseMap_kokkos, StandardCase, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,NO);
     out << "version: " << MueLu::Version() << std::endl;
 
     Level fineLevel;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers_kokkos::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(fineLevel);
+#else
+    TestHelpers_kokkos::TestFactory<SC,NO>::createSingleLevelHierarchy(fineLevel);
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers_kokkos::TestFactory<SC, LO, GO, NO>::Build1DPoisson(15);
+#else
+    RCP<Matrix> A = TestHelpers_kokkos::TestFactory<SC, NO>::Build1DPoisson(15);
+#endif
     fineLevel.Set("A", A);
 
     // build dummy aggregate structure
@@ -91,8 +107,13 @@ namespace MueLuTests {
     TEST_EQUALITY(myCoarseMap->getMaxLocalIndex()     == 9, true);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define MUELU_ETI_GROUP(SC,LO,GO,NO) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(CoarseMap_kokkos, StandardCase, SC, LO, GO, NO)
+#else
+#define MUELU_ETI_GROUP(SC,NO) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(CoarseMap_kokkos, StandardCase, SC, NO)
+#endif
 
 #include <MueLu_ETI_4arg.hpp>
 

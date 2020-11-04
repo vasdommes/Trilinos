@@ -177,12 +177,22 @@ Toperator( OriginalTypeRef orig  )
     std::vector<int> rowOrder( nCols );
     if( reordering_ == 0 || reordering_ == 1 )
     {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       std::multimap<int,int> adjMap;
       typedef std::multimap<int,int>::value_type adjMapValueType;
+#else
+      std::multimap<> adjMap;
+      typedef std::multimap<>::value_type adjMapValueType;
+#endif
       for( int i = 0; i < nCols; ++i )
         adjMap.insert( adjMapValueType( Adj2->NumMyIndices(i), i ) );
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       std::multimap<int,int>::iterator iter = adjMap.begin();
       std::multimap<int,int>::iterator end = adjMap.end();
+#else
+      std::multimap<>::iterator iter = adjMap.begin();
+      std::multimap<>::iterator end = adjMap.end();
+#endif
       if( reordering_ == 0 ) //largest first (less colors)
       {
         for( int i = 1; iter != end; ++iter, ++i )
@@ -587,12 +597,22 @@ Toperator( OriginalTypeRef orig  )
     std::vector<int> rowOrder( nRows );
     if( reordering_ == 0 || reordering_ == 1 )
     {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       std::multimap<int,int> adjMap;
       typedef std::multimap<int,int>::value_type adjMapValueType;
+#else
+      std::multimap<> adjMap;
+      typedef std::multimap<>::value_type adjMapValueType;
+#endif
       for( int i = 0; i < nRows; ++i )
         adjMap.insert( adjMapValueType( Adj2->NumMyIndices(i), i ) );
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       std::multimap<int,int>::iterator iter = adjMap.begin();
       std::multimap<int,int>::iterator end = adjMap.end();
+#else
+      std::multimap<>::iterator iter = adjMap.begin();
+      std::multimap<>::iterator end = adjMap.end();
+#endif
       if( reordering_ == 0 ) //largest first (less colors)
       {
         for( int i = 1; iter != end; ++iter, ++i )

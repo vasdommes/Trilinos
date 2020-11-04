@@ -76,10 +76,19 @@ namespace Details {
 ///    - X's underlying view is up-to-date in Device::memory_space.
 template<class SC, class LO, class GO, class NT, class ResultView, class memory_space>
 void idotLocal(const ResultView& localResult,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                const ::Tpetra::MultiVector<SC, LO, GO, NT>& X,
                const ::Tpetra::MultiVector<SC, LO, GO, NT>& Y)
+#else
+               const ::Tpetra::MultiVector<SC, NT>& X,
+               const ::Tpetra::MultiVector<SC, NT>& Y)
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using MV = ::Tpetra::MultiVector<SC, LO, GO, NT>;
+#else
+  using MV = ::Tpetra::MultiVector<SC, NT>;
+#endif
   using dot_type = typename MV::dot_type;
   using dual_view_type = typename MV::dual_view_type;
   using dev_mem_space = typename dual_view_type::t_dev::memory_space;
@@ -177,11 +186,20 @@ void idotLocal(const ResultView& localResult,
 template<class SC, class LO, class GO, class NT, class ResultView>
 void blockingDotImpl(
     const ResultView& globalResult,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     const ::Tpetra::MultiVector<SC, LO, GO, NT>& X,
     const ::Tpetra::MultiVector<SC, LO, GO, NT>& Y,
+#else
+    const ::Tpetra::MultiVector<SC, NT>& X,
+    const ::Tpetra::MultiVector<SC, NT>& Y,
+#endif
     bool mpiReduceInPlace)
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using MV = ::Tpetra::MultiVector<SC, LO, GO, NT>;
+#else
+  using MV = ::Tpetra::MultiVector<SC, NT>;
+#endif
   using dot_type = typename MV::dot_type;
   using result_dev_view_type = Kokkos::View<dot_type*, typename NT::device_type>;
   using result_mirror_view_type = typename result_dev_view_type::HostMirror;
@@ -197,13 +215,21 @@ void blockingDotImpl(
     //compute local result on host.
     //NOTE: UVM never takes this branch because then dev_mem_space == mirror_mem_space.
     //This means that the dot is actually computed on host.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     idotLocal<SC, LO, GO, NT, result_host_view_type, mirror_mem_space>(localHostResult, X, Y);
+#else
+    idotLocal<SC, NT, result_host_view_type, mirror_mem_space>(localHostResult, X, Y);
+#endif
   }
   else
   {
     //compute local result on temporary device view, then copy that to host.
     result_dev_view_type localDeviceResult(Kokkos::ViewAllocateWithoutInitializing("DeviceLocalDotResult"), numVecs);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     idotLocal<SC, LO, GO, NT, result_dev_view_type, dev_mem_space>(localDeviceResult, X, Y);
+#else
+    idotLocal<SC, NT, result_dev_view_type, dev_mem_space>(localDeviceResult, X, Y);
+#endif
     //NOTE: no fence is required: deep_copy will fence.
     Kokkos::deep_copy(localHostResult, localDeviceResult);
   }
@@ -232,10 +258,19 @@ void blockingDotImpl(
 template<class SC, class LO, class GO, class NT, class ResultView>
 std::shared_ptr< ::Tpetra::Details::CommRequest>
 idotImpl(const ResultView& globalResult,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
          const ::Tpetra::MultiVector<SC, LO, GO, NT>& X,
          const ::Tpetra::MultiVector<SC, LO, GO, NT>& Y)
+#else
+         const ::Tpetra::MultiVector<SC, NT>& X,
+         const ::Tpetra::MultiVector<SC, NT>& Y)
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using MV = ::Tpetra::MultiVector<SC, LO, GO, NT>;
+#else
+  using MV = ::Tpetra::MultiVector<SC, NT>;
+#endif
   using dot_type = typename MV::dot_type;
   using global_result_memspace = typename ResultView::memory_space;
   using result_dev_view_type = Kokkos::View<dot_type*, typename NT::device_type>;
@@ -263,7 +298,11 @@ idotImpl(const ResultView& globalResult,
      (std::is_same<global_result_memspace, Kokkos::CudaSpace>::value || 
      std::is_same<global_result_memspace, Kokkos::CudaUVMSpace>::value))
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     blockingDotImpl<SC, LO, GO, NT, ResultView>(globalResult, X, Y, mpiReduceInPlace);
+#else
+    blockingDotImpl<SC, NT, ResultView>(globalResult, X, Y, mpiReduceInPlace);
+#endif
     return Tpetra::Details::Impl::emptyCommRequest();
   }
 #endif
@@ -287,7 +326,11 @@ idotImpl(const ResultView& globalResult,
     }
     else
       nonowningLocalResult = unmanaged_result_host_view_type(globalResult.data(), numVecs);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     idotLocal<SC, LO, GO, NT, unmanaged_result_host_view_type, mirror_mem_space>(nonowningLocalResult, X, Y);
+#else
+    idotLocal<SC, NT, unmanaged_result_host_view_type, mirror_mem_space>(nonowningLocalResult, X, Y);
+#endif
     return iallreduce(nonowningLocalResult, globalResult, ::Teuchos::REDUCE_SUM, *comm);
   }
   else {
@@ -300,7 +343,11 @@ idotImpl(const ResultView& globalResult,
     }
     else
       nonowningLocalResult = unmanaged_result_dev_view_type(globalResult.data(), numVecs);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     idotLocal<SC, LO, GO, NT, unmanaged_result_dev_view_type, dev_mem_space>(nonowningLocalResult, X, Y);
+#else
+    idotLocal<SC, NT, unmanaged_result_dev_view_type, dev_mem_space>(nonowningLocalResult, X, Y);
+#endif
     //If MPI not CUDA-aware, must copy local result to HostSpace before iallreduce.
     //That view will persistent in the CommRequest, and localResult won't.
     bool communicateFromHost = false;
@@ -380,18 +427,36 @@ idotImpl(const ResultView& globalResult,
 /// or Stokhos packages, \c dot_type may be a different type.  Most
 /// users should not have to worry about this, but Tpetra developers
 /// may need to worry about this.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class SC, class LO, class GO, class NT>
+#else
+template<class SC, class NT>
+#endif
 std::shared_ptr< ::Tpetra::Details::CommRequest>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 idot (typename ::Tpetra::MultiVector<SC, LO, GO, NT>::dot_type* resultRaw,
       const ::Tpetra::MultiVector<SC, LO, GO, NT>& X,
       const ::Tpetra::MultiVector<SC, LO, GO, NT>& Y)
+#else
+idot (typename ::Tpetra::MultiVector<SC, NT>::dot_type* resultRaw,
+      const ::Tpetra::MultiVector<SC, NT>& X,
+      const ::Tpetra::MultiVector<SC, NT>& Y)
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using dot_type = typename ::Tpetra::Vector<SC, LO, GO, NT>::dot_type;
+#else
+  using dot_type = typename ::Tpetra::Vector<SC, NT>::dot_type;
+#endif
   const size_t X_numVecs = X.getNumVectors ();
   const size_t Y_numVecs = Y.getNumVectors ();
   const size_t numVecs = (X_numVecs > Y_numVecs) ? X_numVecs : Y_numVecs;
   Kokkos::View<dot_type*, Kokkos::HostSpace> resultView(resultRaw, numVecs);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   return Details::idotImpl<SC,LO,GO,NT>(resultView, X, Y);
+#else
+  return Details::idotImpl<SC,NT>(resultView, X, Y);
+#endif
 }
 
 /// \brief Nonblocking dot product, with Tpetra::MultiVector inputs,
@@ -456,14 +521,29 @@ idot (typename ::Tpetra::MultiVector<SC, LO, GO, NT>::dot_type* resultRaw,
 /// found in the Sacado or Stokhos packages, \c dot_type may be a
 /// different type.  Most users should not have to worry about this,
 /// but Tpetra developers may need to worry about this.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class SC, class LO, class GO, class NT>
+#else
+template<class SC, class NT>
+#endif
 std::shared_ptr< ::Tpetra::Details::CommRequest>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 idot (const Kokkos::View<typename ::Tpetra::MultiVector<SC, LO, GO, NT>::dot_type*,
         typename ::Tpetra::MultiVector<SC, LO, GO, NT>::device_type>& result,
       const ::Tpetra::MultiVector<SC, LO, GO, NT>& X,
       const ::Tpetra::MultiVector<SC, LO, GO, NT>& Y)
+#else
+idot (const Kokkos::View<typename ::Tpetra::MultiVector<SC, NT>::dot_type*,
+        typename ::Tpetra::MultiVector<SC, NT>::device_type>& result,
+      const ::Tpetra::MultiVector<SC, NT>& X,
+      const ::Tpetra::MultiVector<SC, NT>& Y)
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   return Details::idotImpl<SC,LO,GO,NT>(result, X, Y);
+#else
+  return Details::idotImpl<SC,NT>(result, X, Y);
+#endif
 }
 
 /// \brief Nonblocking dot product, with Tpetra::Vector inputs, and
@@ -507,17 +587,37 @@ idot (const Kokkos::View<typename ::Tpetra::MultiVector<SC, LO, GO, NT>::dot_typ
 /// found in the Sacado or Stokhos packages, \c dot_type may be a
 /// different type.  Most users should not have to worry about this,
 /// but Tpetra developers may need to worry about this.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class SC, class LO, class GO, class NT>
+#else
+template<class SC, class NT>
+#endif
 std::shared_ptr< ::Tpetra::Details::CommRequest>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 idot (const Kokkos::View<typename ::Tpetra::Vector<SC, LO, GO, NT>::dot_type,
         typename ::Tpetra::Vector<SC, LO, GO, NT>::device_type>& result,
       const ::Tpetra::Vector<SC, LO, GO, NT>& X,
       const ::Tpetra::Vector<SC, LO, GO, NT>& Y)
+#else
+idot (const Kokkos::View<typename ::Tpetra::Vector<SC, NT>::dot_type,
+        typename ::Tpetra::Vector<SC, NT>::device_type>& result,
+      const ::Tpetra::Vector<SC, NT>& X,
+      const ::Tpetra::Vector<SC, NT>& Y)
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using dot_type = typename ::Tpetra::Vector<SC, LO, GO, NT>::dot_type;
   using result_device_t = typename ::Tpetra::Vector<SC, LO, GO, NT>::device_type;
+#else
+  using dot_type = typename ::Tpetra::Vector<SC, NT>::dot_type;
+  using result_device_t = typename ::Tpetra::Vector<SC, NT>::device_type;
+#endif
   Kokkos::View<dot_type*, result_device_t, Kokkos::MemoryTraits<Kokkos::Unmanaged>> result1D(result.data(), 1);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   return Details::idotImpl<SC,LO,GO,NT>(result1D, X, Y);
+#else
+  return Details::idotImpl<SC,NT>(result1D, X, Y);
+#endif
 }
 
 } // namespace Tpetra

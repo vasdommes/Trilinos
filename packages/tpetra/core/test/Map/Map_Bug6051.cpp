@@ -69,9 +69,18 @@ namespace {
 
   // If shared, GID goes to rank GID%2.  If not shared (e.g.,
   // pid_and_lid.size()==1), do not change PID assignment.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <typename LO, typename GO>
   class ModTwoTieBreak : public Tpetra::Details::TieBreak<LO, GO> {
+#else
+
+  class ModTwoTieBreak : public Tpetra::Details::TieBreak<> {
+#endif
   public:
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     std::size_t
     selectedIndex (GO GID,
                    const std::vector<std::pair<int,LO> > & pid_and_lid) const
@@ -130,8 +139,13 @@ namespace {
                     indexBase, comm));
 
     out << "Calling createOneToOne" << endl;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     ModTwoTieBreak<LO,GO> tie_break;
     RCP<const Map> new_map = Tpetra::createOneToOne<LO,GO,NT> (map, tie_break);
+#else
+    ModTwoTieBreak<> tie_break;
+    RCP<const Map> new_map = Tpetra::createOneToOne<NT> (map, tie_break);
+#endif
 
     out << "Print the new map" << endl;
     // The "Teuchos::" stuff turns std::cout into a FancyOStream.

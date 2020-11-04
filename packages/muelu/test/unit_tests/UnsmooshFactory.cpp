@@ -64,9 +64,17 @@
 namespace MueLuTests {
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(UnsmooshFactory, UnsmooshTentativeP, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(UnsmooshFactory, UnsmooshTentativeP, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,NO);
     if (!TYPE_EQUAL(GO, int)) { out << "Skipping test for GO != int"        << std::endl; return; }
@@ -81,14 +89,23 @@ namespace MueLuTests {
 
     GlobalOrdinal nx = 6, ny = 6;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,LocalOrdinal,GlobalOrdinal,Node> mv_type_double;
     typedef Xpetra::MultiVectorFactory<double,LocalOrdinal,GlobalOrdinal,Node> MVFactory_double;
+#else
+    typedef Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,Node> mv_type_double;
+    typedef Xpetra::MultiVectorFactory<double,Node> MVFactory_double;
+#endif
 
     // Describes the initial layout of matrix rows across processors.
     Teuchos::ParameterList galeriList;
     galeriList.set("nx", nx);
     galeriList.set("ny", ny);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map> nodeMap = Galeri::Xpetra::CreateMap<LocalOrdinal, GlobalOrdinal, Node>(lib, "Cartesian2D", comm, galeriList);
+#else
+    RCP<const Map> nodeMap = Galeri::Xpetra::CreateMap<Node>(lib, "Cartesian2D", comm, galeriList);
+#endif
 
     //build coordinates before expanding map (nodal coordinates, not dof-based)
     RCP<mv_type_double> coordinates = Galeri::Xpetra::Utils::CreateCartesianCoordinates<double,LocalOrdinal,GlobalOrdinal,Map,mv_type_double>("2D", nodeMap, galeriList);
@@ -116,7 +133,11 @@ namespace MueLuTests {
 
 
     Level fineLevel, coarseLevel;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<SC, LO, GO, NO>::createTwoLevelHierarchy(fineLevel, coarseLevel);
+#else
+    TestHelpers::TestFactory<SC, NO>::createTwoLevelHierarchy(fineLevel, coarseLevel);
+#endif
 
     // Test of createTwoLevelHierarchy: to be moved...
     TEST_EQUALITY(fineLevel.GetLevelID(), 0);
@@ -179,8 +200,13 @@ namespace MueLuTests {
     TEST_EQUALITY(Pfinal->getRowMap()->isSameAs(*A->getRowMap()),true);
   } // UnsmooshTentativeP
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #  define MUELU_ETI_GROUP(SC, LO, GO, Node) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(UnsmooshFactory, UnsmooshTentativeP, SC, LO, GO, Node) \
+#else
+#  define MUELU_ETI_GROUP(SC, Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(UnsmooshFactory, UnsmooshTentativeP, SC, Node) \
+#endif
 
 
 #include <MueLu_ETI_4arg.hpp>

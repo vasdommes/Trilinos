@@ -61,13 +61,23 @@
 
 namespace MueLu {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   BlockedRAPFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::BlockedRAPFactory()
+#else
+  template <class Scalar, class Node>
+  BlockedRAPFactory<Scalar, Node>::BlockedRAPFactory()
+#endif
     : checkAc_(false), repairZeroDiagonals_(false)
   { }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   RCP<const ParameterList> BlockedRAPFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::GetValidParameterList() const {
+#else
+  template <class Scalar, class Node>
+  RCP<const ParameterList> BlockedRAPFactory<Scalar, Node>::GetValidParameterList() const {
+#endif
     RCP<ParameterList> validParamList = rcp(new ParameterList());
 
 #define SET_VALID_ENTRY(name) validParamList->setEntry(name, MasterList::getEntry(name))
@@ -80,8 +90,13 @@ namespace MueLu {
     return validParamList;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void BlockedRAPFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level &fineLevel, Level &coarseLevel) const {
+#else
+  template <class Scalar, class Node>
+  void BlockedRAPFactory<Scalar, Node>::DeclareInput(Level &fineLevel, Level &coarseLevel) const {
+#endif
     const Teuchos::ParameterList& pL = GetParameterList();
     if (pL.get<bool>("transpose: use implicit") == false)
       Input(coarseLevel, "R");
@@ -94,8 +109,13 @@ namespace MueLu {
       (*it)->CallDeclareInput(coarseLevel);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void BlockedRAPFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(Level &fineLevel, Level &coarseLevel) const {  //FIXME make fineLevel const!!
+#else
+  template <class Scalar, class Node>
+  void BlockedRAPFactory<Scalar, Node>::Build(Level &fineLevel, Level &coarseLevel) const {  //FIXME make fineLevel const!!
+#endif
     FactoryMonitor m(*this, "Computing Ac (block)", coarseLevel);
 
     const ParameterList& pL = GetParameterList();
@@ -175,8 +195,13 @@ namespace MueLu {
   }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void BlockedRAPFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::CheckMainDiagonal(RCP<BlockedCrsMatrix> & bAc, bool repairZeroDiagonals) {
+#else
+  template <class Scalar, class Node>
+  void BlockedRAPFactory<Scalar, Node>::CheckMainDiagonal(RCP<BlockedCrsMatrix> & bAc, bool repairZeroDiagonals) {
+#endif
     RCP<Matrix> c00 = bAc->getMatrix(0, 0);
     RCP<Matrix> Aout = MatrixFactory::Build(c00->getRowMap(), c00->getGlobalMaxNumRowEntries());
 
@@ -216,8 +241,13 @@ namespace MueLu {
     bAc->setMatrix(0, 0, Aout);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void BlockedRAPFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::AddTransferFactory(const RCP<const FactoryBase>& factory) {
+#else
+  template <class Scalar, class Node>
+  void BlockedRAPFactory<Scalar, Node>::AddTransferFactory(const RCP<const FactoryBase>& factory) {
+#endif
     // check if it's a TwoLevelFactoryBase based transfer factory
     TEUCHOS_TEST_FOR_EXCEPTION(rcp_dynamic_cast<const TwoLevelFactoryBase>(factory) == Teuchos::null, Exceptions::BadCast,
       "Transfer factory is not derived from TwoLevelFactoryBase. This is very strange. "

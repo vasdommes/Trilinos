@@ -56,7 +56,11 @@
 namespace Tpetra {
 namespace Details {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <class SC, class LO, class GO, class NT>
+#else
+template <class SC, class NT>
+#endif
 KokkosSparse::CrsMatrix<
   typename Kokkos::ArithTraits<SC>::val_type,
     LO,
@@ -64,7 +68,11 @@ KokkosSparse::CrsMatrix<
     void,
     size_t>
 localDeepCopyLocallyIndexedRowMatrix
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 (const RowMatrix<SC, LO, GO, NT>& A,
+#else
+(const RowMatrix<SC, NT>& A,
+#endif
  const char label[])
 {
   TEUCHOS_TEST_FOR_EXCEPTION
@@ -150,13 +158,22 @@ localDeepCopyLocallyIndexedRowMatrix
 //
 // Must be expanded from within the Tpetra namespace!
 //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define TPETRA_DETAILS_LOCALDEEPCOPYROWMATRIX_INSTANT(SC, LO, GO, NT) \
+#else
+#define TPETRA_DETAILS_LOCALDEEPCOPYROWMATRIX_INSTANT(SC, NT) \
+#endif
 namespace Details { \
   template KokkosSparse::CrsMatrix< \
     Kokkos::ArithTraits<SC>::val_type, \
     LO, NT::device_type, void, size_t> \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   localDeepCopyLocallyIndexedRowMatrix<SC, LO, GO, NT> \
     (const RowMatrix<SC, LO, GO, NT>& A, \
+#else
+  localDeepCopyLocallyIndexedRowMatrix<SC, NT> \
+    (const RowMatrix<SC, NT>& A, \
+#endif
      const char label[]); \
 }
 

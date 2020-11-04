@@ -56,7 +56,11 @@
 namespace panzer {
 
 template <typename EvalT,typename LO,typename GO>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 Teuchos::RCP<ResponseBase> ResponseEvaluatorFactory_Probe<EvalT,LO,GO>::
+#else
+Teuchos::RCP<ResponseBase> ResponseEvaluatorFactory_Probe<EvalT>::
+#endif
 buildResponseObject(const std::string & responseName) const
 {
   Teuchos::RCP<ResponseBase> response = Teuchos::rcp(new Response_Probe<EvalT>(responseName,comm_,linearObjFactory_));
@@ -66,7 +70,11 @@ buildResponseObject(const std::string & responseName) const
 }
 
 template <typename EvalT,typename LO,typename GO>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 void ResponseEvaluatorFactory_Probe<EvalT,LO,GO>::
+#else
+void ResponseEvaluatorFactory_Probe<EvalT>::
+#endif
 buildAndRegisterEvaluators(const std::string & responseName,
                            PHX::FieldManager<panzer::Traits> & fm,
                            const panzer::PhysicsBlock & physicsBlock,
@@ -78,7 +86,11 @@ buildAndRegisterEvaluators(const std::string & responseName,
    // build scatter evaluator
    {
      Teuchos::RCP<ProbeScatterBase> scatterObj =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
          (globalIndexer_!=Teuchos::null) ?  Teuchos::rcp(new ProbeScatter<LO,GO>(globalIndexer_)) : Teuchos::null;
+#else
+         (globalIndexer_!=Teuchos::null) ?  Teuchos::rcp(new ProbeScatter<>(globalIndexer_)) : Teuchos::null;
+#endif
      std::string field = (fieldName_=="" ? responseName : fieldName_);
 
      // Get basis and integration rule associated with field
@@ -94,7 +106,11 @@ buildAndRegisterEvaluators(const std::string & responseName,
 
      // build useful evaluator
      Teuchos::RCP<PHX::Evaluator<panzer::Traits> > eval
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
        = Teuchos::rcp(new ResponseScatterEvaluator_Probe<EvalT,panzer::Traits,LO,GO>(responseName,
+#else
+       = Teuchos::rcp(new ResponseScatterEvaluator_Probe<EvalT,panzer::Traits>(responseName,
+#endif
                                                                                      field,
                                                                                      fieldComponent_,
                                                                                      point_,
@@ -111,7 +127,11 @@ buildAndRegisterEvaluators(const std::string & responseName,
 }
 
 template <typename EvalT,typename LO,typename GO>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 bool ResponseEvaluatorFactory_Probe<EvalT,LO,GO>::
+#else
+bool ResponseEvaluatorFactory_Probe<EvalT>::
+#endif
 typeSupported() const
 {
   if(PHX::print<EvalT>()==PHX::print<panzer::Traits::Residual>()  ||

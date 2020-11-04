@@ -51,16 +51,30 @@ namespace FROSch {
     using namespace Teuchos;
     using namespace Xpetra;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     RGDSWCoarseOperator<SC,LO,GO,NO>::RGDSWCoarseOperator(ConstXMatrixPtr k,
+#else
+    template <class SC,class NO>
+    RGDSWCoarseOperator<SC,NO>::RGDSWCoarseOperator(ConstXMatrixPtr k,
+#endif
                                                           ParameterListPtr parameterList) :
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     GDSWCoarseOperator<SC,LO,GO,NO> (k,parameterList)
+#else
+    GDSWCoarseOperator<SC,NO> (k,parameterList)
+#endif
     {
         FROSCH_DETAILTIMER_START_LEVELID(rGDSWCoarseOperatorTime,"RGDSWCoarseOperator::RGDSWCoarseOperator");
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     int RGDSWCoarseOperator<SC,LO,GO,NO>::resetCoarseSpaceBlock(UN blockId,
+#else
+    template <class SC,class NO>
+    int RGDSWCoarseOperator<SC,NO>::resetCoarseSpaceBlock(UN blockId,
+#endif
                                                                 UN dimension,
                                                                 UN dofsPerNode,
                                                                 ConstXMapPtr nodesMap,
@@ -126,7 +140,11 @@ namespace FROSch {
         Array<GO> tmpDirichletBoundaryDofs(dirichletBoundaryDofs()); // Here, we do a copy. Maybe, this is not necessary
         sortunique(tmpDirichletBoundaryDofs);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         this->DDInterface_.reset(new DDInterface<SC,LO,GO,NO>(dimension,this->DofsPerNode_[blockId],nodesMap.getConst(),verbosity,this->LevelID_,communicationStrategy));
+#else
+        this->DDInterface_.reset(new DDInterface<SC,NO>(dimension,this->DofsPerNode_[blockId],nodesMap.getConst(),verbosity,this->LevelID_,communicationStrategy));
+#endif
         this->DDInterface_->resetGlobalDofs(dofsMaps);
         this->DDInterface_->removeDirichletNodes(tmpDirichletBoundaryDofs);
 
@@ -182,7 +200,11 @@ namespace FROSch {
                     }
                 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                 this->InterfaceCoarseSpaces_[blockId].reset(new CoarseSpace<SC,LO,GO,NO>(this->MpiComm_,this->SerialComm_));
+#else
+                this->InterfaceCoarseSpaces_[blockId].reset(new CoarseSpace<SC,NO>(this->MpiComm_,this->SerialComm_));
+#endif
 
                 if (this->ParameterList_->get("Test Unconnected Interface",true)) {
                     this->DDInterface_->divideUnconnectedEntities(this->K_);
@@ -243,8 +265,13 @@ namespace FROSch {
         return 0;
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template<class SC,class LO,class GO,class NO>
     typename RGDSWCoarseOperator<SC,LO,GO,NO>::XMapPtr RGDSWCoarseOperator<SC,LO,GO,NO>::BuildRepeatedMapCoarseLevel(ConstXMapPtr &nodesMap,
+#else
+    template<class SC,class NO>
+    typename RGDSWCoarseOperator<SC,NO>::XMapPtr RGDSWCoarseOperator<SC,NO>::BuildRepeatedMapCoarseLevel(ConstXMapPtr &nodesMap,
+#endif
                                                 UN dofsPerNode,
                                                 ConstXMapPtrVecPtr dofsMaps,
                                                UN partitionType)
@@ -252,18 +279,31 @@ namespace FROSch {
         FROSCH_ASSERT(false,"For RGDSWCoarseOperator the ZoltanDual Option is not implemented!");
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     typename RGDSWCoarseOperator<SC,LO,GO,NO>::XMultiVectorPtrVecPtr RGDSWCoarseOperator<SC,LO,GO,NO>::computeTranslations(UN blockId,
+#else
+    template <class SC,class NO>
+    typename RGDSWCoarseOperator<SC,NO>::XMultiVectorPtrVecPtr RGDSWCoarseOperator<SC,NO>::computeTranslations(UN blockId,
+#endif
                                                                                                                            EntitySetPtr Roots,
                                                                                                                            EntitySetPtrVecPtr entitySetVector,
                                                                                                                            DistanceFunction distanceFunction)
     {
         FROSCH_DETAILTIMER_START_LEVELID(computeTranslationsTime,"RGDSWCoarseOperator::computeTranslations");
         XMultiVectorPtrVecPtr translations(this->DofsPerNode_[blockId]);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         XMapPtr serialGammaMap = MapFactory<LO,GO,NO>::Build(this->K_->getRangeMap()->lib(),this->GammaDofs_[blockId].size(),0,this->SerialComm_);
+#else
+        XMapPtr serialGammaMap = MapFactory<NO>::Build(this->K_->getRangeMap()->lib(),this->GammaDofs_[blockId].size(),0,this->SerialComm_);
+#endif
         for (UN i=0; i<this->DofsPerNode_[blockId]; i++) {
             if (Roots->getNumEntities()>0) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                 translations[i] = MultiVectorFactory<SC,LO,GO,NO>::Build(serialGammaMap,Roots->getNumEntities());
+#else
+                translations[i] = MultiVectorFactory<SC,NO>::Build(serialGammaMap,Roots->getNumEntities());
+#endif
             } else {
                 translations[i] = null;
             }
@@ -302,8 +342,13 @@ namespace FROSch {
         return translations;
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     typename RGDSWCoarseOperator<SC,LO,GO,NO>::XMultiVectorPtrVecPtr RGDSWCoarseOperator<SC,LO,GO,NO>::computeRotations(UN blockId,
+#else
+    template <class SC,class NO>
+    typename RGDSWCoarseOperator<SC,NO>::XMultiVectorPtrVecPtr RGDSWCoarseOperator<SC,NO>::computeRotations(UN blockId,
+#endif
                                                                                                                         UN dimension,
                                                                                                                         ConstXMultiVectorPtr nodeList,
                                                                                                                         EntitySetPtr Roots,
@@ -331,10 +376,18 @@ namespace FROSch {
         }
 
         XMultiVectorPtrVecPtr rotations(rotationsPerEntity);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         XMapPtr serialGammaMap = MapFactory<LO,GO,NO>::Build(this->K_->getRangeMap()->lib(),this->GammaDofs_[blockId].size(),0,this->SerialComm_);
+#else
+        XMapPtr serialGammaMap = MapFactory<NO>::Build(this->K_->getRangeMap()->lib(),this->GammaDofs_[blockId].size(),0,this->SerialComm_);
+#endif
         for (UN i=0; i<rotationsPerEntity; i++) {
             if (Roots->getNumEntities()>0) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                 rotations[i] = MultiVectorFactory<SC,LO,GO,NO>::Build(serialGammaMap,Roots->getNumEntities());
+#else
+                rotations[i] = MultiVectorFactory<SC,NO>::Build(serialGammaMap,Roots->getNumEntities());
+#endif
             } else {
                 rotations[i] = null;
             }

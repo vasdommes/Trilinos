@@ -67,9 +67,17 @@
 namespace MueLuTests {
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(MultiVectorTransferFactory, Constructor, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(MultiVectorTransferFactory, Constructor, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
@@ -77,7 +85,11 @@ namespace MueLuTests {
     RCP<Factory> TentativePFact = rcp(new TentativePFactory());
     RCP<Factory> TentativeRFact = rcp(new TransPFactory());  // Use Ptent for coordinate projection
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<MueLu::MultiVectorTransferFactory<SC, LO, GO, NO> > mvtf = rcp(new MueLu::MultiVectorTransferFactory<SC, LO, GO, NO>("Coordinates"));
+#else
+    RCP<MueLu::MultiVectorTransferFactory<SC, NO> > mvtf = rcp(new MueLu::MultiVectorTransferFactory<SC, NO>("Coordinates"));
+#endif
     mvtf->SetFactory("R", TentativeRFact);
 
     TEST_EQUALITY(mvtf != Teuchos::null, true);
@@ -85,9 +97,17 @@ namespace MueLuTests {
 
   //------------------------------------------------------------------------------------------
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(MultiVectorTransferFactory, Build, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(MultiVectorTransferFactory, Build, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
@@ -97,12 +117,24 @@ namespace MueLuTests {
     out << "equal to the number of fine degrees of freedom." << std::endl;
 
     typedef typename Teuchos::ScalarTraits<SC>::magnitudeType magnitude_type;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef typename Xpetra::MultiVector<magnitude_type,LO,GO,NO> RealValuedMultiVector;
+#else
+    typedef typename Xpetra::MultiVector<magnitude_type,NO> RealValuedMultiVector;
+#endif
 
     Level fineLevel, coarseLevel;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<SC, LO, GO, NO>::createTwoLevelHierarchy(fineLevel, coarseLevel);
+#else
+    TestHelpers::TestFactory<SC, NO>::createTwoLevelHierarchy(fineLevel, coarseLevel);
+#endif
     GO nx = 199;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers::TestFactory<SC, LO, GO, NO>::Build1DPoisson(nx);
+#else
+    RCP<Matrix> A = TestHelpers::TestFactory<SC, NO>::Build1DPoisson(nx);
+#endif
     fineLevel.Set("A",A);
 
     Teuchos::ParameterList galeriList;
@@ -125,7 +157,11 @@ namespace MueLuTests {
     //    fineLevel.SetFactoryManager(M);
     coarseLevel.SetFactoryManager(M);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<MueLu::MultiVectorTransferFactory<SC, LO, GO, NO> > mvtf = rcp(new MueLu::MultiVectorTransferFactory<SC, LO, GO, NO>("onesVector"));
+#else
+    RCP<MueLu::MultiVectorTransferFactory<SC, NO> > mvtf = rcp(new MueLu::MultiVectorTransferFactory<SC, NO>("onesVector"));
+#endif
     mvtf->SetFactory("R",RFact);
 
     coarseLevel.Request("onesVector",mvtf.get());
@@ -142,9 +178,17 @@ namespace MueLuTests {
 
   //------------------------------------------------------------------------------------------
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(MultiVectorTransferFactory, ThreeLevels, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(MultiVectorTransferFactory, ThreeLevels, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 #   if !defined(HAVE_MUELU_IFPACK)
@@ -158,10 +202,18 @@ namespace MueLuTests {
     out << "Tests usage on a three-level hierarchy." << std::endl;
 
     typedef typename Teuchos::ScalarTraits<SC>::magnitudeType real_type;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef typename Xpetra::MultiVector<real_type,LO,GO,NO> RealValuedMultiVector;
+#else
+    typedef typename Xpetra::MultiVector<real_type,NO> RealValuedMultiVector;
+#endif
 
     GO nx = 199;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers::TestFactory<SC, LO, GO, NO>::Build1DPoisson(nx);
+#else
+    RCP<Matrix> A = TestHelpers::TestFactory<SC, NO>::Build1DPoisson(nx);
+#endif
 
     Teuchos::ParameterList galeriList;
     galeriList.set("nx", nx);
@@ -213,7 +265,11 @@ namespace MueLuTests {
     RCP<MultiVector> fineOnes = MultiVectorFactory::Build(A->getRowMap(),1);
     fineOnes->putScalar(1.0);
     fineLevel->Set("onesVector",fineOnes);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<MueLu::MultiVectorTransferFactory<SC, LO, GO, NO> > mvtf = rcp(new MueLu::MultiVectorTransferFactory<SC, LO, GO, NO>("onesVector"));
+#else
+    RCP<MueLu::MultiVectorTransferFactory<SC, NO> > mvtf = rcp(new MueLu::MultiVectorTransferFactory<SC, NO>("onesVector"));
+#endif
     mvtf->SetFactory("R",RFact);
     M.SetFactory("onesVector",mvtf);
     AcFact->AddTransferFactory(mvtf);
@@ -237,10 +293,17 @@ namespace MueLuTests {
        */
   } // ThreeLevels
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define MUELU_ETI_GROUP(Scalar, LO, GO, Node) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(MultiVectorTransferFactory, Constructor, Scalar, LO, GO, Node) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(MultiVectorTransferFactory, Build, Scalar, LO, GO, Node) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(MultiVectorTransferFactory, ThreeLevels, Scalar, LO, GO, Node)
+#else
+#define MUELU_ETI_GROUP(Scalar, Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(MultiVectorTransferFactory, Constructor, Scalar, Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(MultiVectorTransferFactory, Build, Scalar, Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(MultiVectorTransferFactory, ThreeLevels, Scalar, Node)
+#endif
 
 #include <MueLu_ETI_4arg.hpp>
 

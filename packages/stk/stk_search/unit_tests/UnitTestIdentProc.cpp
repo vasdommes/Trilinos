@@ -44,9 +44,17 @@ namespace  {
 TEST(stk_search, ident_proc)
 {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   stk::search::IdentProc<int,int> a(1,0), b;
+#else
+  stk::search::IdentProc<> a(1,0), b;
+#endif
   b = a;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   stk::search::IdentProc<int,int> c(a), d(1,1), e(0,0);
+#else
+  stk::search::IdentProc<> c(a), d(1,1), e(0,0);
+#endif
 
   EXPECT_EQ(c.proc(), 0);
   EXPECT_EQ(c.id(), 1);

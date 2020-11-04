@@ -63,7 +63,11 @@ namespace Stratimikos {
     using namespace Teuchos;
     using namespace Thyra;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <typename LO = int,typename GO = int,typename NO = KokkosClassic::DefaultNode::DefaultNodeType>
+#else
+    template <typename NO = KokkosClassic::DefaultNode::DefaultNodeType>
+#endif
     void enableFROSch (DefaultLinearSolverBuilder& builder,
                        const string& stratName = "FROSch")
     {
@@ -74,7 +78,11 @@ namespace Stratimikos {
 
         using Base  = PreconditionerFactoryBase<double>;
         if (!stratName.compare("FROSch")) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
             using Impl  = FROSchFactory<double, LO, GO, NO> ;
+#else
+            using Impl  = FROSchFactory<double, NO> ;
+#endif
             builder.setPreconditioningStrategyFactory(abstractFactoryStd<Base, Impl>(), stratName);
         }
     }

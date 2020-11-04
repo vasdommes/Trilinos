@@ -1648,7 +1648,11 @@ isend<int, float> (const ArrayRCP<const float>& sendBuffer,
 // Specialization for Ordinal=int and Packet=long long.
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 gather<int, long long> (const long long sendBuf[],
+#else
+gather<> (const long long sendBuf[],
+#endif
                         const int sendCount,
                         long long recvBuf[],
                         const int recvCount,
@@ -1656,7 +1660,11 @@ gather<int, long long> (const long long sendBuf[],
                         const Comm<int>& comm);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 gatherv<int, long long> (const long long sendBuf[],
+#else
+gatherv<> (const long long sendBuf[],
+#endif
                          const int sendCount,
                          long long recvBuf[],
                          const int recvCounts[],
@@ -1672,31 +1680,51 @@ reduceAll<int, long long> (const Comm<int>& comm,
                            long long globalReducts[]);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT RCP<CommRequest<int> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 ireceive<int, long long> (const Comm<int>& comm,
+#else
+ireceive<> (const Comm<int>& comm,
+#endif
                           const ArrayRCP<long long>& recvBuffer,
                           const int sourceRank);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT RCP<CommRequest<int> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 ireceive<int, long long> (const ArrayRCP<long long> &recvBuffer,
+#else
+ireceive<> (const ArrayRCP<long long> &recvBuffer,
+#endif
                           const int sourceRank,
                           const int tag,
                           const Comm<int>& comm);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 send<int, long long> (const Comm<int>& comm,
+#else
+send<> (const Comm<int>& comm,
+#endif
                       const int count,
                       const long long sendBuffer[],
                       const int destRank);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 send<int, long long> (const long long sendBuffer[],
+#else
+send<> (const long long sendBuffer[],
+#endif
                       const int count,
                       const int destRank,
                       const int tag,
                       const Comm<int>& comm);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT RCP<CommRequest<int> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 isend<int, long long> (const ArrayRCP<const long long>& sendBuffer,
+#else
+isend<> (const ArrayRCP<const long long>& sendBuffer,
+#endif
                        const int destRank,
                        const int tag,
                        const Comm<int>& comm);
@@ -1760,7 +1788,11 @@ isend<int, unsigned long long> (const ArrayRCP<const unsigned long long>& sendBu
 // Specialization for Ordinal=int and Packet=long.
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 gather<int, long> (const long sendBuf[],
+#else
+gather<> (const long sendBuf[],
+#endif
                    const int sendCount,
                    long recvBuf[],
                    const int recvCount,
@@ -1768,7 +1800,11 @@ gather<int, long> (const long sendBuf[],
                    const Comm<int>& comm);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 gatherv<int, long> (const long sendBuf[],
+#else
+gatherv<> (const long sendBuf[],
+#endif
                     const int sendCount,
                     long recvBuf[],
                     const int recvCounts[],
@@ -1784,31 +1820,51 @@ reduceAll<int, long> (const Comm<int>& comm,
                       long globalReducts[]);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT RCP<CommRequest<int> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 ireceive<int, long> (const Comm<int>& comm,
+#else
+ireceive<> (const Comm<int>& comm,
+#endif
                      const ArrayRCP<long>& recvBuffer,
                      const int sourceRank);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT RCP<CommRequest<int> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 ireceive<int, long> (const ArrayRCP<long> &recvBuffer,
+#else
+ireceive<> (const ArrayRCP<long> &recvBuffer,
+#endif
                      const int sourceRank,
                      const int tag,
                      const Comm<int>& comm);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 send<int, long> (const Comm<int>& comm,
+#else
+send<> (const Comm<int>& comm,
+#endif
                  const int count,
                  const long sendBuffer[],
                  const int destRank);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 send<int, long> (const long sendBuffer[],
+#else
+send<> (const long sendBuffer[],
+#endif
                  const int count,
                  const int destRank,
                  const int tag,
                  const Comm<int>& comm);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT RCP<CommRequest<int> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 isend<int, long> (const ArrayRCP<const long>& sendBuffer,
+#else
+isend<> (const ArrayRCP<const long>& sendBuffer,
+#endif
                   const int destRank,
                   const int tag,
                   const Comm<int>& comm);
@@ -1872,7 +1928,11 @@ isend<int, unsigned long> (const ArrayRCP<const unsigned long>& sendBuffer,
 // Specialization for Ordinal=int and Packet=int.
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 gather<int, int> (const int sendBuf[],
+#else
+gather<> (const int sendBuf[],
+#endif
                   const int sendCount,
                   int recvBuf[],
                   const int recvCount,
@@ -1880,7 +1940,11 @@ gather<int, int> (const int sendBuf[],
                   const Comm<int>& comm);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 gatherv<int, int> (const int sendBuf[],
+#else
+gatherv<> (const int sendBuf[],
+#endif
                    const int sendCount,
                    int recvBuf[],
                    const int recvCounts[],
@@ -1897,7 +1961,11 @@ scatter (const int sendBuf[],
          const Comm<int>& comm);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 reduce<int, int> (const int sendBuf[],
+#else
+reduce<> (const int sendBuf[],
+#endif
                   int recvBuf[],
                   const int count,
                   const EReductionType reductType,
@@ -1905,7 +1973,11 @@ reduce<int, int> (const int sendBuf[],
                   const Comm<int>& comm);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 reduce<int, long> (const long sendBuf[],
+#else
+reduce<> (const long sendBuf[],
+#endif
                    long recvBuf[],
                    const int count,
                    const EReductionType reductType,
@@ -1945,31 +2017,51 @@ reduceAll<int, int> (const Comm<int>& comm,
 
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT RCP<CommRequest<int> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 ireceive<int, int> (const Comm<int>& comm,
+#else
+ireceive<> (const Comm<int>& comm,
+#endif
                     const ArrayRCP<int>& recvBuffer,
                     const int sourceRank);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT RCP<CommRequest<int> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 ireceive<int, int> (const ArrayRCP<int> &recvBuffer,
+#else
+ireceive<> (const ArrayRCP<int> &recvBuffer,
+#endif
                     const int sourceRank,
                     const int tag,
                     const Comm<int>& comm);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 send<int, int> (const Comm<int>& comm,
+#else
+send<> (const Comm<int>& comm,
+#endif
                 const int count,
                 const int sendBuffer[],
                 const int destRank);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 send<int, int> (const int sendBuffer[],
+#else
+send<> (const int sendBuffer[],
+#endif
                 const int count,
                 const int destRank,
                 const int tag,
                 const Comm<int>& comm);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT RCP<CommRequest<int> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 isend<int, int> (const ArrayRCP<const int>& sendBuffer,
+#else
+isend<> (const ArrayRCP<const int>& sendBuffer,
+#endif
                  const int destRank,
                  const int tag,
                  const Comm<int>& comm);
@@ -1977,7 +2069,11 @@ isend<int, int> (const ArrayRCP<const int>& sendBuffer,
 // Specialization for Ordinal=int and Packet=unsigned int.
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 gather<int, unsigned int> (const unsigned int sendBuf[],
+#else
+gather<> (const unsigned int sendBuf[],
+#endif
                            const int sendCount,
                            unsigned int recvBuf[],
                            const int recvCount,
@@ -1985,7 +2081,11 @@ gather<int, unsigned int> (const unsigned int sendBuf[],
                            const Comm<int>& comm);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 gatherv<int, unsigned int> (const unsigned int sendBuf[],
+#else
+gatherv<> (const unsigned int sendBuf[],
+#endif
                             const int sendCount,
                             unsigned int recvBuf[],
                             const int recvCounts[],
@@ -2001,31 +2101,51 @@ reduceAll<int, unsigned int> (const Comm<int>& comm,
                               unsigned int globalReducts[]);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT RCP<CommRequest<int> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 ireceive<int, unsigned int> (const Comm<int>& comm,
+#else
+ireceive<> (const Comm<int>& comm,
+#endif
                              const ArrayRCP<unsigned int>& recvBuffer,
                              const int sourceRank);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT RCP<CommRequest<int> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 ireceive<int, unsigned int> (const ArrayRCP<unsigned int> &recvBuffer,
+#else
+ireceive<> (const ArrayRCP<unsigned int> &recvBuffer,
+#endif
                              const int sourceRank,
                              const int tag,
                              const Comm<int>& comm);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 send<int, unsigned int> (const Comm<int>& comm,
+#else
+send<> (const Comm<int>& comm,
+#endif
                          const int count,
                          const unsigned int sendBuffer[],
                          const int destRank);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 send<int, unsigned int> (const unsigned int sendBuffer[],
+#else
+send<> (const unsigned int sendBuffer[],
+#endif
                          const int count,
                          const int destRank,
                          const int tag,
                          const Comm<int>& comm);
 template<>
 TEUCHOSCOMM_LIB_DLL_EXPORT RCP<CommRequest<int> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 isend<int, unsigned int> (const ArrayRCP<const unsigned int>& sendBuffer,
+#else
+isend<> (const ArrayRCP<const unsigned int>& sendBuffer,
+#endif
                           const int destRank,
                           const int tag,
                           const Comm<int>& comm);

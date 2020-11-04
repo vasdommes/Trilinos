@@ -606,7 +606,11 @@ int MOERTEL::Interface::NodePID(int nid) const
     return (-1);
   }
   
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::const_iterator curr = nodePID_.find(nid);
+#else
+  std::map<>::const_iterator curr = nodePID_.find(nid);
+#endif
   if (curr != nodePID_.end())
     return(curr->second);
   else
@@ -639,7 +643,11 @@ int MOERTEL::Interface::SegPID(int sid) const
     return (-1);
   }
   
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::const_iterator curr = segPID_.find(sid);
+#else
+  std::map<>::const_iterator curr = segPID_.find(sid);
+#endif
   if (curr != segPID_.end())
     return(curr->second);
   else

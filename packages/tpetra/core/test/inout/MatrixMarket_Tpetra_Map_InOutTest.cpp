@@ -68,9 +68,19 @@ typedef Tpetra::global_size_t GST;
 const bool debug = false;
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MapOutputInput, ContigUniformIndexBase0, LO, GO )
+#else
+TEUCHOS_UNIT_TEST( MapOutputInput, ContigUniformIndexBase0 )
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO, GO> map_type;
+#else
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+  typedef Tpetra::Map<> map_type;
+#endif
   const bool tolerant = false;
   const bool globallyVerbose = true;
 
@@ -106,7 +116,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MapOutputInput, ContigUniformIndexBase0, LO, 
   }
   std::ostringstream mapOutStream;
   // The Scalar type doesn't matter, since we're just writing a Map.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::CrsMatrix<double, LO, GO> crs_matrix_type;
+#else
+  typedef Tpetra::CrsMatrix<double> crs_matrix_type;
+#endif
   typedef Tpetra::MatrixMarket::Writer<crs_matrix_type> writer_type;
   writer_type::writeMap (mapOutStream, map, false && globallyVerbose);
 
@@ -192,9 +206,19 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MapOutputInput, ContigUniformIndexBase0, LO, 
   }
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MapOutputInput, ContigUniformIndexBase1, LO, GO )
+#else
+TEUCHOS_UNIT_TEST( MapOutputInput, ContigUniformIndexBase1 )
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO, GO> map_type;
+#else
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+  typedef Tpetra::Map<> map_type;
+#endif
 
   const bool tolerant = false;
   out << "Test: output a contiguous uniform Tpetra::Map (index base 1) "
@@ -219,7 +243,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MapOutputInput, ContigUniformIndexBase1, LO, 
   out << "Writing Map to output stream" << endl;
   std::ostringstream mapOutStream;
   // The Scalar type doesn't matter, since we're just writing a Map.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::CrsMatrix<double, LO, GO> crs_matrix_type;
+#else
+  typedef Tpetra::CrsMatrix<double> crs_matrix_type;
+#endif
   typedef Tpetra::MatrixMarket::Writer<crs_matrix_type> writer_type;
   writer_type::writeMap (mapOutStream, map, debug);
   out << "Result of writing the Map:" << endl;
@@ -239,9 +267,19 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MapOutputInput, ContigUniformIndexBase1, LO, 
 }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MapOutputInput, ContigNonuniformIndexBase0, LO, GO )
+#else
+TEUCHOS_UNIT_TEST( MapOutputInput, ContigNonuniformIndexBase0 )
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO, GO> map_type;
+#else
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+  typedef Tpetra::Map<> map_type;
+#endif
 
   const bool tolerant = false;
   out << "Test: output a contiguous nonuniform Tpetra::Map (index base 0) "
@@ -264,7 +302,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MapOutputInput, ContigNonuniformIndexBase0, L
   out << "Writing Map to output stream" << endl;
   std::ostringstream mapOutStream;
   // The Scalar type doesn't matter, since we're just writing a Map.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::CrsMatrix<double, LO, GO> crs_matrix_type;
+#else
+  typedef Tpetra::CrsMatrix<double> crs_matrix_type;
+#endif
   typedef Tpetra::MatrixMarket::Writer<crs_matrix_type> writer_type;
   writer_type::writeMap (mapOutStream, map, debug);
   out << "Result of writing the Map:" << endl;
@@ -283,9 +325,19 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MapOutputInput, ContigNonuniformIndexBase0, L
   TEST_EQUALITY(map.isSameAs (*inMap), true);
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MapOutputInput, ContigNonuniformIndexBase1, LO, GO )
+#else
+TEUCHOS_UNIT_TEST( MapOutputInput, ContigNonuniformIndexBase1 )
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO, GO> map_type;
+#else
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+  typedef Tpetra::Map<> map_type;
+#endif
 
   const bool tolerant = false;
   out << "Test: output a contiguous nonuniform Tpetra::Map (index base 1) "
@@ -308,7 +360,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MapOutputInput, ContigNonuniformIndexBase1, L
   out << "Writing Map to output stream" << endl;
   std::ostringstream mapOutStream;
   // The Scalar type doesn't matter, since we're just writing a Map.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::CrsMatrix<double, LO, GO> crs_matrix_type;
+#else
+  typedef Tpetra::CrsMatrix<double> crs_matrix_type;
+#endif
   typedef Tpetra::MatrixMarket::Writer<crs_matrix_type> writer_type;
   writer_type::writeMap (mapOutStream, map, debug);
   out << "Result of writing the Map:" << endl;
@@ -327,9 +383,19 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MapOutputInput, ContigNonuniformIndexBase1, L
   TEST_EQUALITY(map.isSameAs (*inMap), true);
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MapOutputInput, NoncontigIndexBase0, LO, GO )
+#else
+TEUCHOS_UNIT_TEST( MapOutputInput, NoncontigIndexBase0 )
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO, GO> map_type;
+#else
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+  typedef Tpetra::Map<> map_type;
+#endif
 
   RCP<const Comm<int> > comm = Tpetra::getDefaultComm ();
   const int myRank = comm->getRank ();
@@ -358,7 +424,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MapOutputInput, NoncontigIndexBase0, LO, GO )
   out << "Writing Map to output stream" << endl;
   std::ostringstream mapOutStream;
   // The Scalar type doesn't matter, since we're just writing a Map.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::CrsMatrix<double, LO, GO> crs_matrix_type;
+#else
+  typedef Tpetra::CrsMatrix<double> crs_matrix_type;
+#endif
   typedef Tpetra::MatrixMarket::Writer<crs_matrix_type> writer_type;
   writer_type::writeMap (mapOutStream, map, debug);
   out << "Result of writing the Map:" << endl;
@@ -377,9 +447,19 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MapOutputInput, NoncontigIndexBase0, LO, GO )
   TEST_EQUALITY(map.isSameAs (*inMap), true);
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MapOutputInput, NoncontigIndexBase1, LO, GO )
+#else
+TEUCHOS_UNIT_TEST( MapOutputInput, NoncontigIndexBase1 )
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO, GO> map_type;
+#else
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+  typedef Tpetra::Map<> map_type;
+#endif
 
   RCP<const Comm<int> > comm = Tpetra::getDefaultComm ();
   const int myRank = comm->getRank ();
@@ -408,7 +488,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MapOutputInput, NoncontigIndexBase1, LO, GO )
   out << "Writing Map to output stream" << endl;
   std::ostringstream mapOutStream;
   // The Scalar type doesn't matter, since we're just writing a Map.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::CrsMatrix<double, LO, GO> crs_matrix_type;
+#else
+  typedef Tpetra::CrsMatrix<double> crs_matrix_type;
+#endif
   typedef Tpetra::MatrixMarket::Writer<crs_matrix_type> writer_type;
   writer_type::writeMap (mapOutStream, map, debug);
   out << "Result of writing the Map:" << endl;
@@ -428,9 +512,19 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MapOutputInput, NoncontigIndexBase1, LO, GO )
 }
 
 // Noncontiguous, overlapping Map with index base 0.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MapOutputInput, NoncontigOvrlpngIndBase0, LO, GO )
+#else
+TEUCHOS_UNIT_TEST( MapOutputInput, NoncontigOvrlpngIndBase0 )
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO, GO> map_type;
+#else
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+  typedef Tpetra::Map<> map_type;
+#endif
   RCP<const Comm<int> > comm = Tpetra::getDefaultComm ();
   const int myRank = comm->getRank ();
   const int numProcs = comm->getSize ();
@@ -463,7 +557,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MapOutputInput, NoncontigOvrlpngIndBase0, LO,
   out << "Writing Map to output stream" << endl;
   std::ostringstream mapOutStream;
   // The Scalar type doesn't matter, since we're just writing a Map.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::CrsMatrix<double, LO, GO> crs_matrix_type;
+#else
+  typedef Tpetra::CrsMatrix<double> crs_matrix_type;
+#endif
   typedef Tpetra::MatrixMarket::Writer<crs_matrix_type> writer_type;
   writer_type::writeMap (mapOutStream, map, debug);
   out << "Result of writing the Map:" << endl;
@@ -489,6 +587,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MapOutputInput, NoncontigOvrlpngIndBase0, LO,
 //   - {contiguous uniform, contiguous nonuniform, noncontiguous} Map
 
 #define UNIT_TEST_GROUP( LO, GO ) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( MapOutputInput, ContigUniformIndexBase0, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( MapOutputInput, ContigUniformIndexBase1, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( MapOutputInput, ContigNonuniformIndexBase0, LO, GO ) \
@@ -496,6 +595,8 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MapOutputInput, NoncontigOvrlpngIndBase0, LO,
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( MapOutputInput, NoncontigIndexBase0, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( MapOutputInput, NoncontigIndexBase1, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( MapOutputInput, NoncontigOvrlpngIndBase0, LO, GO )
+#else
+#endif
 
 
 TPETRA_ETI_MANGLING_TYPEDEFS()

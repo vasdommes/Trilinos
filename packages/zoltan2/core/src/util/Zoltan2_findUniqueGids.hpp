@@ -121,7 +121,11 @@ size_t findUniqueGidsCommon(
 }
 
 ////////////////////////////////////////////////////////////////////////////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <typename lno_t, typename gno_t>
+#else
+
+#endif
 size_t findUniqueGids(
   Tpetra::MultiVector<gno_t, lno_t, gno_t> &keys,
   Tpetra::Vector<gno_t, lno_t, gno_t> &gids

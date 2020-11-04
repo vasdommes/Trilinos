@@ -75,8 +75,16 @@
 // instantiation.  Ah well.
 //
 //TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( CrsMatrix, NonlocalSumInto, CrsMatrixType )
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( CrsMatrix, NonlocalSumInto, LocalOrdinalType, GlobalOrdinalType, ScalarType, NodeType )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( CrsMatrix, NonlocalSumInto, ScalarType, NodeType )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinalType = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinalType = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   using Tpetra::createContigMapWithNode;
   using Tpetra::global_size_t;
   using Tpetra::Map;
@@ -121,11 +129,19 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( CrsMatrix, NonlocalSumInto, LocalOrdinalType,
   typedef global_ordinal_type GO;
   typedef node_type NT;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::CrsMatrix<ST, LO, GO, NT> CrsMatrixType;
+#else
+  typedef Tpetra::CrsMatrix<ST, NT> CrsMatrixType;
+#endif
 
   // CrsGraph specialization corresponding to CrsMatrixType (the
   // CrsMatrix specialization).
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::CrsGraph<LO, GO, NT> crs_graph_type;
+#else
+  typedef Tpetra::CrsGraph<NT> crs_graph_type;
+#endif
 
   ////////////////////////////////////////////////////////////////////
   // HERE BEGINS THE TEST.
@@ -165,7 +181,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( CrsMatrix, NonlocalSumInto, LocalOrdinalType,
   }
 
   // Create a contiguous row Map, with numLocalRows rows per process.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<const map_type> rowMap = createContigMapWithNode<LO, GO, NT> (INVALID, numLocalRows, comm);
+#else
+  RCP<const map_type> rowMap = createContigMapWithNode<NT> (INVALID, numLocalRows, comm);
+#endif
 
   // For now, reuse the row Map for the domain and range Maps.  Later,
   // we might want to test using different domain or range Maps.
@@ -485,8 +505,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( CrsMatrix, NonlocalSumInto, mat_complex_do
 #endif // 0
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define UNIT_TEST_GROUP( SCALAR, LO, GO, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( CrsMatrix, NonlocalSumInto, LO, GO, SCALAR, NODE )
+#else
+#define UNIT_TEST_GROUP( SCALAR, NODE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( CrsMatrix, NonlocalSumInto, SCALAR, NODE )
+#endif
 
 TPETRA_ETI_MANGLING_TYPEDEFS()
 

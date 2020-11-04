@@ -51,8 +51,13 @@ namespace FROSch {
     using namespace Teuchos;
     using namespace Xpetra;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     ConstantPartitionOfUnity<SC,LO,GO,NO>::ConstantPartitionOfUnity(CommPtr mpiComm,
+#else
+    template <class SC,class NO>
+    ConstantPartitionOfUnity<SC,NO>::ConstantPartitionOfUnity(CommPtr mpiComm,
+#endif
                                                                     CommPtr serialComm,
                                                                     UN dimension,
                                                                     UN dofsPerNode,
@@ -62,7 +67,11 @@ namespace FROSch {
                                                                     Verbosity verbosity,
                                                                     UN levelID,
                                                                     DDInterfacePtr ddInterface) :
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     PartitionOfUnity<SC,LO,GO,NO> (mpiComm,serialComm,dofsPerNode,nodesMap,dofsMaps,parameterList,verbosity,levelID),
+#else
+    PartitionOfUnity<SC,NO> (mpiComm,serialComm,dofsPerNode,nodesMap,dofsMaps,parameterList,verbosity,levelID),
+#endif
     DDInterface_ (ddInterface)
     {
         FROSCH_DETAILTIMER_START_LEVELID(constantPartitionOfUnityTime,"ConstantPartitionOfUnity::ConstantPartitionOfUnity");
@@ -88,7 +97,11 @@ namespace FROSch {
             FROSCH_ASSERT(false,"FROSch::InterfacePartitionOfUnity : ERROR: Specify a valid communication strategy for the identification of the interface components.");
         }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         if (DDInterface_.is_null()) DDInterface_.reset(new DDInterface<SC,LO,GO,NO>(dimension,dofsPerNode,nodesMap.getConst(),this->Verbosity_,this->LevelID_,communicationStrategy));
+#else
+        if (DDInterface_.is_null()) DDInterface_.reset(new DDInterface<SC,NO>(dimension,dofsPerNode,nodesMap.getConst(),this->Verbosity_,this->LevelID_,communicationStrategy));
+#endif
         FROSCH_ASSERT(DDInterface_->getInterface()->getEntity(0)->getNumNodes()==0,"FROSch::ConstantPartitionOfUnity : ERROR: Is only reasonable if there is no interface.");
         DDInterface_->resetGlobalDofs(dofsMaps);
         Volumes_ = DDInterface_->getInterior()->deepCopy();
@@ -97,14 +110,24 @@ namespace FROSch {
         this->PartitionOfUnityMaps_ = ConstXMapPtrVecPtr(1);
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     ConstantPartitionOfUnity<SC,LO,GO,NO>::~ConstantPartitionOfUnity()
+#else
+    template <class SC,class NO>
+    ConstantPartitionOfUnity<SC,NO>::~ConstantPartitionOfUnity()
+#endif
     {
 
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     int ConstantPartitionOfUnity<SC,LO,GO,NO>::removeDirichletNodes(GOVecView dirichletBoundaryDofs,
+#else
+    template <class SC,class NO>
+    int ConstantPartitionOfUnity<SC,NO>::removeDirichletNodes(GOVecView dirichletBoundaryDofs,
+#endif
                                                                     ConstXMultiVectorPtr nodeList)
     {
         FROSCH_DETAILTIMER_START_LEVELID(removeDirichletNodesTime,"ConstantPartitionOfUnity::removeDirichletNodes");
@@ -118,8 +141,13 @@ namespace FROSch {
         return 0;
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     int ConstantPartitionOfUnity<SC,LO,GO,NO>::computePartitionOfUnity(ConstXMultiVectorPtr nodeList)
+#else
+    template <class SC,class NO>
+    int ConstantPartitionOfUnity<SC,NO>::computePartitionOfUnity(ConstXMultiVectorPtr nodeList)
+#endif
     {
         FROSCH_DETAILTIMER_START_LEVELID(computePartitionOfUnityTime,"ConstantPartitionOfUnity::computePartitionOfUnity");
         // Interface
@@ -219,10 +247,18 @@ namespace FROSch {
         }
 
         // Build Partition Of Unity Vectors
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         XMapPtr serialMap = MapFactory<LO,GO,NO>::Build(DDInterface_->getNodesMap()->lib(),numInteriorDofs,0,this->SerialComm_);
+#else
+        XMapPtr serialMap = MapFactory<NO>::Build(DDInterface_->getNodesMap()->lib(),numInteriorDofs,0,this->SerialComm_);
+#endif
 
         if (UseVolumes_ && Volumes_->getNumEntities()>0) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
             XMultiVectorPtr tmpVector = MultiVectorFactory<SC,LO,GO,NO>::Build(serialMap,Volumes_->getNumEntities());
+#else
+            XMultiVectorPtr tmpVector = MultiVectorFactory<SC,NO>::Build(serialMap,Volumes_->getNumEntities());
+#endif
 
             for (UN i=0; i<Volumes_->getNumEntities(); i++) {
                 for (UN j=0; j<Volumes_->getEntity(i)->getNumNodes(); j++) {

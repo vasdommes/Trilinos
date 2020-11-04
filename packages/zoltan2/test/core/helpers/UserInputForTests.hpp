@@ -1561,7 +1561,11 @@ void UserInputForTests::readZoltanTestData(string path, string testData,
   }
 
   // broadcast whether we have graphs and coords to all processes
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::broadcast<int, int>(*tcomm_, 0, 3, fileInfo);
+#else
+  Teuchos::broadcast<>(*tcomm_, 0, 3, fileInfo);
+#endif
 
   bool haveGraph = (fileInfo[0] == 1);
   bool haveCoords = (fileInfo[1] == 1);
@@ -1634,7 +1638,11 @@ void UserInputForTests::getUIChacoGraph(FILE *fptr, bool haveAssign,
       fail = true;
 
     if (fail){
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Teuchos::broadcast<int, int>(*tcomm_, 0, 5, graphCounts);
+#else
+      Teuchos::broadcast<>(*tcomm_, 0, 5, graphCounts);
+#endif
       throw std::runtime_error("Unable to read chaco file");
     }
 
@@ -1672,7 +1680,11 @@ void UserInputForTests::getUIChacoGraph(FILE *fptr, bool haveAssign,
     graphCounts[4] = (int)maxRowLen; // size_t maxRowLen will fit; it is <= (int-int)
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::broadcast<int, int>(*tcomm_, 0, 5, graphCounts);
+#else
+  Teuchos::broadcast<>(*tcomm_, 0, 5, graphCounts);
+#endif
 
   if (graphCounts[0] == 0)
     throw std::runtime_error("Unable to read chaco file");
@@ -1945,7 +1957,11 @@ void UserInputForTests::getUIChacoCoords(FILE *fptr, string fname)
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::broadcast<int, int>(*tcomm_, 0, 1, &ndim);
+#else
+  Teuchos::broadcast<>(*tcomm_, 0, 1, &ndim);
+#endif
 
   if (ndim == 0)
     throw std::runtime_error("Can't read coordinate file");

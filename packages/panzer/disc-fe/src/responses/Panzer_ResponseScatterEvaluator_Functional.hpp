@@ -76,10 +76,16 @@ public:
                               const std::vector<Teuchos::ArrayRCP<double> > & d2gdx2) const = 0;
 #endif
 };
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
  
 template <typename LO,typename GO>
+#endif
 class FunctionalScatter : public FunctionalScatterBase {
 public:
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+   using LO = typename Tpetra::Map<>::local_ordinal_type;
+   using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
    FunctionalScatter(const Teuchos::RCP<const panzer::GlobalIndexer> & globalIndexer)
    { 
      if(globalIndexer!=Teuchos::null)
@@ -134,9 +140,13 @@ private:
   PHX::MDField<const ScalarT,panzer::Cell> cellIntegral_; // holds cell integrals
   Teuchos::RCP<FunctionalScatterBase> scatterObj_;
 };
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 
 template <typename LO,typename GO>
 void FunctionalScatter<LO,GO>::scatterDerivative(const PHX::MDField<const panzer::Traits::Jacobian::ScalarT,panzer::Cell> & cellIntegral,
+#else
+void FunctionalScatter<>::scatterDerivative(const PHX::MDField<const panzer::Traits::Jacobian::ScalarT,panzer::Cell> & cellIntegral,
+#endif
                                                 panzer::Traits::EvalData workset, 
                                                 WorksetDetailsAccessor& wda,
                                                 const std::vector<Teuchos::ArrayRCP<double> > & dgdx) const 
@@ -172,8 +182,12 @@ void FunctionalScatter<LO,GO>::scatterDerivative(const PHX::MDField<const panzer
 }
 
 #ifdef Panzer_BUILD_HESSIAN_SUPPORT
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <typename LO,typename GO>
 void FunctionalScatter<LO,GO>::scatterHessian(const PHX::MDField<const panzer::Traits::Hessian::ScalarT,panzer::Cell> & cellIntegral,
+#else
+void FunctionalScatter<>::scatterHessian(const PHX::MDField<const panzer::Traits::Hessian::ScalarT,panzer::Cell> & cellIntegral,
+#endif
                                                 panzer::Traits::EvalData workset, 
                                                 WorksetDetailsAccessor& wda,
                                                 const std::vector<Teuchos::ArrayRCP<double> > & d2gdx2) const 

@@ -75,9 +75,13 @@ namespace MueLu {
   current processor.  That mapping is used for unamalgamation.
 */
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template<class LocalOrdinal = DefaultLocalOrdinal,
            class GlobalOrdinal = DefaultGlobalOrdinal,
            class Node = DefaultNode>
+#else
+  template<class Node = DefaultNode>
+#endif
   class AmalgamationInfo
     : public BaseClass {
 #undef MUELU_AMALGAMATIONINFO_SHORT
@@ -85,6 +89,10 @@ namespace MueLu {
 
   public:
 
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     /// Constructor
     AmalgamationInfo(RCP<Array<LO> > rowTranslation,
                      RCP<Array<LO> > colTranslation,
@@ -138,7 +146,11 @@ namespace MueLu {
     /*! @brief ComputeUnamalgamatedImportDofMap
      * build overlapping dof row map from aggregates needed for overlapping null space
      */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::RCP< Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > ComputeUnamalgamatedImportDofMap(const Aggregates& aggregates) const;
+#else
+    Teuchos::RCP< Xpetra::Map<Node> > ComputeUnamalgamatedImportDofMap(const Aggregates& aggregates) const;
+#endif
 
     /*! @brief ComputeGlobalDOF
      *

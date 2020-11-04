@@ -66,14 +66,22 @@ void Teuchos::updateParametersFromYamlFileAndBroadcast(
       std::istreambuf_iterator<char> stream_end;
       std::string yamlString(stream_iter, stream_end);
       int strsize = yamlString.size();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       broadcast<int, int>(comm, 0, &strsize);
+#else
+      broadcast<>(comm, 0, &strsize);
+#endif
       char* ptr = (strsize) ? (&yamlString[0]) : 0;
       broadcast<int, char>(comm, 0, strsize, ptr);
       updateParametersFromYamlString(yamlString, paramList,overwrite, yamlFileName);
     }
     else {
       int strsize;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       broadcast<int, int>(comm, 0, &strsize);
+#else
+      broadcast<>(comm, 0, &strsize);
+#endif
       std::string yamlString;
       yamlString.resize(strsize);
       char* ptr = (strsize) ? (&yamlString[0]) : 0;

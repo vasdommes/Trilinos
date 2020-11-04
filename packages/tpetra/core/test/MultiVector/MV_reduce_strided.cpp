@@ -208,8 +208,16 @@ void reduceMultiVector2 (MV& Z)
 // UNIT TESTS
 //
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( MultiVector, reduce_strided, Scalar, LocalOrdinal, GlobalOrdinal, Node )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MultiVector, reduce_strided, Scalar, Node )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   using Teuchos::RCP;
   using Teuchos::rcp;
   using std::endl;
@@ -217,7 +225,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( MultiVector, reduce_strided, Scalar, LocalOrd
   using LO = LocalOrdinal;
   using GO = GlobalOrdinal;
   using NT = Node;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using MV = Tpetra::MultiVector<SC, LO, GO, NT>;
+#else
+  using MV = Tpetra::MultiVector<SC, NT>;
+#endif
   using map_type = typename MV::map_type;
   using STS = Teuchos::ScalarTraits<SC>;
   using mag_type = typename MV::mag_type;
@@ -417,8 +429,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( MultiVector, reduce_strided, Scalar, LocalOrd
 // INSTANTIATIONS
 //
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define UNIT_TEST_GROUP( SCALAR, LO, GO, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( MultiVector, reduce_strided, SCALAR, LO, GO, NODE )
+#else
+#define UNIT_TEST_GROUP( SCALAR, NODE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( MultiVector, reduce_strided, SCALAR, NODE )
+#endif
 
   TPETRA_ETI_MANGLING_TYPEDEFS()
 

@@ -59,10 +59,15 @@ namespace MueLuTests {
 // createRegionMatrix is a helper function that allows us to easily
 // generate a region matrix based on the corresponding composite
 // matrix.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+template <class Scalar, class Node>
+#endif
 void createRegionMatrix(const Teuchos::ParameterList galeriList,
                         const int numDofsPerNode,
                         const int maxRegPerProc,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                         const RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > nodeMap,
                         const RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > dofMap,
                         const RCP<Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > A,
@@ -73,8 +78,24 @@ void createRegionMatrix(const Teuchos::ParameterList galeriList,
                         std::vector<RCP<Xpetra::Import<LocalOrdinal, GlobalOrdinal, Node> > >& rowImportPerGrp,
                         std::vector<RCP<Xpetra::Import<LocalOrdinal, GlobalOrdinal, Node> > >& colImportPerGrp,
                         std::vector<RCP<Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > >& regionGrpMats,
+#else
+                        const RCP<Xpetra::Map<Node> > nodeMap,
+                        const RCP<Xpetra::Map<Node> > dofMap,
+                        const RCP<Xpetra::Matrix<Scalar, Node> > A,
+                        std::vector<RCP<Xpetra::Map<Node> > >& rowMapPerGrp,
+                        std::vector<RCP<Xpetra::Map<Node> > >& colMapPerGrp,
+                        std::vector<RCP<Xpetra::Map<Node> > >& revisedRowMapPerGrp,
+                        std::vector<RCP<Xpetra::Map<Node> > >& revisedColMapPerGrp,
+                        std::vector<RCP<Xpetra::Import<Node> > >& rowImportPerGrp,
+                        std::vector<RCP<Xpetra::Import<Node> > >& colImportPerGrp,
+                        std::vector<RCP<Xpetra::Matrix<Scalar, Node> > >& regionGrpMats,
+#endif
                         Teuchos::ArrayRCP<LocalOrdinal>&  regionMatVecLIDs,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                         Teuchos::RCP<Xpetra::Import<LocalOrdinal, GlobalOrdinal, Node> >& regionInterfaceImporter) {
+#else
+                        Teuchos::RCP<Xpetra::Import<Node> >& regionInterfaceImporter) {
+#endif
 #include <MueLu_UseShortNames.hpp>
 
   std::string matrixType = galeriList.get<std::string>("matrixType");
@@ -137,14 +158,22 @@ void createRegionMatrix(const Teuchos::ParameterList galeriList,
   // std::cout << "p=" << myRank << " | interfaceCompositeGIDs" << interfaceCompositeGIDs << std::endl;
   // std::cout << "p=" << myRank << " | interfaceRegionLIDs" << interfaceRegionLIDs() << std::endl;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   rowMapPerGrp[0] = Xpetra::MapFactory<LO,GO,Node>::Build(A->getRowMap()->lib(),
+#else
+  rowMapPerGrp[0] = Xpetra::MapFactory<Node>::Build(A->getRowMap()->lib(),
+#endif
                                                           Teuchos::OrdinalTraits<GO>::invalid(),
                                                           quasiRegionGIDs(),
                                                           A->getRowMap()->getIndexBase(),
                                                           A->getRowMap()->getComm());
   colMapPerGrp[0] = rowMapPerGrp[0];
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   revisedRowMapPerGrp[0] = Xpetra::MapFactory<LO,GO,Node>::Build(A->getRowMap()->lib(),
+#else
+  revisedRowMapPerGrp[0] = Xpetra::MapFactory<Node>::Build(A->getRowMap()->lib(),
+#endif
                                                                  Teuchos::OrdinalTraits<GO>::invalid(),
                                                                  quasiRegionGIDs.size(),
                                                                  A->getRowMap()->getIndexBase(),
@@ -156,8 +185,13 @@ void createRegionMatrix(const Teuchos::ParameterList galeriList,
   rowImportPerGrp[0] = ImportFactory::Build(dofMap, rowMapPerGrp[0]);
   colImportPerGrp[0] = ImportFactory::Build(dofMap, colMapPerGrp[0]);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Xpetra::MultiVector<LO, LO, GO, NO> > regionsPerGIDWithGhosts;
   RCP<Xpetra::MultiVector<GO, LO, GO, NO> > interfaceGIDsMV;
+#else
+  RCP<Xpetra::MultiVector<LO, NO> > regionsPerGIDWithGhosts;
+  RCP<Xpetra::MultiVector<GO, NO> > interfaceGIDsMV;
+#endif
   MakeRegionPerGIDWithGhosts(nodeMap, revisedRowMapPerGrp[0], rowImportPerGrp[0],
                              maxRegPerGID, numDofsPerNode,
                              lNodesPerDir, sendGIDs, sendPIDs, interfaceRegionLIDs,
@@ -184,22 +218,41 @@ void createRegionMatrix(const Teuchos::ParameterList galeriList,
 // comm [in]: the MPI communicator used with distributed objects
 // A [out]: composite matrix
 // regionGrpMats [out]: the region matrix
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+template <class Scalar, class Node>
+#endif
 void createProblem(const int maxRegPerProc, const LocalOrdinal numDofsPerNode,
                    Galeri::Xpetra::Parameters<GlobalOrdinal>& galeriParameters,
                    RCP<const Teuchos::Comm<int> > comm,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                    RCP<Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> >& A,
                    std::vector<RCP<Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > >& regionGrpMats,
                    std::vector<RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > >& revisedRowMapPerGrp,
                    std::vector<RCP<Xpetra::Import<LocalOrdinal, GlobalOrdinal, Node> > >& rowImportPerGrp,
+#else
+                   RCP<Xpetra::Matrix<Scalar, Node> >& A,
+                   std::vector<RCP<Xpetra::Matrix<Scalar, Node> > >& regionGrpMats,
+                   std::vector<RCP<Xpetra::Map<Node> > >& revisedRowMapPerGrp,
+                   std::vector<RCP<Xpetra::Import<Node> > >& rowImportPerGrp,
+#endif
                    Teuchos::ArrayRCP<LocalOrdinal>& regionMatVecLIDs,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                    RCP<Xpetra::Import<LocalOrdinal, GlobalOrdinal, Node> >& regionInterfaceImporter) {
+#else
+                   RCP<Xpetra::Import<Node> >& regionInterfaceImporter) {
+#endif
 #include <MueLu_UseShortNames.hpp>
   using TST                   = Teuchos::ScalarTraits<SC>;
   using magnitude_type        = typename TST::magnitudeType;
   using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
   using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
+#else
+  using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+#endif
 
   Teuchos::ParameterList galeriList = galeriParameters.GetParameterList();
   std::string matrixType = galeriParameters.GetMatrixType();
@@ -213,9 +266,17 @@ void createProblem(const int maxRegPerProc, const LocalOrdinal numDofsPerNode,
   }
 
   // Build maps for the problem
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Map> nodeMap = Galeri::Xpetra::CreateMap<LO, GO, Node>(TestHelpers::Parameters::getLib(),
+#else
+  RCP<Map> nodeMap = Galeri::Xpetra::CreateMap<Node>(TestHelpers::Parameters::getLib(),
+#endif
                                                              mapType, comm, galeriList);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Map> dofMap  = Xpetra::MapFactory<LO,GO,Node>::Build(nodeMap, numDofsPerNode);
+#else
+  RCP<Map> dofMap  = Xpetra::MapFactory<Node>::Build(nodeMap, numDofsPerNode);
+#endif
 
   // Build the Xpetra problem
   RCP<Galeri::Xpetra::Problem<Map,CrsMatrixWrap,MultiVector> > Pr =
@@ -251,14 +312,27 @@ void createProblem(const int maxRegPerProc, const LocalOrdinal numDofsPerNode,
 // test_matrix() is checking that performing a MatVec with composite A and region A
 // yields the same vector. It also verifies that regionalToComposite(regA) returns
 // the same matrix as composite A. It is a convenience function to perform common tests.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+template <class Scalar, class Node>
+#endif
 void test_matrix(const int maxRegPerProc,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                  RCP<Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > A,
                  std::vector<RCP<Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > > regionGrpMats,
                  std::vector<RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > > rowMapPerGrp,
                  std::vector<RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > > colMapPerGrp,
                  std::vector<RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > > revisedRowMapPerGrp,
                  std::vector<RCP<Xpetra::Import<LocalOrdinal, GlobalOrdinal, Node> > > rowImportPerGrp,
+#else
+                 RCP<Xpetra::Matrix<Scalar, Node> > A,
+                 std::vector<RCP<Xpetra::Matrix<Scalar, Node> > > regionGrpMats,
+                 std::vector<RCP<Xpetra::Map<Node> > > rowMapPerGrp,
+                 std::vector<RCP<Xpetra::Map<Node> > > colMapPerGrp,
+                 std::vector<RCP<Xpetra::Map<Node> > > revisedRowMapPerGrp,
+                 std::vector<RCP<Xpetra::Import<Node> > > rowImportPerGrp,
+#endif
                  Teuchos::FancyOStream& out,
                  bool& success) {
 #include <MueLu_UseShortNames.hpp>
@@ -360,9 +434,17 @@ void test_matrix(const int maxRegPerProc,
 // for matrices. More specifically we compute a region A
 // based on a composite A and check the values in region A
 // against know correct values.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, CompositeToRegionMatrix, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(RegionMatrix, CompositeToRegionMatrix, Scalar, Node)
+#endif
 {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   MUELU_TESTING_SET_OSTREAM;
   MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -370,8 +452,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, CompositeToRegionMatrix, Scalar,
   using magnitude_type        = typename TST::magnitudeType;
   using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
   using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
   using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+  using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+  using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
   out << "version: " << MueLu::Version() << std::endl;
 
@@ -388,9 +475,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, CompositeToRegionMatrix, Scalar,
 
   // Build maps for the problem
   const LO numDofsPerNode = 1;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Map> nodeMap = Galeri::Xpetra::CreateMap<LO, GO, Node>(TestHelpers::Parameters::getLib(),
+#else
+  RCP<Map> nodeMap = Galeri::Xpetra::CreateMap<Node>(TestHelpers::Parameters::getLib(),
+#endif
                                                              "Cartesian2D", comm, galeriList);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Map> dofMap  = Xpetra::MapFactory<LO,GO,Node>::Build(nodeMap, numDofsPerNode);
+#else
+  RCP<Map> dofMap  = Xpetra::MapFactory<Node>::Build(nodeMap, numDofsPerNode);
+#endif
 
   // Build the Xpetra problem
   RCP<Galeri::Xpetra::Problem<Map,CrsMatrixWrap,MultiVector> > Pr =
@@ -539,9 +634,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, CompositeToRegionMatrix, Scalar,
 // Then compute the equivalent region problem and finally
 // use the region problem to go back to composite which should
 // lead to a matrix identical to the original composite matrix
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, RegionToCompositeMatrix, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(RegionMatrix, RegionToCompositeMatrix, Scalar, Node)
+#endif
 {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   MUELU_TESTING_SET_OSTREAM;
   MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -549,8 +652,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, RegionToCompositeMatrix, Scalar,
   using magnitude_type        = typename TST::magnitudeType;
   using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
   using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
   using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+  using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+  using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
   out << "version: " << MueLu::Version() << std::endl;
 
@@ -565,9 +673,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, RegionToCompositeMatrix, Scalar,
 
   // Build maps for the problem
   const LO numDofsPerNode = 1;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Map> nodeMap = Galeri::Xpetra::CreateMap<LO, GO, Node>(TestHelpers::Parameters::getLib(),
+#else
+  RCP<Map> nodeMap = Galeri::Xpetra::CreateMap<Node>(TestHelpers::Parameters::getLib(),
+#endif
                                                              "Cartesian2D", comm, galeriList);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Map> dofMap  = Xpetra::MapFactory<LO,GO,Node>::Build(nodeMap, numDofsPerNode);
+#else
+  RCP<Map> dofMap  = Xpetra::MapFactory<Node>::Build(nodeMap, numDofsPerNode);
+#endif
 
   // Build the Xpetra problem
   RCP<Galeri::Xpetra::Problem<Map,CrsMatrixWrap,MultiVector> > Pr =
@@ -651,9 +767,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, RegionToCompositeMatrix, Scalar,
 // to composite formate before verifying the equivalence.
 //
 // Do this for 1 DOF per node
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, FastMatVec, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(RegionMatrix, FastMatVec, Scalar, Node)
+#endif
 {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   MUELU_TESTING_SET_OSTREAM;
   MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -661,8 +785,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, FastMatVec, Scalar, LocalOrdinal
   using magnitude_type        = typename TST::magnitudeType;
   using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
   using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
   using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+  using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+  using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
   out << "version: " << MueLu::Version() << std::endl;
 
@@ -677,9 +806,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, FastMatVec, Scalar, LocalOrdinal
 
   // Build maps for the problem
   const LO numDofsPerNode = 1;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Map> nodeMap = Galeri::Xpetra::CreateMap<LO, GO, Node>(TestHelpers::Parameters::getLib(),
+#else
+  RCP<Map> nodeMap = Galeri::Xpetra::CreateMap<Node>(TestHelpers::Parameters::getLib(),
+#endif
                                                              "Cartesian2D", comm, galeriList);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Map> dofMap  = Xpetra::MapFactory<LO,GO,Node>::Build(nodeMap, numDofsPerNode);
+#else
+  RCP<Map> dofMap  = Xpetra::MapFactory<Node>::Build(nodeMap, numDofsPerNode);
+#endif
 
   // Build the Xpetra problem
   RCP<Galeri::Xpetra::Problem<Map,CrsMatrixWrap,MultiVector> > Pr =
@@ -772,9 +909,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, FastMatVec, Scalar, LocalOrdinal
 // to composite formate before verifying the equivalence.
 //
 // Do this for 1 DOF per node
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, FastMatVec3D, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(RegionMatrix, FastMatVec3D, Scalar, Node)
+#endif
 {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   MUELU_TESTING_SET_OSTREAM;
   MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -782,8 +927,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, FastMatVec3D, Scalar, LocalOrdin
   using magnitude_type        = typename TST::magnitudeType;
   using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
   using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
   using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+  using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+  using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
   out << "version: " << MueLu::Version() << std::endl;
 
@@ -876,9 +1026,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, FastMatVec3D, Scalar, LocalOrdin
 // to composite formate before verifying the equivalence.
 //
 // Do this for 2 DOFs per node (two-dimensional elasticity)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, FastMatVec2D_Elasticity, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(RegionMatrix, FastMatVec2D_Elasticity, Scalar, Node)
+#endif
 {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   MUELU_TESTING_SET_OSTREAM;
   MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -886,8 +1044,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, FastMatVec2D_Elasticity, Scalar,
   using magnitude_type        = typename TST::magnitudeType;
   using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
   using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
   using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+  using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+  using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
   out << "version: " << MueLu::Version() << std::endl;
 
@@ -976,9 +1139,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, FastMatVec2D_Elasticity, Scalar,
 // to composite formate before verifying the equivalence.
 //
 // Do this for 3 DOFs per node (three-dimensional elasticity)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, FastMatVec3D_Elasticity, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(RegionMatrix, FastMatVec3D_Elasticity, Scalar, Node)
+#endif
 {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   MUELU_TESTING_SET_OSTREAM;
   MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -986,8 +1157,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, FastMatVec3D_Elasticity, Scalar,
   using magnitude_type        = typename TST::magnitudeType;
   using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
   using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
   using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+  using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+  using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
   out << "version: " << MueLu::Version() << std::endl;
 
@@ -1075,9 +1251,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, FastMatVec3D_Elasticity, Scalar,
 //   1) the region operator is compared against know values
 //   2) the action of the region MatVec is compared with the composite MatVec
 //   3) compute the composite operator from the region operator leads to the original matrix
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, Laplace2D, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(RegionMatrix, Laplace2D, Scalar, Node)
+#endif
 {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   MUELU_TESTING_SET_OSTREAM;
   MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -1085,8 +1269,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, Laplace2D, Scalar, LocalOrdinal,
   using magnitude_type        = typename TST::magnitudeType;
   using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
   using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
   using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+  using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+  using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
   out << "version: " << MueLu::Version() << std::endl;
 
@@ -1101,9 +1290,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, Laplace2D, Scalar, LocalOrdinal,
 
   // Build maps for the problem
   const LO numDofsPerNode = 1;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Map> nodeMap = Galeri::Xpetra::CreateMap<LO, GO, Node>(TestHelpers::Parameters::getLib(),
+#else
+  RCP<Map> nodeMap = Galeri::Xpetra::CreateMap<Node>(TestHelpers::Parameters::getLib(),
+#endif
                                                              "Cartesian2D", comm, galeriList);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Map> dofMap  = Xpetra::MapFactory<LO,GO,Node>::Build(nodeMap, numDofsPerNode);
+#else
+  RCP<Map> dofMap  = Xpetra::MapFactory<Node>::Build(nodeMap, numDofsPerNode);
+#endif
 
   // Build the Xpetra problem
   RCP<Galeri::Xpetra::Problem<Map,CrsMatrixWrap,MultiVector> > Pr =
@@ -1252,9 +1449,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, Laplace2D, Scalar, LocalOrdinal,
 //   1) the region operator is compared against know values
 //   2) the action of the region MatVec is compared with the composite MatVec
 //   3) compute the composite operator from the region operator leads to the original matrix
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, Laplace3D, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(RegionMatrix, Laplace3D, Scalar, Node)
+#endif
 {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   MUELU_TESTING_SET_OSTREAM;
   MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -1262,8 +1467,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, Laplace3D, Scalar, LocalOrdinal,
   using magnitude_type        = typename TST::magnitudeType;
   using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
   using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
   using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+  using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+  using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
   out << "version: " << MueLu::Version() << std::endl;
 
@@ -1278,9 +1488,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, Laplace3D, Scalar, LocalOrdinal,
 
   // Build maps for the problem
   const LO numDofsPerNode = 1;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Map> nodeMap = Galeri::Xpetra::CreateMap<LO, GO, Node>(TestHelpers::Parameters::getLib(),
+#else
+  RCP<Map> nodeMap = Galeri::Xpetra::CreateMap<Node>(TestHelpers::Parameters::getLib(),
+#endif
                                                              "Cartesian3D", comm, galeriList);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Map> dofMap  = Xpetra::MapFactory<LO,GO,Node>::Build(nodeMap, numDofsPerNode);
+#else
+  RCP<Map> dofMap  = Xpetra::MapFactory<Node>::Build(nodeMap, numDofsPerNode);
+#endif
 
   // Build the Xpetra problem
   RCP<Galeri::Xpetra::Problem<Map,CrsMatrixWrap,MultiVector> > Pr =
@@ -1571,6 +1789,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, Laplace3D, Scalar, LocalOrdinal,
   }
 } // Laplace3D
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #  define MUELU_ETI_GROUP(Scalar, LO, GO, Node) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(RegionMatrix,CompositeToRegionMatrix,Scalar,LO,GO,Node) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(RegionMatrix,RegionToCompositeMatrix,Scalar,LO,GO,Node) \
@@ -1580,6 +1799,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionMatrix, Laplace3D, Scalar, LocalOrdinal,
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(RegionMatrix,FastMatVec3D_Elasticity,Scalar,LO,GO,Node) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(RegionMatrix,Laplace2D,Scalar,LO,GO,Node)               \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(RegionMatrix,Laplace3D,Scalar,LO,GO,Node)
+#else
+#  define MUELU_ETI_GROUP(Scalar, Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(RegionMatrix,CompositeToRegionMatrix,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(RegionMatrix,RegionToCompositeMatrix,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(RegionMatrix,FastMatVec,Scalar,Node)              \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(RegionMatrix,FastMatVec3D,Scalar,Node)            \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(RegionMatrix,FastMatVec2D_Elasticity,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(RegionMatrix,FastMatVec3D_Elasticity,Scalar,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(RegionMatrix,Laplace2D,Scalar,Node)               \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(RegionMatrix,Laplace3D,Scalar,Node)
+#endif
 
 #include <MueLu_ETI_4arg.hpp>
 

@@ -910,7 +910,11 @@ TEUCHOS_UNIT_TEST( MDComm, subCommReduce )
 
   // Compute the axis commStrides
   Array< int > commStrides =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Domi::computeStrides<int,int>(finalCommDims,Domi::MDComm::commLayout);
+#else
+    Domi::computeStrides<>(finalCommDims,Domi::MDComm::commLayout);
+#endif
 
   // We will reduce this MDComm several times by using the comm index
   // constructor along each dimension
@@ -929,7 +933,11 @@ TEUCHOS_UNIT_TEST( MDComm, subCommReduce )
     }
     if (numDims == 1) newCommDims.push_back(finalCommDims[0]);
     newAxisStrides =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Domi::computeStrides<int,int>(newCommDims, Domi::MDComm::commLayout);
+#else
+      Domi::computeStrides<>(newCommDims, Domi::MDComm::commLayout);
+#endif
 
     int redAxisRank = finalCommDims[axis] / 2;
     bool partOfSubComm = true;

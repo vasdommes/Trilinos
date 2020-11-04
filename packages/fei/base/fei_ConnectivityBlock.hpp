@@ -76,11 +76,19 @@ namespace fei {
 
     /** get map of connectivity-ids with associated offsets
     */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     const std::map<int,int>& getConnectivityIDs() const { return( connIDsOffsetMap_ ); }
+#else
+    const std::map<>& getConnectivityIDs() const { return( connIDsOffsetMap_ ); }
+#endif
 
     /** get map of connectivity-ids with associated offsets
     */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::map<int,int>& getConnectivityIDs() { return( connIDsOffsetMap_ ); }
+#else
+    std::map<>& getConnectivityIDs() { return( connIDsOffsetMap_ ); }
+#endif
 
     /** get vector of connectivity-offsets. Only available if this
       object was constructed using constructor 3 or 4. Power users only.
@@ -128,7 +136,11 @@ namespace fei {
     bool isSymmetric_;
     bool isDiagonal_;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::map<int,int> connIDsOffsetMap_;
+#else
+    std::map<> connIDsOffsetMap_;
+#endif
 
     std::vector<int> connectivityOffsets_;
 

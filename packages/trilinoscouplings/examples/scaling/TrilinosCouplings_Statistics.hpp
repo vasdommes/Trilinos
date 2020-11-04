@@ -60,14 +60,28 @@
 #include <Teuchos_Comm.hpp>
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 class MachineLearningStatistics_Hex3D {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   using ST = Scalar;
   using LO = LocalOrdinal;
   using GO = GlobalOrdinal;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using crsgraph_type    = Xpetra::CrsGraph<LO, GO, Node>;
   using multivector_type = Xpetra::MultiVector<ST, LO, GO, Node>;
   using vector_type      = Xpetra::Vector<ST, LO, GO, Node>;
+#else
+  using crsgraph_type    = Xpetra::CrsGraph<Node>;
+  using multivector_type = Xpetra::MultiVector<ST, Node>;
+  using vector_type      = Xpetra::Vector<ST, Node>;
+#endif
   
   public:
 
@@ -93,7 +107,11 @@ class MachineLearningStatistics_Hex3D {
     return sqrt(dist);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   double myDistance2(const Xpetra::MultiVector<ST, LO, GO, Node> &v, int i0, int i1) {
+#else
+  double myDistance2(const Xpetra::MultiVector<ST, Node> &v, int i0, int i1) {
+#endif
     const size_t numVectors = v.getNumVectors();
     double distance = 0.0;
     for (size_t j=0; j<numVectors; j++) {
@@ -319,9 +337,15 @@ class MachineLearningStatistics_Hex3D {
   /***************************** STATISTICS (Part IIb) ******************************/
   /**********************************************************************************/
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   void Phase2b(Teuchos::RCP<const Xpetra::CrsGraph<LO, GO, Node> > gl_StiffGraph, Teuchos::RCP<Xpetra::MultiVector<ST, LO, GO,Node> > coords) {
     using multivector_factory = Xpetra::MultiVectorFactory<ST,LO,GO,Node>;
     using vector_factory      = Xpetra::VectorFactory<ST,LO,GO,Node>;
+#else
+  void Phase2b(Teuchos::RCP<const Xpetra::CrsGraph<Node> > gl_StiffGraph, Teuchos::RCP<Xpetra::MultiVector<ST,Node> > coords) {
+    using multivector_factory = Xpetra::MultiVectorFactory<ST,Node>;
+    using vector_factory      = Xpetra::VectorFactory<ST,Node>;
+#endif
 
     Teuchos::RCP<multivector_type> coordsOwnedPlusShared;
     comm = gl_StiffGraph->getRowMap()->getComm();
@@ -334,7 +358,11 @@ class MachineLearningStatistics_Hex3D {
       coordsOwnedPlusShared = coords;
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::RCP<const Xpetra::Map<LO, GO, Node> > rowMap = gl_StiffGraph->getRowMap();
+#else
+    Teuchos::RCP<const Xpetra::Map<Node> > rowMap = gl_StiffGraph->getRowMap();
+#endif
     Teuchos::RCP<vector_type > laplDiagOwned = vector_factory::Build(rowMap, true);
     Teuchos::ArrayView<const LO> indices;
     size_t numOwnedRows = rowMap->getNodeNumElements();
@@ -375,9 +403,15 @@ class MachineLearningStatistics_Hex3D {
   }
 
 #ifdef HAVE_XPETRA_TPETRA
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   void Phase2b(Teuchos::RCP<const Tpetra::CrsGraph<LO, GO, Node> > gl_StiffGraph, Teuchos::RCP<Tpetra::MultiVector<ST, LO, GO,Node> > coords) {
     Teuchos::RCP<multivector_type> coords_X = Teuchos::rcp(new Xpetra::TpetraMultiVector<ST,LO,GO,Node>(coords));
     Teuchos::RCP<const crsgraph_type> graph_X = Teuchos::rcp(new Xpetra::TpetraCrsGraph<LO,GO,Node>(Teuchos::rcp_const_cast<Tpetra::CrsGraph<LO,GO,Node> >(gl_StiffGraph)));
+#else
+  void Phase2b(Teuchos::RCP<const Tpetra::CrsGraph<Node> > gl_StiffGraph, Teuchos::RCP<Tpetra::MultiVector<ST,Node> > coords) {
+    Teuchos::RCP<multivector_type> coords_X = Teuchos::rcp(new Xpetra::TpetraMultiVector<ST,Node>(coords));
+    Teuchos::RCP<const crsgraph_type> graph_X = Teuchos::rcp(new Xpetra::TpetraCrsGraph<Node>(Teuchos::rcp_const_cast<Tpetra::CrsGraph<Node> >(gl_StiffGraph)));
+#endif
 
     Phase2b(graph_X, coords_X);
   }
@@ -463,7 +497,11 @@ private:
   const int dim = 3;
 
   
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::RCP<Tpetra::CrsGraph<LO, GO, Node> > crs_graph;
+#else
+  Teuchos::RCP<Tpetra::CrsGraph<Node> > crs_graph;
+#endif
   Teuchos::RCP<const Teuchos::Comm<int> > comm;
   Teuchos::ParameterList problemStatistics;
 

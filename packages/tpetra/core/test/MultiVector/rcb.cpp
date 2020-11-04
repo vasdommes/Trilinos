@@ -292,8 +292,13 @@ timeTpetra (const GO numGlobalCoords,
   using Teuchos::rcp;
   using std::cerr;
   using std::endl;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO, GO> map_type;
   typedef Tpetra::MultiVector<Scalar, LO, GO> MV;
+#else
+  typedef Tpetra::Map<> map_type;
+  typedef Tpetra::MultiVector<Scalar> MV;
+#endif
   typedef ArrayView<const Scalar> coordList_t;
 
   const int nprocs = comm->getSize ();
@@ -341,13 +346,21 @@ timeTpetra (const GO numGlobalCoords,
     roundRobinGlobalIds<GO> (numGlobalCoords, nprocs, rank);
 
   RCP<const map_type> newTmap;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Tpetra::Import<LO, GO> > importer;
+#else
+  RCP<Tpetra::Import<> > importer;
+#endif
   RCP<MV> newMvector;
   {
     Teuchos::TimeMonitor timeMon (*tmvMigrate);
 
     newTmap = rcp (new map_type (numGlobalCoords, newGidArray.view(0, numLocalCoords), 0, comm));
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     importer = rcp (new Tpetra::Import<LO, GO> (tmap, newTmap));
+#else
+    importer = rcp (new Tpetra::Import<> (tmap, newTmap));
+#endif
     newMvector = rcp (new MV (newTmap, COORDDIM, true));
 
     newMvector->doImport (*mvector, *importer, Tpetra::INSERT);
@@ -437,13 +450,21 @@ timeTpetra (const GO numGlobalCoords,
     subGroupGloballyIncreasingIds<GO> (numGlobalCoords, nprocs, rank);
 
   RCP<const map_type> newSubMap;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Tpetra::Import<LO, GO> > subImporter;
+#else
+  RCP<Tpetra::Import<> > subImporter;
+#endif
   RCP<MV> newSubMvector;
   {
     Teuchos::TimeMonitor timeMon (*tmvMigrateN);
 
     newSubMap = rcp (new map_type (globalSize, incrGidArray.view (0, numLocalCoords), 0, subComm));
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     subImporter = rcp (new Tpetra::Import<LO, GO> (subMap, newSubMap));
+#else
+    subImporter = rcp (new Tpetra::Import<> (subMap, newSubMap));
+#endif
     newSubMvector = rcp (new MV (newSubMap, COORDDIM, true));
     newSubMvector->doImport (*subMvector, *subImporter, Tpetra::INSERT);
     mvector = newSubMvector;

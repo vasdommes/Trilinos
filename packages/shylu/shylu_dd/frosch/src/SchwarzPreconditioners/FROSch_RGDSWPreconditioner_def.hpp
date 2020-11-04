@@ -51,27 +51,50 @@ namespace FROSch {
     using namespace Teuchos;
     using namespace Xpetra;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     RGDSWPreconditioner<SC,LO,GO,NO>::RGDSWPreconditioner(ConstXMatrixPtr k,
+#else
+    template <class SC,class NO>
+    RGDSWPreconditioner<SC,NO>::RGDSWPreconditioner(ConstXMatrixPtr k,
+#endif
                                                           ParameterListPtr parameterList) :
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     AlgebraicOverlappingPreconditioner<SC,LO,GO,NO> (k,parameterList)
+#else
+    AlgebraicOverlappingPreconditioner<SC,NO> (k,parameterList)
+#endif
     {
         FROSCH_TIMER_START_LEVELID(rGDSWPreconditionerTime,"RGDSWPreconditioner::RGDSWPreconditioner");
         // Set the LevelID in the sublist
         parameterList->sublist("RGDSWCoarseOperator").set("Level ID",this->LevelID_);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         CoarseOperator_.reset(new RGDSWCoarseOperator<SC,LO,GO,NO>(k,sublist(parameterList,"RGDSWCoarseOperator")));
+#else
+        CoarseOperator_.reset(new RGDSWCoarseOperator<SC,NO>(k,sublist(parameterList,"RGDSWCoarseOperator")));
+#endif
         this->SumOperator_->addOperator(CoarseOperator_);
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     int RGDSWPreconditioner<SC,LO,GO,NO>::initialize(bool useDefaultParameters)
+#else
+    template <class SC,class NO>
+    int RGDSWPreconditioner<SC,NO>::initialize(bool useDefaultParameters)
+#endif
     {
         ConstXMapPtr repeatedMap = BuildRepeatedMap(this->K_->getCrsGraph());
         return initialize(repeatedMap,useDefaultParameters);
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     int RGDSWPreconditioner<SC,LO,GO,NO>::initialize(ConstXMapPtr repeatedMap,
+#else
+    template <class SC,class NO>
+    int RGDSWPreconditioner<SC,NO>::initialize(ConstXMapPtr repeatedMap,
+#endif
                                                      bool useDefaultParameters)
     {
         if (useDefaultParameters) {
@@ -92,16 +115,26 @@ namespace FROSch {
         }
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     int RGDSWPreconditioner<SC,LO,GO,NO>::initialize(GOVecPtr &dirichletBoundaryDofs,
+#else
+    template <class SC,class NO>
+    int RGDSWPreconditioner<SC,NO>::initialize(GOVecPtr &dirichletBoundaryDofs,
+#endif
                                                      bool useDefaultParameters)
     {
         ConstXMapPtr repeatedMap = BuildRepeatedMap(this->K_->getCrsGraph());
         return initialize(repeatedMap,dirichletBoundaryDofs,useDefaultParameters);
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     int RGDSWPreconditioner<SC,LO,GO,NO>::initialize(ConstXMapPtr repeatedMap,
+#else
+    template <class SC,class NO>
+    int RGDSWPreconditioner<SC,NO>::initialize(ConstXMapPtr repeatedMap,
+#endif
                                                      GOVecPtr &dirichletBoundaryDofs,
                                                      bool useDefaultParameters)
     {
@@ -123,16 +156,26 @@ namespace FROSch {
         }
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     int RGDSWPreconditioner<SC,LO,GO,NO>::initialize(UN dimension,
+#else
+    template <class SC,class NO>
+    int RGDSWPreconditioner<SC,NO>::initialize(UN dimension,
+#endif
                                                      int overlap)
     {
         XMapPtr repeatedMap = BuildRepeatedMap(this->K_->getCrsGraph());
         return initialize(dimension,overlap,repeatedMap);
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     int RGDSWPreconditioner<SC,LO,GO,NO>::initialize(UN dimension,
+#else
+    template <class SC,class NO>
+    int RGDSWPreconditioner<SC,NO>::initialize(UN dimension,
+#endif
                                                      int overlap,
                                                      ConstXMapPtr repeatedMap)
     {
@@ -144,8 +187,13 @@ namespace FROSch {
         return 0;
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     int RGDSWPreconditioner<SC,LO,GO,NO>::initialize(UN dimension,
+#else
+    template <class SC,class NO>
+    int RGDSWPreconditioner<SC,NO>::initialize(UN dimension,
+#endif
                                                      int overlap,
                                                      ConstXMapPtr repeatedMap,
                                                      GOVecPtr &dirichletBoundaryDofs)
@@ -158,8 +206,13 @@ namespace FROSch {
         return 0;
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     int RGDSWPreconditioner<SC,LO,GO,NO>::initialize(UN dimension,
+#else
+    template <class SC,class NO>
+    int RGDSWPreconditioner<SC,NO>::initialize(UN dimension,
+#endif
                                                      UN dofsPerNode,
                                                      DofOrdering dofOrdering,
                                                      int overlap,
@@ -177,8 +230,13 @@ namespace FROSch {
         return ret;
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     int RGDSWPreconditioner<SC,LO,GO,NO>::initialize(UN dimension,
+#else
+    template <class SC,class NO>
+    int RGDSWPreconditioner<SC,NO>::initialize(UN dimension,
+#endif
                                                      UN dofsPerNode,
                                                      DofOrdering dofOrdering,
                                                      int overlap,
@@ -197,8 +255,13 @@ namespace FROSch {
         return ret;
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     int RGDSWPreconditioner<SC,LO,GO,NO>::initialize(UN dimension,
+#else
+    template <class SC,class NO>
+    int RGDSWPreconditioner<SC,NO>::initialize(UN dimension,
+#endif
                                                      UN dofsPerNode,
                                                      DofOrdering dofOrdering,
                                                      int overlap,
@@ -217,8 +280,13 @@ namespace FROSch {
         return ret;
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     int RGDSWPreconditioner<SC,LO,GO,NO>::initialize(UN dimension,
+#else
+    template <class SC,class NO>
+    int RGDSWPreconditioner<SC,NO>::initialize(UN dimension,
+#endif
                                                      UN dofsPerNode,
                                                      DofOrdering dofOrdering,
                                                      int overlap,
@@ -239,8 +307,13 @@ namespace FROSch {
         return ret;
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     int RGDSWPreconditioner<SC,LO,GO,NO>::compute()
+#else
+    template <class SC,class NO>
+    int RGDSWPreconditioner<SC,NO>::compute()
+#endif
     {
         FROSCH_TIMER_START_LEVELID(computeTime,"RGDSWPreconditioner::compute");
         int ret = 0;
@@ -249,21 +322,36 @@ namespace FROSch {
         return ret;
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     void RGDSWPreconditioner<SC,LO,GO,NO>::describe(FancyOStream &out,
+#else
+    template <class SC,class NO>
+    void RGDSWPreconditioner<SC,NO>::describe(FancyOStream &out,
+#endif
                                                     const EVerbosityLevel verbLevel) const
     {
         FROSCH_ASSERT(false,"describe() has to be implemented properly...");
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     string RGDSWPreconditioner<SC,LO,GO,NO>::description() const
+#else
+    template <class SC,class NO>
+    string RGDSWPreconditioner<SC,NO>::description() const
+#endif
     {
         return "RGDSW Preconditioner";
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     int RGDSWPreconditioner<SC,LO,GO,NO>::resetMatrix(ConstXMatrixPtr &k)
+#else
+    template <class SC,class NO>
+    int RGDSWPreconditioner<SC,NO>::resetMatrix(ConstXMatrixPtr &k)
+#endif
     {
         FROSCH_DETAILTIMER_START_LEVELID(resetMatrixTime,"RGDSWPreconditioner::resetMatrix");
         this->K_ = k;

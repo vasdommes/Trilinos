@@ -87,8 +87,13 @@ namespace MueLu {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   RCP<const ParameterList> NotayAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::GetValidParameterList() const {
+#else
+  template <class Scalar, class Node>
+  RCP<const ParameterList> NotayAggregationFactory<Scalar, Node>::GetValidParameterList() const {
+#endif
     RCP<ParameterList> validParamList = rcp(new ParameterList());
 
 
@@ -110,8 +115,13 @@ namespace MueLu {
     return validParamList;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void NotayAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level& currentLevel) const {
+#else
+  template <class Scalar, class Node>
+  void NotayAggregationFactory<Scalar, Node>::DeclareInput(Level& currentLevel) const {
+#endif
     const ParameterList& pL = GetParameterList();
 
     Input(currentLevel, "A");
@@ -125,8 +135,13 @@ namespace MueLu {
   }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void NotayAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(Level& currentLevel) const {
+#else
+  template <class Scalar, class Node>
+  void NotayAggregationFactory<Scalar, Node>::Build(Level& currentLevel) const {
+#endif
     FactoryMonitor m(*this, "Build", currentLevel);
     using STS = Teuchos::ScalarTraits<Scalar>;
     using MT  = typename STS::magnitudeType;
@@ -210,7 +225,11 @@ namespace MueLu {
       MueLu::NotayUtils::RandomReorder(orderingVector);
 #if defined(HAVE_MUELU_KOKKOS_REFACTOR)
     else if (ordering == O_CUTHILL_MCKEE) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       RCP<Xpetra::Vector<LO,LO,GO,NO> > rcmVector = MueLu::Utilities_kokkos<SC,LO,GO,NO>::CuthillMcKee(*A);
+#else
+      RCP<Xpetra::Vector<LO,NO> > rcmVector = MueLu::Utilities_kokkos<SC,NO>::CuthillMcKee(*A);
+#endif
       auto localVector = rcmVector->getData(0);
       for (LO i = 0; i < numRows; i++)
         orderingVector[i] = localVector[i];
@@ -300,7 +319,11 @@ namespace MueLu {
         MueLu::NotayUtils::RandomReorder(localOrderingVector);
 #if defined(HAVE_MUELU_KOKKOS_REFACTOR)
       else if (ordering == O_CUTHILL_MCKEE) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         RCP<Xpetra::Vector<LO,LO,GO,NO> > rcmVector = MueLu::Utilities_kokkos<SC,LO,GO,NO>::CuthillMcKee(*A);
+#else
+        RCP<Xpetra::Vector<LO,NO> > rcmVector = MueLu::Utilities_kokkos<SC,NO>::CuthillMcKee(*A);
+#endif
         auto localVector = rcmVector->getData(0);
         for (LO i = 0; i < numRows; i++)
           localOrderingVector[i] = localVector[i];
@@ -344,8 +367,13 @@ namespace MueLu {
   }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void NotayAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  template <class Scalar, class Node>
+  void NotayAggregationFactory<Scalar, Node>::
+#endif
   BuildInitialAggregates(const Teuchos::ParameterList& params,
                          const RCP<const Matrix>& A,
 			 const Teuchos::ArrayView<const LO> & orderingVector,
@@ -358,7 +386,11 @@ namespace MueLu {
     Monitor m(*this, "BuildInitialAggregates");
     using STS = Teuchos::ScalarTraits<Scalar>;
     using MT  = typename STS::magnitudeType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using RealValuedVector = Xpetra::Vector<MT,LocalOrdinal,GlobalOrdinal,Node>;
+#else
+    using RealValuedVector = Xpetra::Vector<MT,Node>;
+#endif
 
     RCP<Teuchos::FancyOStream> out;
     if(const char* dbg = std::getenv("MUELU_PAIRWISEAGGREGATION_DEBUG")) {
@@ -392,9 +424,15 @@ namespace MueLu {
 
     // Extract diagonal, rowsums, etc
     // NOTE: The ghostedRowSum vector here has has the sign flipped from Notay's S
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Vector> ghostedDiag = MueLu::Utilities<SC,LO,GO,NO>::GetMatrixOverlappedDiagonal(*A);
     RCP<Vector> ghostedRowSum = MueLu::Utilities<SC,LO,GO,NO>::GetMatrixOverlappedDeletedRowsum(*A);
     RCP<RealValuedVector> ghostedAbsRowSum = MueLu::Utilities<SC,LO,GO,NO>::GetMatrixOverlappedAbsDeletedRowsum(*A);
+#else
+    RCP<Vector> ghostedDiag = MueLu::Utilities<SC,NO>::GetMatrixOverlappedDiagonal(*A);
+    RCP<Vector> ghostedRowSum = MueLu::Utilities<SC,NO>::GetMatrixOverlappedDeletedRowsum(*A);
+    RCP<RealValuedVector> ghostedAbsRowSum = MueLu::Utilities<SC,NO>::GetMatrixOverlappedAbsDeletedRowsum(*A);
+#endif
     const ArrayRCP<const SC> D     = ghostedDiag->getData(0);
     const ArrayRCP<const SC> S     = ghostedRowSum->getData(0);
     const ArrayRCP<const MT> AbsRs = ghostedAbsRowSum->getData(0);
@@ -529,8 +567,13 @@ namespace MueLu {
     aggregates.SetNumAggregates(aggIndex);
   } // BuildInitialAggregates
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void NotayAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  template <class Scalar, class Node>
+  void NotayAggregationFactory<Scalar, Node>::
+#endif
   BuildFurtherAggregates(const Teuchos::ParameterList& params,
                          const RCP<const Matrix>& A,
                          const Teuchos::ArrayView<const LO> & orderingVector,
@@ -670,8 +713,13 @@ namespace MueLu {
 
   } // BuildFurtherAggregates
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void NotayAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  template <class Scalar, class Node>
+  void NotayAggregationFactory<Scalar, Node>::
+#endif
   BuildOnRankLocalMatrix(const typename Matrix::local_matrix_type& localA,
                          typename Matrix::local_matrix_type& onrankA) const {
     Monitor m(*this, "BuildOnRankLocalMatrix");
@@ -745,8 +793,13 @@ namespace MueLu {
                                 nnzOnrankA, values, rowPtr, colInd);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void NotayAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  template <class Scalar, class Node>
+  void NotayAggregationFactory<Scalar, Node>::
+#endif
   BuildIntermediateProlongator(const LocalOrdinal numRows,
                                const LocalOrdinal numDirichletNodes,
                                const LocalOrdinal numLocalAggregates,
@@ -801,8 +854,13 @@ namespace MueLu {
                                       values, rowPtr, colInd);
   } // BuildIntermediateProlongator
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void NotayAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  template <class Scalar, class Node>
+  void NotayAggregationFactory<Scalar, Node>::
+#endif
   BuildCoarseLocalMatrix(const typename Matrix::local_matrix_type& intermediateP,
                          typename Matrix::local_matrix_type& coarseA) const {
     Monitor m(*this, "BuildCoarseLocalMatrix");
@@ -885,8 +943,13 @@ namespace MueLu {
     localSpGEMM(intermediatePt, AP, "coarseA", coarseA);
   } // BuildCoarseLocalMatrix
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void NotayAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  template <class Scalar, class Node>
+  void NotayAggregationFactory<Scalar, Node>::
+#endif
   localSpGEMM(const typename Matrix::local_matrix_type& A,
               const typename Matrix::local_matrix_type& B,
               const std::string matrixLabel,

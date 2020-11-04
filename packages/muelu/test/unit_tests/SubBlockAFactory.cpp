@@ -63,9 +63,15 @@ namespace MueLuTests {
   /////////////////////////
   // helper function
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   Teuchos::RCP<Xpetra::CrsMatrixWrap<Scalar,LocalOrdinal, GlobalOrdinal, Node> >
   GenerateProblemMatrix(const Teuchos::RCP<const Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > map,
+#else
+  template<class Scalar, class Node>
+  Teuchos::RCP<Xpetra::CrsMatrixWrap<Scalar, Node> >
+  GenerateProblemMatrix(const Teuchos::RCP<const Xpetra::Map<Node> > map,
+#endif
                         Scalar a = 2.0, Scalar b = -1.0, Scalar c = -1.0) {
 #   include "MueLu_UseShortNames.hpp"
 
@@ -125,9 +131,17 @@ namespace MueLuTests {
     return mtx;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(SubBlockAFactory, Constructor, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(SubBlockAFactory, Constructor, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,NO);
 
@@ -137,9 +151,17 @@ namespace MueLuTests {
     TEST_EQUALITY(subBlockAFactory != Teuchos::null, true);
   } // Constructor
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(SubBlockAFactory, ExtractMainDiagBlocks, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(SubBlockAFactory, ExtractMainDiagBlocks, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,NO);
     out << "version: " << MueLu::Version() << std::endl;
@@ -175,8 +197,13 @@ namespace MueLuTests {
 
     RCP<const MapExtractor> mapExtractor = MapExtractorFactory::Build(bigMap, maps);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<CrsMatrixWrap> Op11 = GenerateProblemMatrix<Scalar, LO, GO, Node>(map1, 2, -1, -1);
     RCP<CrsMatrixWrap> Op22 = GenerateProblemMatrix<Scalar, LO, GO, Node>(map2, 3, -2, -1);
+#else
+    RCP<CrsMatrixWrap> Op11 = GenerateProblemMatrix<Scalar, Node>(map1, 2, -1, -1);
+    RCP<CrsMatrixWrap> Op22 = GenerateProblemMatrix<Scalar, Node>(map2, 3, -2, -1);
+#endif
 
     // build blocked operator
     RCP<BlockedCrsMatrix> bOp = rcp(new BlockedCrsMatrix(mapExtractor, mapExtractor, 10));
@@ -232,9 +259,15 @@ namespace MueLuTests {
     TEST_EQUALITY(A22->getNodeNumEntries(), Op22->getNodeNumEntries());
   } // ExtractMainDiagBlocks
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #  define MUELU_ETI_GROUP(SC, LO, GO, Node) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(SubBlockAFactory, Constructor, SC, LO, GO, Node) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(SubBlockAFactory, ExtractMainDiagBlocks, SC, LO, GO, Node)
+#else
+#  define MUELU_ETI_GROUP(SC, Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(SubBlockAFactory, Constructor, SC, Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(SubBlockAFactory, ExtractMainDiagBlocks, SC, Node)
+#endif
 
 #include <MueLu_ETI_4arg.hpp>
 }

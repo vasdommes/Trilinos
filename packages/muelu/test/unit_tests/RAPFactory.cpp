@@ -67,9 +67,17 @@
 namespace MueLuTests {
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RAPFactory, Constructor, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(RAPFactory, Constructor, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
@@ -80,9 +88,17 @@ namespace MueLuTests {
     out << *rapFactory << std::endl;
   } // Constructor test
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RAPFactory, Correctness, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(RAPFactory, Correctness, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
@@ -91,14 +107,26 @@ namespace MueLuTests {
     using magnitude_type        = typename TST::magnitudeType;
     using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
     using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
+#else
+    using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+#endif
 
     RCP<const Teuchos::Comm<int> > comm = Parameters::getDefaultComm();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Level fineLevel, coarseLevel; TestHelpers::TestFactory<Scalar, LO, GO, NO>::createTwoLevelHierarchy(fineLevel, coarseLevel);
+#else
+    Level fineLevel, coarseLevel; TestHelpers::TestFactory<Scalar, NO>::createTwoLevelHierarchy(fineLevel, coarseLevel);
+#endif
 
     GO nx = 27*comm->getSize();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> Op = TestHelpers::TestFactory<Scalar, LO, GO, NO>::Build1DPoisson(nx);
+#else
+    RCP<Matrix> Op = TestHelpers::TestFactory<Scalar, NO>::Build1DPoisson(nx);
+#endif
     fineLevel.Set("A",Op);
 
     Teuchos::ParameterList galeriList;
@@ -161,9 +189,17 @@ namespace MueLuTests {
 
   } // Correctness test
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RAPFactory, ImplicitTranspose, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(RAPFactory, ImplicitTranspose, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
@@ -172,7 +208,11 @@ namespace MueLuTests {
     using magnitude_type        = typename TST::magnitudeType;
     using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
     using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
+#else
+    using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+#endif
 
     RCP<const Teuchos::Comm<int> > comm = Parameters::getDefaultComm();
 
@@ -190,14 +230,22 @@ namespace MueLuTests {
     defManager->SetFactory("Aggregates", rcp(new CoupledAggregationFactory()));   // real aggregation factory for Ptent
 
     Level fineLevel, coarseLevel;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<Scalar, LO, GO, NO>::createTwoLevelHierarchy(fineLevel, coarseLevel);
+#else
+    TestHelpers::TestFactory<Scalar, NO>::createTwoLevelHierarchy(fineLevel, coarseLevel);
+#endif
 
     // overwrite default factory manager
     fineLevel.SetFactoryManager(defManager);
     coarseLevel.SetFactoryManager(defManager);
 
     GO nx = 19*comm->getSize();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> Op = TestHelpers::TestFactory<Scalar, LO, GO, NO>::Build1DPoisson(nx);
+#else
+    RCP<Matrix> Op = TestHelpers::TestFactory<Scalar, NO>::Build1DPoisson(nx);
+#endif
     fineLevel.Set("A",Op);
 
     Teuchos::ParameterList galeriList;
@@ -268,9 +316,17 @@ namespace MueLuTests {
 
   } // ImplicitTranspose test
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RAPFactory, FixZeroDiagonals, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(RAPFactory, FixZeroDiagonals, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
@@ -292,14 +348,22 @@ namespace MueLuTests {
     defManager->SetFactory("R", rcp(MueLu::NoFactory::get(),false));         // dummy factory for R
 
     Level fineLevel, coarseLevel;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<Scalar, LO, GO, NO>::createTwoLevelHierarchy(fineLevel, coarseLevel);
+#else
+    TestHelpers::TestFactory<Scalar, NO>::createTwoLevelHierarchy(fineLevel, coarseLevel);
+#endif
 
     // overwrite default factory manager
     fineLevel.SetFactoryManager(defManager);
     coarseLevel.SetFactoryManager(defManager);
 
     GO nx = 19*comm->getSize();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> Op = TestHelpers::TestFactory<Scalar, LO, GO, NO>::Build1DPoisson(nx);
+#else
+    RCP<Matrix> Op = TestHelpers::TestFactory<Scalar, NO>::Build1DPoisson(nx);
+#endif
     fineLevel.Set("A",Op);
 
     //Create diagonal matrix, same dimensions as A, but with some zeros on the diagonal
@@ -367,9 +431,17 @@ namespace MueLuTests {
   } // FixZeroDiagonals test
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RAPFactory, RelativeBoost, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(RAPFactory, RelativeBoost, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
@@ -391,14 +463,22 @@ namespace MueLuTests {
     defManager->SetFactory("R", rcp(MueLu::NoFactory::get(),false));         // dummy factory for R
 
     Level fineLevel, coarseLevel;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<Scalar, LO, GO, NO>::createTwoLevelHierarchy(fineLevel, coarseLevel);
+#else
+    TestHelpers::TestFactory<Scalar, NO>::createTwoLevelHierarchy(fineLevel, coarseLevel);
+#endif
 
     // overwrite default factory manager
     fineLevel.SetFactoryManager(defManager);
     coarseLevel.SetFactoryManager(defManager);
 
     GO nx = 19*comm->getSize();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> Op = TestHelpers::TestFactory<Scalar, LO, GO, NO>::Build1DPoisson(nx);
+#else
+    RCP<Matrix> Op = TestHelpers::TestFactory<Scalar, NO>::Build1DPoisson(nx);
+#endif
     fineLevel.Set("A",Op);
 
     //Create diagonal matrix, same dimensions as A, but with some zeros on the diagonal
@@ -438,7 +518,11 @@ namespace MueLuTests {
 
     RCP<Matrix> coarseOp = coarseLevel.Get< RCP<Matrix> >("A", &rap);
     std::string filename = "Ac.dat";
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Xpetra::IO<SC,LO,GO,NO>::Write(filename,*coarseOp);
+#else
+    Xpetra::IO<SC,NO>::Write(filename,*coarseOp);
+#endif
 
     //The diagonal repair should result in a single nonzero entry with scalar value one in local row 0,
     //There should be no repeated column indices.
@@ -468,12 +552,21 @@ namespace MueLuTests {
 
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define MUELU_ETI_GROUP(Scalar, LO, GO, Node) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(RAPFactory,Constructor,Scalar,LO,GO,Node) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(RAPFactory,Correctness,Scalar,LO,GO,Node) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(RAPFactory,ImplicitTranspose,Scalar,LO,GO,Node) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(RAPFactory,FixZeroDiagonals,Scalar,LO,GO,Node) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(RAPFactory,RelativeBoost,Scalar,LO,GO,Node)
+#else
+#define MUELU_ETI_GROUP(Scalar, Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(RAPFactory,Constructor,Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(RAPFactory,Correctness,Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(RAPFactory,ImplicitTranspose,Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(RAPFactory,FixZeroDiagonals,Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(RAPFactory,RelativeBoost,Scalar,Node)
+#endif
 
 #include <MueLu_ETI_4arg.hpp>
 

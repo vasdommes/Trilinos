@@ -61,16 +61,26 @@ namespace MueLu {
   */
 
   template <class Scalar = DefaultScalar,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
             class LocalOrdinal = DefaultLocalOrdinal,
             class GlobalOrdinal = DefaultGlobalOrdinal,
+#endif
             class Node = DefaultNode>
   class RegionRFactory : public TwoLevelFactoryBase {
 #undef MUELU_REGIONRFACTORY_SHORT
 #include "MueLu_UseShortNames.hpp"
 
   public:
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     using real_type = typename Teuchos::ScalarTraits<SC>::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using realvaluedmultivector_type = typename Xpetra::MultiVector<real_type, LO, GO, NO>;
+#else
+    using realvaluedmultivector_type = typename Xpetra::MultiVector<real_type,NO>;
+#endif
 
     //! @name Constructors/Destructors.
     //@{

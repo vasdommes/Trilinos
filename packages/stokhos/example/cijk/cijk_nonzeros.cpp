@@ -322,7 +322,11 @@ int main(int argc, char **argv)
 	Cijk_tile[j][k]->fillComplete();
 
     
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Array< Array< std::map<int,int> > > nz_tile(nj_tiles);
+#else
+    Array< Array< std::map<> > > nz_tile(nj_tiles);
+#endif
     Array< Array< Array< std::pair<int,int> > > > sorted_nz_tile(nj_tiles);
     for (int j_tile=0; j_tile<nj_tiles; ++j_tile) {
       nz_tile[j_tile].resize(nk_tiles); 
@@ -357,7 +361,11 @@ int main(int argc, char **argv)
 	// Sort based on non-zeros for each i, for each tile
 	sorted_nz_tile[j_tile][k_tile].resize(nz_tile[j_tile][k_tile].size());
 	int idx=0;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 	for (std::map<int,int>::iterator it = nz_tile[j_tile][k_tile].begin();
+#else
+	for (std::map<>::iterator it = nz_tile[j_tile][k_tile].begin();
+#endif
 	     it != nz_tile[j_tile][k_tile].end(); ++it) {
 	  sorted_nz_tile[j_tile][k_tile][idx] = 
 	    std::make_pair(it->first, it->second);

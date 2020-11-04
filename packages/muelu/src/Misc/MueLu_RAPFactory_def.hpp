@@ -67,12 +67,22 @@
 
 namespace MueLu {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   RAPFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::RAPFactory()
+#else
+  template <class Scalar, class Node>
+  RAPFactory<Scalar, Node>::RAPFactory()
+#endif
     : hasDeclaredInput_(false) { }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   RCP<const ParameterList> RAPFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::GetValidParameterList() const {
+#else
+  template <class Scalar, class Node>
+  RCP<const ParameterList> RAPFactory<Scalar, Node>::GetValidParameterList() const {
+#endif
     RCP<ParameterList> validParamList = rcp(new ParameterList());
 
 #define SET_VALID_ENTRY(name) validParamList->setEntry(name, MasterList::getEntry(name))
@@ -98,8 +108,13 @@ namespace MueLu {
     return validParamList;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void RAPFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level &fineLevel, Level &coarseLevel) const {
+#else
+  template <class Scalar, class Node>
+  void RAPFactory<Scalar, Node>::DeclareInput(Level &fineLevel, Level &coarseLevel) const {
+#endif
     const Teuchos::ParameterList& pL = GetParameterList();
     if (pL.get<bool>("transpose: use implicit") == false)
       Input(coarseLevel, "R");
@@ -114,8 +129,13 @@ namespace MueLu {
     hasDeclaredInput_ = true;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void RAPFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(Level& fineLevel, Level& coarseLevel) const {
+#else
+  template <class Scalar, class Node>
+  void RAPFactory<Scalar, Node>::Build(Level& fineLevel, Level& coarseLevel) const {
+#endif
     const bool doTranspose       = true;
     const bool doFillComplete    = true;
     const bool doOptimizeStorage = true;
@@ -216,7 +236,11 @@ namespace MueLu {
 
         Teuchos::ArrayView<const double> relativeFloor = pL.get<Teuchos::Array<double> >("rap: relative diagonal floor")();
         if(relativeFloor.size() > 0) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           Xpetra::MatrixUtils<SC,LO,GO,NO>::RelativeDiagonalBoost(Ac, relativeFloor,GetOStream(Statistics2));
+#else
+          Xpetra::MatrixUtils<SC,NO>::RelativeDiagonalBoost(Ac, relativeFloor,GetOStream(Statistics2));
+#endif
         }
 
         bool repairZeroDiagonals = pL.get<bool>("RepairMainDiagonal") || pL.get<bool>("rap: fix zero diagonals");
@@ -225,7 +249,11 @@ namespace MueLu {
           using magnitudeType = typename Teuchos::ScalarTraits<Scalar>::magnitudeType;
           magnitudeType threshold = pL.get<magnitudeType>("rap: fix zero diagonals threshold");
           Scalar replacement = Teuchos::as<Scalar>(pL.get<double>("rap: fix zero diagonals replacement"));
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           Xpetra::MatrixUtils<SC,LO,GO,NO>::CheckRepairMainDiagonal(Ac, repairZeroDiagonals, GetOStream(Warnings1), threshold, replacement);
+#else
+          Xpetra::MatrixUtils<SC,NO>::CheckRepairMainDiagonal(Ac, repairZeroDiagonals, GetOStream(Warnings1), threshold, replacement);
+#endif
         }
 
         if (IsPrint(Statistics2)) {
@@ -270,7 +298,11 @@ namespace MueLu {
 
           SubFactoryMonitor m2(*this, "MxMxM: R x A x P (implicit)", coarseLevel);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           Xpetra::TripleMatrixMultiply<SC,LO,GO,NO>::
+#else
+          Xpetra::TripleMatrixMultiply<SC,NO>::
+#endif
             MultiplyRAP(*P, doTranspose, *A, !doTranspose, *P, !doTranspose, *Ac, doFillComplete,
                         doOptimizeStorage, labelstr+std::string("MueLu::R*A*P-implicit-")+levelstr.str(),
                         RAPparams);
@@ -281,7 +313,11 @@ namespace MueLu {
 
           SubFactoryMonitor m2(*this, "MxMxM: R x A x P (explicit)", coarseLevel);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           Xpetra::TripleMatrixMultiply<SC,LO,GO,NO>::
+#else
+          Xpetra::TripleMatrixMultiply<SC,NO>::
+#endif
             MultiplyRAP(*R, !doTranspose, *A, !doTranspose, *P, !doTranspose, *Ac, doFillComplete,
                         doOptimizeStorage, labelstr+std::string("MueLu::R*A*P-explicit-")+levelstr.str(),
                         RAPparams);
@@ -289,7 +325,11 @@ namespace MueLu {
       
         Teuchos::ArrayView<const double> relativeFloor = pL.get<Teuchos::Array<double> >("rap: relative diagonal floor")();
         if(relativeFloor.size() > 0) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           Xpetra::MatrixUtils<SC,LO,GO,NO>::RelativeDiagonalBoost(Ac, relativeFloor,GetOStream(Statistics2));
+#else
+          Xpetra::MatrixUtils<SC,NO>::RelativeDiagonalBoost(Ac, relativeFloor,GetOStream(Statistics2));
+#endif
         }
 
         bool repairZeroDiagonals = pL.get<bool>("RepairMainDiagonal") || pL.get<bool>("rap: fix zero diagonals");
@@ -298,7 +338,11 @@ namespace MueLu {
           using magnitudeType = typename Teuchos::ScalarTraits<Scalar>::magnitudeType;
           magnitudeType threshold = pL.get<magnitudeType>("rap: fix zero diagonals threshold");
           Scalar replacement = Teuchos::as<Scalar>(pL.get<double>("rap: fix zero diagonals replacement"));
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           Xpetra::MatrixUtils<SC,LO,GO,NO>::CheckRepairMainDiagonal(Ac, repairZeroDiagonals, GetOStream(Warnings1), threshold, replacement);
+#else
+          Xpetra::MatrixUtils<SC,NO>::CheckRepairMainDiagonal(Ac, repairZeroDiagonals, GetOStream(Warnings1), threshold, replacement);
+#endif
         }
 
 
@@ -365,8 +409,13 @@ namespace MueLu {
 
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void RAPFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::AddTransferFactory(const RCP<const FactoryBase>& factory) {
+#else
+  template <class Scalar, class Node>
+  void RAPFactory<Scalar, Node>::AddTransferFactory(const RCP<const FactoryBase>& factory) {
+#endif
     // check if it's a TwoLevelFactoryBase based transfer factory
     TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::rcp_dynamic_cast<const TwoLevelFactoryBase>(factory) == Teuchos::null, Exceptions::BadCast,
                                "MueLu::RAPFactory::AddTransferFactory: Transfer factory is not derived from TwoLevelFactoryBase. "

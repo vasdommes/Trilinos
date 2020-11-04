@@ -132,7 +132,11 @@ void testCoordinateModel(std::string &fname, int nWeights,
     else{
       nGlobalIds = nLocalIds;
     }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::broadcast<int, int>(*comm, 0, &nGlobalIds);
+#else
+    Teuchos::broadcast<>(*comm, 0, &nGlobalIds);
+#endif
   }
   else{
     nGlobalIds = coords->getGlobalLength();

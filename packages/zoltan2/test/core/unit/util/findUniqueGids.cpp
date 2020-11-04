@@ -397,7 +397,11 @@ void test5(Teuchos::RCP<const Teuchos::Comm<int> > &comm)
   Tpetra::global_size_t gNEntries =
           Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<lno_t, gno_t> map_t;
+#else
+  typedef Tpetra::Map<> map_t;
+#endif
   Teuchos::RCP<const map_t> map = rcp(new map_t(gNEntries, nKeys, 0, comm),
                                       true);
 
@@ -415,7 +419,11 @@ void test5(Teuchos::RCP<const Teuchos::Comm<int> > &comm)
     keys.replaceLocalValue(i, 2, gno_t(i));
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   size_t nUniqueGids = Zoltan2::findUniqueGids<lno_t,gno_t>(keys,gids);
+#else
+  size_t nUniqueGids = Zoltan2::findUniqueGids<>(keys,gids);
+#endif
 
   // Test for correctness
   if (me == 0) 
@@ -457,7 +465,11 @@ void test6(Teuchos::RCP<const Teuchos::Comm<int> > &comm)
   Tpetra::global_size_t gNEntries =
           Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<lno_t, gno_t> map_t;
+#else
+  typedef Tpetra::Map<> map_t;
+#endif
   Teuchos::RCP<const map_t> map = rcp(new map_t(gNEntries, nKeys, 0, comm),
                                       true);
 
@@ -471,7 +483,11 @@ void test6(Teuchos::RCP<const Teuchos::Comm<int> > &comm)
     keys.replaceLocalValue(i, 3, gno_t(3));
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   size_t nUniqueGids = Zoltan2::findUniqueGids<lno_t,gno_t>(keys,gids);
+#else
+  size_t nUniqueGids = Zoltan2::findUniqueGids<>(keys,gids);
+#endif
 
   // Test for correctness
   if (me == 0) 

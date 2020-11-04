@@ -1487,7 +1487,11 @@ static int set_number_of_zdrive_processes(char *fname, char **disks)
 // the partition number assigned to each element by Zoltan.
 //----------------------------------------------------------------
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 static map<int, int> partitionMap;   // for searching
+#else
+static map<> partitionMap;   // for searching
+#endif
 static int *gids=NULL;               // for message passing
 static int *pids=NULL;
 static int listSize=0;
@@ -1519,7 +1523,11 @@ static void update_partition_ids(int *eltIds, vtkIntArray *partids)
   for (int i=0; i<partids->GetNumberOfTuples(); i++){
 
     if (ids[i] < 0){
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       map<int,int>::iterator it = partitionMap.find(eltIds[i]);
+#else
+      map<>::iterator it = partitionMap.find(eltIds[i]);
+#endif
 
       if (it->first == eltIds[i]){
 

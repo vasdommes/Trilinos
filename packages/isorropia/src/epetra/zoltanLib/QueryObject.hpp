@@ -125,7 +125,11 @@ class QueryObject
 
   Teuchos::RCP<const Epetra_MultiVector> weights_;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int> procmap_;
+#else
+  std::map<> procmap_;
+#endif
   std::set<int> graph_self_edges_;
 
   unsigned int myProc_;

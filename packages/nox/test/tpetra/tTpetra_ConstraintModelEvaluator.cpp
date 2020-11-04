@@ -80,14 +80,23 @@ TEUCHOS_UNIT_TEST(NOX_Tpetra_1DFEM, Responses)
   using LO = NOX::LocalOrdinal;
   using GO = NOX::GlobalOrdinal;
   using Node = NOX::NodeType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using converter = ::Thyra::TpetraOperatorVectorExtraction<Scalar,LO,GO,Node>;
+#else
+  using converter = ::Thyra::TpetraOperatorVectorExtraction<Scalar,Node>;
+#endif
 
   // Create the model evaluator object
   Scalar x00 = 0.0;
   Scalar x01 = 1.0;
   const Tpetra::global_size_t numGlobalElements = 100;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::RCP<EvaluatorTpetra1DFEM<Scalar,LO,GO,Node> > model =
     evaluatorTpetra1DFEM<Scalar,LO,GO,Node>(comm, numGlobalElements, x00, x01);
+#else
+  Teuchos::RCP<EvaluatorTpetra1DFEM<Scalar,Node> > model =
+    evaluatorTpetra1DFEM<Scalar,Node>(comm, numGlobalElements, x00, x01);
+#endif
 
   LOCA::ParameterVector p_vec;
   p_vec.addParameter("k",1.0);

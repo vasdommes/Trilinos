@@ -98,8 +98,13 @@ int main(int argc, char *argv[]) {
   typedef Tpetra::Map<>::local_ordinal_type LO;
   typedef Tpetra::Map<>::global_ordinal_type GO;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::CrsMatrix<Scalar,LO,GO> MAT;
   typedef Tpetra::MultiVector<Scalar,LO,GO> MV;
+#else
+  typedef Tpetra::CrsMatrix<Scalar> MAT;
+  typedef Tpetra::MultiVector<Scalar> MV;
+#endif
 
   using Tpetra::global_size_t;
   using Teuchos::tuple;
@@ -138,7 +143,11 @@ int main(int argc, char *argv[]) {
         elementList[k] = myRank + k*numProcs + 4*myRank;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO,GO>  map_type;
+#else
+  typedef Tpetra::Map<>  map_type;
+#endif
   RCP< const map_type > map = rcp( new map_type(numGlobalEntries, elementList, 0, comm) );
   TEUCHOS_TEST_FOR_EXCEPTION(
     comm->getSize () > 1 && map->isContiguous (),

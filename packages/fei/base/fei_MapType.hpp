@@ -58,9 +58,17 @@
 namespace fei {
 
 #ifdef HAVE_FEI_BOOST
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 typedef boost::unordered_map<int,int> MapIntInt;
 #else
+typedef boost::unordered_map<> MapIntInt;
+#endif
+#else
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 typedef std::map<int,int> MapIntInt;
+#else
+typedef std::map<> MapIntInt;
+#endif
 #endif
 
 }//namespace fei

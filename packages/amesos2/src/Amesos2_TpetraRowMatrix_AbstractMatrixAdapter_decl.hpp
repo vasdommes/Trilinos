@@ -80,8 +80,10 @@ namespace Amesos2 {
 	    typename Node,
 	    class DerivedMat >
   class AbstractConcreteMatrixAdapter< Tpetra::RowMatrix<Scalar,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 							 LocalOrdinal,
 							 GlobalOrdinal,
+#endif
 							 Node >,
 				       DerivedMat >
     : public MatrixAdapter< DerivedMat > {
@@ -90,8 +92,10 @@ namespace Amesos2 {
     friend class MatrixAdapter< DerivedMat >;
 
     typedef Tpetra::RowMatrix<Scalar,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 			      LocalOrdinal,
 			      GlobalOrdinal,
+#endif
 			      Node >              matrix_t;
 						 
     typedef Scalar                                scalar_t;

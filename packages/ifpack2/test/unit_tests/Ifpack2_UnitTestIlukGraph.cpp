@@ -65,13 +65,25 @@ using Tpetra::global_size_t;
 typedef tif_utest::Node Node;
 
 //this macro declares the unit-test-class:
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Ifpack2IlukGraph, IlukGraphTest0, LocalOrdinal, GlobalOrdinal)
+#else
+TEUCHOS_UNIT_TEST(Ifpack2IlukGraph, IlukGraphTest0)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
 //we are now in a class method declared by the above macro, and
 //that method has these input arguments:
 //Teuchos::FancyOStream& out, bool& success
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::CrsGraph<LocalOrdinal,GlobalOrdinal,Node> crs_graph_type;
+#else
+  typedef Tpetra::CrsGraph<Node> crs_graph_type;
+#endif
   typedef typename crs_graph_type::local_graph_type local_graph_type;
   typedef typename local_graph_type::row_map_type lno_row_view_t;
   typedef typename local_graph_type::entries_type lno_nonzero_view_t;
@@ -87,8 +99,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Ifpack2IlukGraph, IlukGraphTest0, LocalOrdinal
 
   global_size_t num_rows_per_proc = 5;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::RCP<const Tpetra::CrsGraph<LocalOrdinal,GlobalOrdinal,Node> > crsgraph =
     tif_utest::create_tridiag_graph<LocalOrdinal,GlobalOrdinal,Node> (num_rows_per_proc);
+#else
+  Teuchos::RCP<const Tpetra::CrsGraph<Node> > crsgraph =
+    tif_utest::create_tridiag_graph<Node> (num_rows_per_proc);
+#endif
 
   int num_procs = crsgraph->getRowMap()->getComm()->getSize();
   TEST_EQUALITY( crsgraph->getRowMap()->getNodeNumElements(), num_rows_per_proc)
@@ -173,7 +190,10 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Ifpack2IlukGraph, IlukGraphTest0, LocalOrdinal
 }
 
 #define UNIT_TEST_GROUP_LO_GO(LocalOrdinal,GlobalOrdinal) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Ifpack2IlukGraph, IlukGraphTest0, LocalOrdinal,GlobalOrdinal)
+#else
+#endif
 
 #include "Ifpack2_ETIHelperMacros.h"
 

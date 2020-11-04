@@ -125,15 +125,27 @@ namespace {
    * UNIT TESTS
    */
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( MultiVecAdapter, Initialization, SCALAR, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( MultiVecAdapter, Initialization, SCALAR )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     /* Test correct initialization of the MultiVecAdapter
      *
      * - All Constructors
      * - Correct initialization of class members
      * - Correct typedefs ( using Amesos2::is_same<> )
      */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef MultiVector<SCALAR,LO,GO,Node> MV;
+#else
+    typedef MultiVector<SCALAR,Node> MV;
+#endif
     typedef MultiVecAdapter<MV> ADAPT;
 
     const global_size_t INVALID = OrdinalTraits<global_size_t>::invalid();
@@ -144,7 +156,11 @@ namespace {
     const size_t numLocal = 10;
 
     out << "Creating Map" << std::endl;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Map<LO,GO,Node> > map = rcp( new Map<LO,GO,Node>(INVALID,numLocal,0,comm) );
+#else
+    RCP<Map<Node> > map = rcp( new Map<Node>(INVALID,numLocal,0,comm) );
+#endif
 
     out << "Creating MultiVector" << std::endl;
     RCP<MV> mv = rcp(new MV(map,11));
@@ -166,11 +182,23 @@ namespace {
 
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( MultiVecAdapter, Dimensions, SCALAR, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( MultiVecAdapter, Dimensions, SCALAR )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // Test that the dimensions reported by the adapter match those as reported
     // by the Tpetra::MultiVector
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef MultiVector<SCALAR,LO,GO,Node> MV;
+#else
+    typedef MultiVector<SCALAR,Node> MV;
+#endif
     typedef MultiVecAdapter<MV> ADAPT;
 
     const global_size_t INVALID = OrdinalTraits<global_size_t>::invalid();
@@ -179,7 +207,11 @@ namespace {
     // const size_t rank     = comm->getRank();
     // create a Map
     const size_t numLocal = 10;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Map<LO,GO,Node> > map = rcp( new Map<LO,GO,Node>(INVALID,numLocal,0,comm) );
+#else
+    RCP<Map<Node> > map = rcp( new Map<Node>(INVALID,numLocal,0,comm) );
+#endif
 
     RCP<MV> mv = rcp(new MV(map,11));
     mv->randomize();
@@ -199,10 +231,22 @@ namespace {
   // Test the get1dCopy() method of MultiVecAdapter.  Check against a
   // known multivector, and also check against what is returned by the
   // Tpetra::MultiVector.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( MultiVecAdapter, Copy, SCALAR, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( MultiVecAdapter, Copy, SCALAR )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     using std::endl;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef MultiVector<SCALAR,LO,GO,Node> MV;
+#else
+    typedef MultiVector<SCALAR,Node> MV;
+#endif
     typedef MultiVecAdapter<MV> ADAPT;
 
     const global_size_t INVALID = OrdinalTraits<global_size_t>::invalid();
@@ -217,7 +261,11 @@ namespace {
     const size_t numVectors = 7;
     const size_t numLocal = 13;
     out << "Creating Map" << endl;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Map<LO,GO,Node> > map = rcp (new Map<LO,GO,Node> (INVALID,numLocal,0,comm));
+#else
+    RCP<Map<Node> > map = rcp (new Map<Node> (INVALID,numLocal,0,comm));
+#endif
 
     out << "Creating MultiVector" << endl;
     RCP<MV> mv = rcp (new MV (map, numVectors));
@@ -243,10 +291,19 @@ namespace {
     if (rank == 0) {
       my_num_elems = numLocal*numprocs;
     }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map<LO,GO,Node> > root_map =
       rcp (new Map<LO,GO,Node> (numLocal*numprocs, my_num_elems, 0, comm));
+#else
+    RCP<const Map<Node> > root_map =
+      rcp (new Map<Node> (numLocal*numprocs, my_num_elems, 0, comm));
+#endif
     MV root_mv (root_map, numVectors);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Tpetra::Import<LO,GO,Node> importer (map, root_map);
+#else
+    Tpetra::Import<Node> importer (map, root_map);
+#endif
     root_mv.doImport (*mv, importer, Tpetra::REPLACE);
 
     root_mv.get1dCopy (original (), numLocal * numprocs);
@@ -282,15 +339,27 @@ namespace {
     out << "Done!" << endl;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( MultiVecAdapter, Copy_Map, SCALAR, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( MultiVecAdapter, Copy_Map, SCALAR )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     /* Test the get1dCopy() method of MultiVecAdapter.  This test
        checks the map-based interface to the get1dCopy method.  We
        create an initial multivector which is distributed across all
        MPI processes and then get a copy of the multivector data on
        only the first 2 ranks.
      */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef MultiVector<SCALAR,LO,GO,Node> MV;
+#else
+    typedef MultiVector<SCALAR,Node> MV;
+#endif
     typedef MultiVecAdapter<MV> ADAPT;
 
     const global_size_t INVALID = OrdinalTraits<global_size_t>::invalid();
@@ -303,7 +372,11 @@ namespace {
     const size_t numVectors = 7;
     const size_t numLocal = 13;
     const size_t total_rows = numLocal * numprocs;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Map<LO,GO,Node> > map = rcp( new Map<LO,GO,Node>(INVALID,numLocal,0,comm) );
+#else
+    RCP<Map<Node> > map = rcp( new Map<Node>(INVALID,numLocal,0,comm) );
+#endif
 
     RCP<MV> mv = rcp(new MV(map,numVectors));
     mv->randomize();
@@ -329,7 +402,11 @@ namespace {
     } else {
       my_num_rows = total_rows;
     }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     const Tpetra::Map<LO,GO,Node> redist_map(total_rows, my_num_rows, 0, comm);
+#else
+    const Tpetra::Map<Node> redist_map(total_rows, my_num_rows, 0, comm);
+#endif
 
     // Get first the global data copy
     get_1d_copy_helper<ADAPT,SCALAR>::do_get(ptrInArg(*adapter),
@@ -377,9 +454,19 @@ namespace {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( MultiVecAdapter, Globalize, SCALAR, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( MultiVecAdapter, Globalize, SCALAR )
+#endif
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef MultiVector<SCALAR,LO,GO,Node> MV;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef MultiVector<SCALAR,Node> MV;
+#endif
     typedef MultiVecAdapter<MV> ADAPT;
 
     const global_size_t INVALID = OrdinalTraits<global_size_t>::invalid();
@@ -390,7 +477,11 @@ namespace {
     // create a Map
     const size_t numVectors = 7;
     const size_t numLocal = 13;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Map<LO,GO,Node> > map = rcp( new Map<LO,GO,Node>(INVALID,numLocal,0,comm) );
+#else
+    RCP<Map<Node> > map = rcp( new Map<Node>(INVALID,numLocal,0,comm) );
+#endif
 
     RCP<MV> mv = rcp(new MV(map,numVectors));
     mv->randomize();
@@ -462,11 +553,19 @@ namespace {
   // #define FAST_DEVELOPMENT_UNIT_TEST_BUILD
 
 #define UNIT_TEST_GROUP_ORDINAL_SCALAR( LO, GO, SCALAR )                \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( MultiVecAdapter, Initialization, SCALAR, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( MultiVecAdapter, Dimensions, SCALAR, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( MultiVecAdapter, Copy, SCALAR, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( MultiVecAdapter, Copy_Map, SCALAR, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( MultiVecAdapter, Globalize, SCALAR, LO, GO ) \
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( MultiVecAdapter, Initialization, SCALAR ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( MultiVecAdapter, Dimensions, SCALAR ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( MultiVecAdapter, Copy, SCALAR ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( MultiVecAdapter, Copy_Map, SCALAR ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( MultiVecAdapter, Globalize, SCALAR ) \
+#endif
 
 #  define UNIT_TEST_GROUP_ORDINAL( ORDINAL )            \
   UNIT_TEST_GROUP_ORDINAL_ORDINAL( ORDINAL, ORDINAL )

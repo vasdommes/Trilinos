@@ -1749,7 +1749,11 @@ void PartitioningSolution<Adapter>::RemapParts()
     sizes[0] = nedges;
   }
   if (np > 1)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::gather<int, int>(&nedges, 1, sizes, 1, 0, *comm_);
+#else
+    Teuchos::gather<>(&nedges, 1, sizes, 1, 0, *comm_);
+#endif
 
   // prefix sum to build the idx array
   if (me == 0) {
@@ -1785,7 +1789,11 @@ void PartitioningSolution<Adapter>::RemapParts()
   }
 
   Teuchos::gatherv<int, part_t>(bufv, cnt, adj, sizes, idx, 0, *comm_);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::gatherv<int, long>(bufw, cnt, wgt, sizes, idx, 0, *comm_);
+#else
+  Teuchos::gatherv<>(bufw, cnt, wgt, sizes, idx, 0, *comm_);
+#endif
   delete [] bufv;
   delete [] bufw;
 
@@ -1903,7 +1911,11 @@ void PartitioningSolution<Adapter>::RemapParts()
   delete [] adj;
   delete [] wgt;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::broadcast<int, int>(*comm_, 0, 1, &doRemap);
+#else
+  Teuchos::broadcast<>(*comm_, 0, 1, &doRemap);
+#endif
 
   if (doRemap) {
     if (me != 0) remap = new part_t[nGlobalParts_];

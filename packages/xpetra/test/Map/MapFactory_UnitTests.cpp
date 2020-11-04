@@ -94,8 +94,16 @@ namespace {
   //
   // UNIT TESTS
   //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(MapFactory, ContigUniformMapFact, M, LO, GO, N)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(MapFactory, ContigUniformMapFact, M, N)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // create a comm
     RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
 
@@ -106,8 +114,13 @@ namespace {
     Xpetra::UnderlyingLib lib = testMap.lib();
 
     // Create the map via a MapFactory
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using MapFactory = Xpetra::MapFactory<LO, GO, N>;
     using Map = Xpetra::Map<LO, GO, N>;
+#else
+    using MapFactory = Xpetra::MapFactory<N>;
+    using Map = Xpetra::Map<N>;
+#endif
     RCP<const Map> map = MapFactory::Build(lib, numGlobalElements, Teuchos::ScalarTraits<GO>::zero(), comm);
 
     TEST_INEQUALITY(map, Teuchos::null);
@@ -119,8 +132,16 @@ namespace {
     TEST_EQUALITY_CONST(globalSuccess_int, 0);
   } // ContigUniformMapFact
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(MapFactory, ContigUserMapFact, M, LO, GO, N)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(MapFactory, ContigUserMapFact, M, N)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // create a comm
     RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
 
@@ -133,8 +154,13 @@ namespace {
     Xpetra::UnderlyingLib lib = testMap.lib();
 
     // Create the map via a MapFactory
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using MapFactory = Xpetra::MapFactory<LO, GO, N>;
     using Map = Xpetra::Map<LO, GO, N>;
+#else
+    using MapFactory = Xpetra::MapFactory<N>;
+    using Map = Xpetra::Map<N>;
+#endif
     RCP<const Map> map = MapFactory::Build(lib, numGlobalElements, numLocalElements, Teuchos::ScalarTraits<GO>::zero(), comm);
 
     TEST_INEQUALITY(map, Teuchos::null);
@@ -147,8 +173,16 @@ namespace {
     TEST_EQUALITY_CONST(globalSuccess_int, 0);
   } // ContigUserMapFact
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(MapFactory, NonContigUserMapFact, M, LO, GO, N)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(MapFactory, NonContigUserMapFact, M, N)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // create a comm
     RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
 
@@ -167,8 +201,13 @@ namespace {
       gidList[i] = i + offsetPerRank;
 
     // Create the map via a MapFactory
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using MapFactory = Xpetra::MapFactory<LO, GO, N>;
     using Map = Xpetra::Map<LO, GO, N>;
+#else
+    using MapFactory = Xpetra::MapFactory<N>;
+    using Map = Xpetra::Map<N>;
+#endif
     RCP<const Map> map = MapFactory::Build(lib, numGlobalElements, gidList, Teuchos::ScalarTraits<GO>::zero(), comm);
 
     TEST_INEQUALITY(map, Teuchos::null);
@@ -183,8 +222,16 @@ namespace {
     TEST_EQUALITY_CONST(globalSuccess_int, 0);
   } // NonContigUserMapFact
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(MapFactory, TransformNumDofsPerNode, M, LO, GO, N)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(MapFactory, TransformNumDofsPerNode, M, N)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // create a comm
     RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
 
@@ -196,8 +243,13 @@ namespace {
     Xpetra::UnderlyingLib lib = testMap.lib();
 
     // Create the map via a MapFactory
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using MapFactory = Xpetra::MapFactory<LO, GO, N>;
     using Map = Xpetra::Map<LO, GO, N>;
+#else
+    using MapFactory = Xpetra::MapFactory<N>;
+    using Map = Xpetra::Map<N>;
+#endif
     RCP<const Map> nodeMap = MapFactory::Build(lib, numNodes, Teuchos::ScalarTraits<GO>::zero(), comm);
 
     TEST_INEQUALITY(nodeMap, Teuchos::null);
@@ -216,8 +268,16 @@ namespace {
     TEST_EQUALITY_CONST(globalSuccess_int, 0);
   } // TransformNumDofsPerNode
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(MapFactory, TransformNumDofsPerNodeWithOffset, M, LO, GO, N)
+#else
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(MapFactory, TransformNumDofsPerNodeWithOffset, M, N)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // create a comm
     RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
 
@@ -230,8 +290,13 @@ namespace {
     Xpetra::UnderlyingLib lib = testMap.lib();
 
     // Create the map via a MapFactory
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using MapFactory = Xpetra::MapFactory<LO, GO, N>;
     using Map = Xpetra::Map<LO, GO, N>;
+#else
+    using MapFactory = Xpetra::MapFactory<N>;
+    using Map = Xpetra::Map<N>;
+#endif
     RCP<const Map> nodeMap = MapFactory::Build(lib, numNodes, Teuchos::ScalarTraits<GO>::zero(), comm);
 
     TEST_INEQUALITY(nodeMap, Teuchos::null);
@@ -255,25 +320,43 @@ namespace {
   //
 #ifdef HAVE_XPETRA_TPETRA
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   #define XPETRA_TPETRA_TYPES( LO, GO, N) \
     typedef typename Xpetra::TpetraMap<LO,GO,N> M##LO##GO##N;
+#else
+  #define XPETRA_TPETRA_TYPES(N) \
+    typedef typename Xpetra::TpetraMap<N> M##LO##GO##N;
+#endif
 
 #endif
 
 #ifdef HAVE_XPETRA_EPETRA
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   #define XPETRA_EPETRA_TYPES( LO, GO, N) \
+#else
+  #define XPETRA_EPETRA_TYPES(N) \
+#endif
     typedef typename Xpetra::EpetraMapT<GO,N> M##LO##GO##N;
 
 #endif
 
 // List of tests (which run both on Epetra and Tpetra)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define XP_MAP_INSTANT(LO,GO,N) \
     TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( MapFactory, ContigUniformMapFact,              M##LO##GO##N, LO, GO, N) \
     TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( MapFactory, ContigUserMapFact,                 M##LO##GO##N, LO, GO, N) \
     TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( MapFactory, NonContigUserMapFact,              M##LO##GO##N, LO, GO, N) \
     TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( MapFactory, TransformNumDofsPerNode,           M##LO##GO##N, LO, GO, N) \
     TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( MapFactory, TransformNumDofsPerNodeWithOffset, M##LO##GO##N, LO, GO, N)
+#else
+#define XP_MAP_INSTANT(N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( MapFactory, ContigUniformMapFact,              M##LO##GO##N, N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( MapFactory, ContigUserMapFact,                 M##LO##GO##N, N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( MapFactory, NonContigUserMapFact,              M##LO##GO##N, N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( MapFactory, TransformNumDofsPerNode,           M##LO##GO##N, N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( MapFactory, TransformNumDofsPerNodeWithOffset, M##LO##GO##N, N)
+#endif
 
 #if defined(HAVE_XPETRA_TPETRA)
 

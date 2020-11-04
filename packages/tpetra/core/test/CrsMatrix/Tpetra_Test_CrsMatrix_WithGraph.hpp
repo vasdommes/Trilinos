@@ -170,24 +170,48 @@ inline void tupleToArray(Array<T> &arr, const tuple &tup)
   //
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( CrsMatrix, AdvancedGraphUsage, LO, GO, Scalar, Node )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( CrsMatrix, AdvancedGraphUsage, Scalar, Node )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // generate a tridiagonal matrix
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::CrsMatrix<Scalar,LO,GO,Node> MAT;
+#else
+    typedef Tpetra::CrsMatrix<Scalar,Node> MAT;
+#endif
     const global_size_t INVALID = Teuchos::OrdinalTraits<global_size_t>::invalid();
     // get a comm
     RCP<const Comm<int> > comm = getDefaultComm();
     // create a Map with numLocal entries per node
     const size_t numLocal = 10;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Tpetra::Map<LO,GO,Node> > map = createContigMapWithNode<LO,GO,Node>(INVALID,numLocal,comm);
+#else
+    RCP<const Tpetra::Map<Node> > map = createContigMapWithNode<Node>(INVALID,numLocal,comm);
+#endif
     {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Tpetra::CrsGraph<LO,GO,Node> diaggraph (map, 1, Tpetra::StaticProfile);
+#else
+      Tpetra::CrsGraph<Node> diaggraph (map, 1, Tpetra::StaticProfile);
+#endif
       // A pre-constructed graph must be fill complete before being used to construct a CrsMatrix
       TEST_THROW( MAT matrix(rcpFromRef(diaggraph)), std::runtime_error );
     }
     {
       // create a simple diagonal graph
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Tpetra::CrsGraph<LO,GO,Node> diaggraph (map, 1, Tpetra::StaticProfile);
+#else
+      Tpetra::CrsGraph<Node> diaggraph (map, 1, Tpetra::StaticProfile);
+#endif
       for (GO r=map->getMinGlobalIndex(); r <= map->getMaxGlobalIndex(); ++r) {
         diaggraph.insertGlobalIndices(r,tuple(r));
       }
@@ -217,11 +241,23 @@ inline void tupleToArray(Array<T> &arr, const tuple &tup)
   // Test that CrsMatrix operations (setAllToScalar, apply, and local
   // triangular solve) work when the matrix was constructed with a
   // const CrsGraph.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( CrsMatrix, WithGraph, LO, GO, Scalar, Node )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( CrsMatrix, WithGraph, Scalar, Node )
+#endif
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::CrsMatrix<Scalar,LO,GO,Node>  MAT;
     typedef Tpetra::CrsGraph<LO,GO,Node>         GRPH;
     typedef Tpetra::Vector<Scalar,LO,GO,Node>       V;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef Tpetra::CrsMatrix<Scalar,Node>  MAT;
+    typedef Tpetra::CrsGraph<Node>         GRPH;
+    typedef Tpetra::Vector<Scalar,Node>       V;
+#endif
     typedef ScalarTraits<Scalar>                   ST;
     typedef typename ST::magnitudeType            Mag;
     typedef ScalarTraits<Mag>                      MT;
@@ -243,7 +279,11 @@ inline void tupleToArray(Array<T> &arr, const tuple &tup)
     const size_t numLocal = 10;
     out << "Create a Map with numLocal=" << numLocal << " entries per process" << endl;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Tpetra::Map<LO,GO,Node> > map = createContigMapWithNode<LO,GO,Node>(INVALID,numLocal,comm);
+#else
+    RCP<const Tpetra::Map<Node> > map = createContigMapWithNode<Node>(INVALID,numLocal,comm);
+#endif
     RCP<ParameterList> params = parameterList();
     params->set("Optimize Storage",true);
     RCP<ParameterList> fillparams = sublist(params,"Local Sparse Ops");
@@ -461,11 +501,23 @@ inline void tupleToArray(Array<T> &arr, const tuple &tup)
   }
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( CrsMatrix, WithColMap, LO, GO, Scalar, Node )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( CrsMatrix, WithColMap, Scalar, Node )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // generate a tridiagonal matrix
     typedef ScalarTraits<Scalar> ST;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::CrsMatrix<Scalar,LO,GO,Node> MAT;
+#else
+    typedef Tpetra::CrsMatrix<Scalar,Node> MAT;
+#endif
     const global_size_t INVALID = Teuchos::OrdinalTraits<global_size_t>::invalid();
     const Scalar SONE  = ST::one();
     // get a comm
@@ -477,8 +529,13 @@ inline void tupleToArray(Array<T> &arr, const tuple &tup)
     const size_t numLocal = 10;
     TEUCHOS_TEST_FOR_EXCEPTION( numLocal < 2, std::logic_error, "Test assumes that numLocal be greater than 1.");
     // these maps are equalivalent, but we should keep two distinct maps just to verify the general use case.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Tpetra::Map<LO,GO,Node> > rmap = createContigMapWithNode<LO,GO,Node>(INVALID,numLocal,comm);
     RCP<const Tpetra::Map<LO,GO,Node> > cmap = createContigMapWithNode<LO,GO,Node>(INVALID,numLocal,comm);
+#else
+    RCP<const Tpetra::Map<Node> > rmap = createContigMapWithNode<Node>(INVALID,numLocal,comm);
+    RCP<const Tpetra::Map<Node> > cmap = createContigMapWithNode<Node>(INVALID,numLocal,comm);
+#endif
     //////////////////////////////////
     // add tridiagonal entries, but use a diagonal column map.
     // result should be block diagonal matrix, with no importer/exporter.
@@ -582,10 +639,21 @@ inline void tupleToArray(Array<T> &arr, const tuple &tup)
   }
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( CrsMatrix, WithGraph_replaceLocal, LO, GO, Scalar, Node )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( CrsMatrix, WithGraph_replaceLocal, Scalar, Node )
+#endif
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::CrsMatrix<Scalar,LO,GO,Node> MAT;
     typedef Tpetra::Vector<Scalar,LO,GO,Node> V;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef Tpetra::CrsMatrix<Scalar,Node> MAT;
+    typedef Tpetra::Vector<Scalar,Node> V;
+#endif
     typedef Teuchos::ScalarTraits<Scalar> ST;
     typedef typename ST::magnitudeType Mag;
     typedef Teuchos::ScalarTraits<Mag> MT;
@@ -601,10 +669,18 @@ inline void tupleToArray(Array<T> &arr, const tuple &tup)
     out << "Create a Map with numLocal=" << numLocal << " entries per process" << endl;
 
     const global_size_t INVALID = Teuchos::OrdinalTraits<global_size_t>::invalid();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Tpetra::Map<LO,GO,Node> > map = createContigMapWithNode<LO,GO,Node>(INVALID,numLocal,comm);
+#else
+    RCP<const Tpetra::Map<Node> > map = createContigMapWithNode<Node>(INVALID,numLocal,comm);
+#endif
 
     out << "Create a tridiagonal CrsGraph" << endl;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Tpetra::CrsGraph<LO,GO,Node> graph (map, 3, Tpetra::StaticProfile);
+#else
+    Tpetra::CrsGraph<Node> graph (map, 3, Tpetra::StaticProfile);
+#endif
     for (GO r=map->getMinGlobalIndex(); r <= map->getMaxGlobalIndex(); ++r) {
       if (r == map->getMinAllGlobalIndex()) {
         graph.insertGlobalIndices(r,tuple(r,r+1));
@@ -820,17 +896,33 @@ inline void tupleToArray(Array<T> &arr, const tuple &tup)
 
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( CrsMatrix, ExceedStaticAlloc, LO, GO, Scalar, Node )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( CrsMatrix, ExceedStaticAlloc, Scalar, Node )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // test that an exception is thrown when we exceed statically allocated memory
     typedef ScalarTraits<Scalar> ST;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::CrsMatrix<Scalar,LO,GO,Node> MAT;
+#else
+    typedef Tpetra::CrsMatrix<Scalar,Node> MAT;
+#endif
     const global_size_t INVALID = Teuchos::OrdinalTraits<global_size_t>::invalid();
     // get a comm
     RCP<const Comm<int> > comm = getDefaultComm();
     // create a Map
     const size_t numLocal = 10;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Tpetra::Map<LO,GO,Node> > map = createContigMapWithNode<LO,GO,Node>(INVALID,numLocal,comm);
+#else
+    RCP<const Tpetra::Map<Node> > map = createContigMapWithNode<Node>(INVALID,numLocal,comm);
+#endif
     {
       MAT matrix(map, 1, Tpetra::StaticProfile);
       // room for one on each row
@@ -853,12 +945,21 @@ inline void tupleToArray(Array<T> &arr, const tuple &tup)
 // Please only invoke this in the Tpetra::Test namespace.
 //
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define UNIT_TEST_GROUP( SCALAR, LO, GO, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( CrsMatrix, WithGraph, LO, GO, SCALAR, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( CrsMatrix, WithColMap, LO, GO, SCALAR, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( CrsMatrix, AdvancedGraphUsage, LO, GO, SCALAR, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( CrsMatrix, WithGraph_replaceLocal, LO, GO, SCALAR, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( CrsMatrix, ExceedStaticAlloc, LO, GO, SCALAR, NODE ) \
+#else
+#define UNIT_TEST_GROUP( SCALAR, NODE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( CrsMatrix, WithGraph, SCALAR, NODE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( CrsMatrix, WithColMap, SCALAR, NODE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( CrsMatrix, AdvancedGraphUsage, SCALAR, NODE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( CrsMatrix, WithGraph_replaceLocal, SCALAR, NODE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( CrsMatrix, ExceedStaticAlloc, SCALAR, NODE ) \
+#endif
 
 } // namespace Test
 } // namespace Tpetra

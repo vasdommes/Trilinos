@@ -68,7 +68,11 @@ MDComm::MDComm(const Teuchos::ArrayView< const int > & commDims,
   _commDims(regularizeCommDims(_teuchosComm->getSize(),
                                commDims.size(),
                                commDims)),
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   _commStrides(computeStrides<int,int>(_commDims,
+#else
+  _commStrides(computeStrides<>(_commDims,
+#endif
                                        commLayout)),
   _commIndex(computeCommIndexes(_teuchosComm->getRank(),
                                 _commStrides)),
@@ -85,7 +89,11 @@ MDComm::MDComm(const Teuchos::RCP< const Teuchos::Comm< int > > teuchosComm,
   _commDims(regularizeCommDims(teuchosComm->getSize(),
                                commDims.size(),
                                commDims)),
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   _commStrides(computeStrides<int,int>(_commDims,
+#else
+  _commStrides(computeStrides<>(_commDims,
+#endif
                                        commLayout)),
   _commIndex(computeCommIndexes(teuchosComm->getRank(),
                                 _commStrides)),
@@ -112,7 +120,11 @@ MDComm::MDComm(Teuchos::ParameterList & plist) :
   _periodic = createArrayOfInts(numDims, periodic);
 
   // Set the axis strides
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   _commStrides = computeStrides<int,int>(_commDims,
+#else
+  _commStrides = computeStrides<>(_commDims,
+#endif
                                          commLayout);
 
   // Set the axis ranks for this processor
@@ -140,7 +152,11 @@ MDComm::MDComm(const Teuchos::RCP< const Teuchos::Comm< int > > teuchosComm,
   _periodic = createArrayOfInts(numDims, periodic);
 
   // Set the axis strides
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   _commStrides = computeStrides<int,int>(_commDims,
+#else
+  _commStrides = computeStrides<>(_commDims,
+#endif
                                          commLayout);
 
   // Set the axis ranks for this processor
@@ -155,7 +171,11 @@ MDComm::MDComm(int numDims) :
   _commDims(regularizeCommDims(_teuchosComm->getSize(),
                                numDims,
                                Teuchos::Array< int >())),
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   _commStrides(computeStrides<int,int>(_commDims,
+#else
+  _commStrides(computeStrides<>(_commDims,
+#endif
                                        commLayout)),
   _commIndex(computeCommIndexes(_teuchosComm->getRank(),
                                 _commStrides)),
@@ -171,7 +191,11 @@ MDComm::MDComm(const Teuchos::RCP< const Teuchos::Comm< int > > teuchosComm,
   _commDims(regularizeCommDims(teuchosComm->getSize(),
                                numDims,
                                Teuchos::Array< int >())),
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   _commStrides(computeStrides<int,int>(_commDims,
+#else
+  _commStrides(computeStrides<>(_commDims,
+#endif
                                        commLayout)),
   _commIndex(computeCommIndexes(teuchosComm->getRank(),
                                 _commStrides)),
@@ -188,7 +212,11 @@ MDComm::MDComm(int numDims,
   _commDims(regularizeCommDims(_teuchosComm->getSize(),
                                numDims,
                                commDims)),
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   _commStrides(computeStrides<int,int>(_commDims,
+#else
+  _commStrides(computeStrides<>(_commDims,
+#endif
                                        commLayout)),
   _commIndex(computeCommIndexes(_teuchosComm->getRank(),
                                 _commStrides)),
@@ -206,7 +234,11 @@ MDComm::MDComm(const Teuchos::RCP< const Teuchos::Comm< int > > teuchosComm,
   _commDims(regularizeCommDims(teuchosComm->getSize(),
                                numDims,
                                commDims)),
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   _commStrides(computeStrides<int,int>(_commDims,
+#else
+  _commStrides(computeStrides<>(_commDims,
+#endif
                                        commLayout)),
   _commIndex(computeCommIndexes(teuchosComm->getRank(),
                                 _commStrides)),
@@ -315,7 +347,11 @@ MDComm::MDComm(const MDComm & parent,
           _commIndex.push_back(parent._commIndex[myAxis]);
         }
       }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       _commStrides = computeStrides<int,int>(_commDims, commLayout);
+#else
+      _commStrides = computeStrides<>(_commDims, commLayout);
+#endif
     }
   }
 }
@@ -354,7 +390,11 @@ MDComm::MDComm(const MDComm & parent,
       _periodic[axis] = 0;
 
     // Compute the new strides of the new sub-communicator
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     _commStrides = computeStrides<int,int>(_commDims, commLayout);
+#else
+    _commStrides = computeStrides<>(_commDims, commLayout);
+#endif
 
     // Compute the ranks of the subcommunicator
     size_type rankSize = 1;

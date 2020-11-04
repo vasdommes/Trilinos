@@ -43,7 +43,11 @@ int main(int narg, char **arg)
 
   // Create a new map with IDs uniquely assigned to ranks (oneToOneMap)
   Teuchos::RCP<const map_t> oneToOneMap =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           Tpetra::createOneToOne<lno_t, gno_t>(mapWithCopies);
+#else
+          Tpetra::createOneToOne<>(mapWithCopies);
+#endif
 
 
   // Print the entries of each map

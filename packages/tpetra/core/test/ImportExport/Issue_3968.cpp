@@ -74,9 +74,15 @@ namespace { // (anonymous)
   using GO = Tpetra::Map<>::global_ordinal_type;
 #endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using map_type = Tpetra::Map<LO, GO>;
   using vec_type = Tpetra::Vector<GO, LO, GO>;
   using export_type = Tpetra::Export<LO, GO>;
+#else
+  using map_type = Tpetra::Map<>;
+  using vec_type = Tpetra::Vector<GO>;
+  using export_type = Tpetra::Export<>;
+#endif
 
   Teuchos::RCP<const map_type>
   createTargetMap (const Teuchos::RCP<const Teuchos::Comm<int>>& comm)

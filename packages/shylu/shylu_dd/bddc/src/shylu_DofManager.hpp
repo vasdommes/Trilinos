@@ -57,19 +57,33 @@ using Teuchos::rcp;
 #include "shylu_errorBDDC.hpp"
 
 namespace bddc {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 
 template <class LO, class GO>
+#endif
   class DofManager
 {
 public:
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   //
   // Convenience typedefs
   //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO,GO>                                 Map;
   typedef Tpetra::CrsGraph<LO,GO>                            CrsGraph;
   typedef Tpetra::CrsMatrix<GO,LO,GO>                        CrsMatrixGO;
   typedef Tpetra::Export<LO,GO>                              Export;
   typedef Tpetra::Import<LO,GO>                              Import;
+#else
+  typedef Tpetra::Map<>                                 Map;
+  typedef Tpetra::CrsGraph<>                            CrsGraph;
+  typedef Tpetra::CrsMatrix<GO>                        CrsMatrixGO;
+  typedef Tpetra::Export<>                              Export;
+  typedef Tpetra::Import<>                              Import;
+#endif
 
   DofManager()
   {
@@ -97,7 +111,11 @@ public:
                    0, Comm));
     RCP<const Map> nodeMap1to1;
     if (nodeGlobalIDs1to1 == nullptr) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       nodeMap1to1 = Tpetra::createOneToOne<LO,GO>(nodeMap);
+#else
+      nodeMap1to1 = Tpetra::createOneToOne<>(nodeMap);
+#endif
     }
     else {
       nodeMap1to1 =
@@ -119,7 +137,11 @@ public:
     nodeGraph1to1->fillComplete(domainMap, nodeMap1to1);
     GO numDof = nodeGraph1to1->getNodeNumEntries();
     GO numDofSS;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::scan<int, GO> (*Comm, Teuchos::REDUCE_SUM, 1, &numDof, &numDofSS);
+#else
+    Teuchos::scan<> (*Comm, Teuchos::REDUCE_SUM, 1, &numDof, &numDofSS);
+#endif
     GO baseGID = numDofSS - numDof;
     // The matrix nodeMatrix1to1 is the counterpart of the graph nodeGraph1to1
     // with globalIDs as entries
@@ -156,7 +178,11 @@ public:
       rcp( new Map(IGO,
                    Teuchos::ArrayView<const GO>(nodeGlobalIDs, numNodes),
                    0, Comm));
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map> nodeMap1to1 = Tpetra::createOneToOne<LO,GO>(nodeMap);
+#else
+    RCP<const Map> nodeMap1to1 = Tpetra::createOneToOne<>(nodeMap);
+#endif
     // The rows and columns of the graph nodeGraphSubdomain are node global IDs
     // and local degrees of freedom (dofs), respectively, prior to assembly.
     RCP<CrsGraph> nodeGraphSubdomain;
@@ -172,7 +198,11 @@ public:
     nodeGraph1to1->fillComplete(domainMap, nodeMap1to1);
     GO numDof = nodeGraph1to1->getNodeNumEntries();
     GO numDofSS;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::scan<int, GO> (*Comm, Teuchos::REDUCE_SUM, 1, &numDof, &numDofSS);
+#else
+    Teuchos::scan<> (*Comm, Teuchos::REDUCE_SUM, 1, &numDof, &numDofSS);
+#endif
     GO baseGID = numDofSS - numDof;
     // The matrix nodeMatrix1to1 is the counterpart of the graph nodeGraph1to1
     // with globalIDs as entries
@@ -223,7 +253,11 @@ public:
           (i, Teuchos::ArrayView<LO>(&localDofsIndex[nodeBegin[i]], count[i]));
       }
     }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map> ColMap1to1 = Tpetra::createOneToOne<LO,GO>(ColMap);
+#else
+    RCP<const Map> ColMap1to1 = Tpetra::createOneToOne<>(ColMap);
+#endif
     A->fillComplete(ColMap1to1, NodeMap1to1);
   }
 

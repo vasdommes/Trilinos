@@ -74,14 +74,25 @@ struct IlukImplTypeDetails {
 };
 // Single-process unit tests for RILUK are located in the file Ifpack2_UnitTestSerialRILUK.cpp.
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <typename Scalar, typename LocalOrdinal, typename GlobalOrdinal>
 static Teuchos::RCP<Ifpack2::RILUK<Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > > setupTest (const IlukImplTypeDetails::Enum ilukimplType)
+#else
+template <typename Scalar,>
+static Teuchos::RCP<Ifpack2::RILUK<Tpetra::RowMatrix<Scalar,Node> > > setupTest (const IlukImplTypeDetails::Enum ilukimplType)
+#endif
 {
   // Test that ILU(k) can be done on a parallel sparse matrix with noncontiguous row map.
   // See bug #6033.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>   crs_matrix_type;
   typedef Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>   row_matrix_type;
   typedef Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node>                map_type;
+#else
+  typedef Tpetra::CrsMatrix<Scalar,Node>   crs_matrix_type;
+  typedef Tpetra::RowMatrix<Scalar,Node>   row_matrix_type;
+  typedef Tpetra::Map<Node>                map_type;
+#endif
 
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -130,35 +141,67 @@ static Teuchos::RCP<Ifpack2::RILUK<Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalO
   return prec;
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2RILUK, Parallel, Scalar, LocalOrdinal, GlobalOrdinal)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL(Ifpack2RILUK, Parallel, Scalar)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   std::string version = Ifpack2::Version();
   out << "Ifpack2::Version(): " << version << std::endl;
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     auto prec = setupTest<Scalar, LocalOrdinal, GlobalOrdinal>(IlukImplTypeDetails::Serial);
+#else
+    auto prec = setupTest<Scalar>(IlukImplTypeDetails::Serial);
+#endif
     prec->initialize();
     prec->compute();
   }
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     auto prec = setupTest<Scalar, LocalOrdinal, GlobalOrdinal>(IlukImplTypeDetails::KSPILUK);
+#else
+    auto prec = setupTest<Scalar>(IlukImplTypeDetails::KSPILUK);
+#endif
     prec->initialize();
     prec->compute();
   }
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2RILUK, ParallelReuse, Scalar, LocalOrdinal, GlobalOrdinal)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL(Ifpack2RILUK, ParallelReuse, Scalar)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   std::string version = Ifpack2::Version();
   out << "Ifpack2::Version(): " << version << std::endl;
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     auto prec = setupTest<Scalar, LocalOrdinal, GlobalOrdinal>(IlukImplTypeDetails::Serial);
+#else
+    auto prec = setupTest<Scalar>(IlukImplTypeDetails::Serial);
+#endif
     prec->initialize();
     prec->compute();
     // Pretend we've updated some of the numbers in the matrix, but not its structure.
     prec->compute();
   }
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     auto prec = setupTest<Scalar, LocalOrdinal, GlobalOrdinal>(IlukImplTypeDetails::KSPILUK);
+#else
+    auto prec = setupTest<Scalar>(IlukImplTypeDetails::KSPILUK);
+#endif
     prec->initialize();
     prec->compute();
     // Pretend we've updated some of the numbers in the matrix, but not its structure.
@@ -167,8 +210,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Ifpack2RILUK, ParallelReuse, Scalar, LocalOrdi
 }
 
 #define UNIT_TEST_GROUP_SC_LO_GO( SC, LO, GO ) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Ifpack2RILUK, Parallel, SC, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Ifpack2RILUK, ParallelReuse, SC, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( Ifpack2RILUK, Parallel, SC ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( Ifpack2RILUK, ParallelReuse, SC )
+#endif
 
 #include "Ifpack2_ETIHelperMacros.h"
 

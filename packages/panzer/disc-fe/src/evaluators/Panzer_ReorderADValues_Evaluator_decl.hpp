@@ -144,7 +144,11 @@ private:
   // Build a source to destination map using all the pairs
   // of field numers in the <code>fieldNumberMaps</code>
   void buildSrcToDestMap(const std::string & elementBlock,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                          const std::map<int,int> & fieldNumberMaps,
+#else
+                         const std::map<> & fieldNumberMaps,
+#endif
                          const GlobalIndexer & indexerSrc,
                          const GlobalIndexer & indexerDest);
 

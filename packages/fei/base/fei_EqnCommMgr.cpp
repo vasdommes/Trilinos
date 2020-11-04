@@ -1169,10 +1169,18 @@ int EqnCommMgr::exchangePtToBlkInfo(snl_fei::PointBlockMap& blkEqnMapper)
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>* ptEqns =  blkEqnMapper.getPtEqns();
+#else
+  std::map<>* ptEqns =  blkEqnMapper.getPtEqns();
+#endif
   size_t numPtEqns = ptEqns->size();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::const_iterator
+#else
+  std::map<>::const_iterator
+#endif
     pteq = ptEqns->begin(),
     pteq_end = ptEqns->end();
 

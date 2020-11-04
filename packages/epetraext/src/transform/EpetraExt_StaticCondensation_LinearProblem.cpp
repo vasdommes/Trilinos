@@ -128,8 +128,13 @@ operator()( OriginalTypeRef orig )
 
   vector<int> ColNZCnt( NRows );
   vector<int> CS_RowIndices( NRows );
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   map<int,int> RS_Map;
   map<int,int> CS_Map;
+#else
+  map<> RS_Map;
+  map<> CS_Map;
+#endif
 
   int NumIndices;
   int * Indices;
@@ -150,7 +155,11 @@ operator()( OriginalTypeRef orig )
   {
     cout << "-------------------------\n";
     cout << "Row Singletons\n";
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     for( map<int,int>::iterator itM = RS_Map.begin(); itM != RS_Map.end(); ++itM )
+#else
+    for( map<>::iterator itM = RS_Map.begin(); itM != RS_Map.end(); ++itM )
+#endif
       cout << (*itM).first << "\t" << (*itM).second << endl;
     cout << "Col Counts\n";
     for( int i = 0; i < NRows; ++i )

@@ -64,7 +64,11 @@ namespace {
     typedef typename MapType::global_ordinal_type GO;
     typedef typename MapType::node_type NT;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::MultiVector<ST, LO, GO, NT> MV;
+#else
+    typedef Tpetra::MultiVector<ST, NT> MV;
+#endif
     typedef typename Teuchos::ArrayView<const GO>::size_type size_type;
 
     static Teuchos::RCP<const MapType>
@@ -93,7 +97,11 @@ namespace {
       else  {
         eltList = ArrayView<const GO> (NULL, 0);
       }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       return createNonContigMapWithNode<LO, GO, NT> (eltList, comm);
+#else
+      return createNonContigMapWithNode<NT> (eltList, comm);
+#endif
     }
 
     static Teuchos::RCP<const MV>
@@ -162,7 +170,11 @@ namespace {
     static std::string
     writeMultiVectorToString (const MV& X) {
       using Teuchos::rcpFromRef;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       typedef Tpetra::CrsMatrix<ST, LO, GO, NT> sparse_matrix_type;
+#else
+      typedef Tpetra::CrsMatrix<ST, NT> sparse_matrix_type;
+#endif
       typedef Tpetra::MatrixMarket::Writer<sparse_matrix_type> writer_type;
 
       std::ostringstream os;
@@ -174,7 +186,11 @@ namespace {
     readMultiVectorFromString (const std::string& s,
                                Teuchos::RCP<const MapType> map)
     {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       typedef Tpetra::CrsMatrix<ST, LO, GO, NT> sparse_matrix_type;
+#else
+      typedef Tpetra::CrsMatrix<ST, NT> sparse_matrix_type;
+#endif
       typedef Tpetra::MatrixMarket::Reader<sparse_matrix_type> reader_type;
 
       std::istringstream in (s);
@@ -275,14 +291,26 @@ namespace {
     }
   };
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Tpetra_MatrixMarket, MultiVector_Output_Perm, LO, GO )
+#else
+TEUCHOS_UNIT_TEST( Tpetra_MatrixMarket, MultiVector_Output_Perm )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   using Teuchos::Comm;
   using Teuchos::ParameterList;
   using Teuchos::RCP;
   using Teuchos::TypeNameTraits;
   using std::endl;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO, GO> map_type;
+#else
+  typedef Tpetra::Map<> map_type;
+#endif
 
   // Get the default communicator.
   RCP<const Comm<int> > comm = Tpetra::getDefaultComm ();
@@ -305,7 +333,10 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Tpetra_MatrixMarket, MultiVector_Output_Perm,
 //////////////////////////////////////////////////////////////////////
 
 #define UNIT_TEST_GROUP( LO, GO ) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Tpetra_MatrixMarket, MultiVector_Output_Perm, LO, GO )
+#else
+#endif
 
 TPETRA_ETI_MANGLING_TYPEDEFS()
 

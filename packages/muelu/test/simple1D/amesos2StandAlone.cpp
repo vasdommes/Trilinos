@@ -122,7 +122,11 @@ int main(int argc, char *argv[]) {
   typedef MV::global_ordinal_type GO;
 
   typedef Teuchos::ScalarTraits<Scalar> ST;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::CrsMatrix<Scalar,LO,GO> MAT;
+#else
+  typedef Tpetra::CrsMatrix<Scalar> MAT;
+#endif
 
   using Tpetra::global_size_t;
   using Teuchos::tuple;
@@ -139,7 +143,11 @@ int main(int argc, char *argv[]) {
   const size_t numVectors = 1;
 
   int numGlobalElements = 1000;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<const Tpetra::Map<> > map = Tpetra::createUniformContigMap<LO, GO> (numGlobalElements, comm);
+#else
+  RCP<const Tpetra::Map<> > map = Tpetra::createUniformContigMap<> (numGlobalElements, comm);
+#endif
   const size_t numMyElements = map->getNodeNumElements();
   Teuchos::ArrayView<const GO> myGlobalElements = map->getNodeElementList();
 

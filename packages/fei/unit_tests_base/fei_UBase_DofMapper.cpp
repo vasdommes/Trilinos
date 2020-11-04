@@ -70,9 +70,19 @@ void fill_dof_mapper_2(fei::DofMapper<LocalOrdinal,GlobalOrdinal,DofOrder>& dof_
   dof_mapper.set_maps_are_valid(true);
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(DofMapper, test1, LocalOrdinal, GlobalOrdinal)
+#else
+TEUCHOS_UNIT_TEST(DofMapper, test1)
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   fei::DofMapper<LocalOrdinal,GlobalOrdinal> dofmapper;
+#else
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+  fei::DofMapper<> dofmapper;
+#endif
 
   TEUCHOS_TEST_EQUALITY(dofmapper.maps_are_valid(), false, out, success);
 
@@ -85,7 +95,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(DofMapper, test1, LocalOrdinal, GlobalOrdinal)
   TEUCHOS_TEST_EQUALITY(idx, 2, out, success);
 
   idx = 1;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::pair<const fei::Dof<LocalOrdinal,GlobalOrdinal>*,GlobalOrdinal> result=
+#else
+  std::pair<const fei::Dof<>*,GlobalOrdinal> result=
+#endif
     dofmapper.getDof(idx);
   TEUCHOS_TEST_EQUALITY(result.first->id(), 0, out, success);
   TEUCHOS_TEST_EQUALITY(result.second, 1, out, success);
@@ -96,9 +110,19 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(DofMapper, test1, LocalOrdinal, GlobalOrdinal)
   TEUCHOS_TEST_EQUALITY(result.second, 0, out, success);
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(DofMapper, test2, LocalOrdinal, GlobalOrdinal)
+#else
+TEUCHOS_UNIT_TEST(DofMapper, test2)
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   fei::DofMapper<LocalOrdinal,GlobalOrdinal> dofmapper;
+#else
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+  fei::DofMapper<> dofmapper;
+#endif
 
   TEUCHOS_TEST_EQUALITY(dofmapper.maps_are_valid(), false, out, success);
 
@@ -110,7 +134,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(DofMapper, test2, LocalOrdinal, GlobalOrdinal)
   TEUCHOS_TEST_THROW(dofmapper.getGlobalIndex(rank, id, field), std::runtime_error, out, success);
 
   GlobalOrdinal idx = 0;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::pair<const fei::Dof<LocalOrdinal,GlobalOrdinal>*,GlobalOrdinal> result=
+#else
+  std::pair<const fei::Dof<>*,GlobalOrdinal> result=
+#endif
     dofmapper.getDof(idx);
   TEUCHOS_TEST_EQUALITY(result.first->id(), 0, out, success);
   TEUCHOS_TEST_EQUALITY(result.second, 0, out, success);
@@ -119,9 +147,19 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(DofMapper, test2, LocalOrdinal, GlobalOrdinal)
   TEUCHOS_TEST_THROW(dofmapper.getDof(idx), std::runtime_error, out, success);
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(DofMapper, test3, LocalOrdinal, GlobalOrdinal)
+#else
+TEUCHOS_UNIT_TEST(DofMapper, test3)
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   fei::DofMapper<LocalOrdinal,GlobalOrdinal,fei::less_field_rank_id<LocalOrdinal,GlobalOrdinal> > dofmapper;
+#else
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+  fei::DofMapper<LocalOrdinal,GlobalOrdinal,fei::less_field_rank_id<> > dofmapper;
+#endif
 
   TEUCHOS_TEST_EQUALITY(dofmapper.maps_are_valid(), false, out, success);
 
@@ -139,7 +177,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(DofMapper, test3, LocalOrdinal, GlobalOrdinal)
   TEUCHOS_TEST_EQUALITY(idx, 5, out, success);
 
   idx = 1;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::pair<const fei::Dof<LocalOrdinal,GlobalOrdinal>*,GlobalOrdinal> result=
+#else
+  std::pair<const fei::Dof<>*,GlobalOrdinal> result=
+#endif
     dofmapper.getDof(idx);
   TEUCHOS_TEST_EQUALITY(result.first->id(), 0, out, success);
   TEUCHOS_TEST_EQUALITY(result.first->field(), field1, out, success);
@@ -152,9 +194,19 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(DofMapper, test3, LocalOrdinal, GlobalOrdinal)
   TEUCHOS_TEST_EQUALITY(result.second, 0, out, success);
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(DofMapper, test4, LocalOrdinal, GlobalOrdinal)
+#else
+TEUCHOS_UNIT_TEST(DofMapper, test4)
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   fei::DofMapper<LocalOrdinal,GlobalOrdinal,fei::less_field_rank_id<LocalOrdinal,GlobalOrdinal> > dofmapper;
+#else
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+  fei::DofMapper<LocalOrdinal,GlobalOrdinal,fei::less_field_rank_id<> > dofmapper;
+#endif
 
   TEUCHOS_TEST_EQUALITY(dofmapper.maps_are_valid(), false, out, success);
 
@@ -167,7 +219,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(DofMapper, test4, LocalOrdinal, GlobalOrdinal)
   TEUCHOS_TEST_THROW(dofmapper.getGlobalIndex(rank, id, field1), std::runtime_error, out, success);
 
   GlobalOrdinal idx = 0;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::pair<const fei::Dof<LocalOrdinal,GlobalOrdinal>*,GlobalOrdinal> result=
+#else
+  std::pair<const fei::Dof<>*,GlobalOrdinal> result=
+#endif
     dofmapper.getDof(idx);
   TEUCHOS_TEST_EQUALITY(result.first->id(), 0, out, success);
   TEUCHOS_TEST_EQUALITY(result.first->field(), field1, out, success);
@@ -178,9 +234,15 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(DofMapper, test4, LocalOrdinal, GlobalOrdinal)
 }
 
 #define UNIT_TEST_GROUP(LO,GO) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(DofMapper, test1, LO, GO) \
+#else
+#endif
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(DofMapper, test2, LO, GO) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(DofMapper, test3, LO, GO) \
+#else
+#endif
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(DofMapper, test4, LO, GO)
 
 UNIT_TEST_GROUP(int,int)

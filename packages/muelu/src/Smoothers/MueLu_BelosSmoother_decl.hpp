@@ -85,15 +85,24 @@ namespace MueLu {
     */
 
   template <class Scalar = SmootherPrototype<>::scalar_type,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
             class LocalOrdinal = typename SmootherPrototype<Scalar>::local_ordinal_type,
             class GlobalOrdinal = typename SmootherPrototype<Scalar, LocalOrdinal>::global_ordinal_type,
             class Node = typename SmootherPrototype<Scalar, LocalOrdinal, GlobalOrdinal>::node_type>
   class BelosSmoother : public SmootherPrototype<Scalar,LocalOrdinal,GlobalOrdinal,Node> {
+#else
+            class Node = typename SmootherPrototype<Scalar>::node_type>
+  class BelosSmoother : public SmootherPrototype<Scalar,Node> {
+#endif
 #undef MUELU_BELOSSMOOTHER_SHORT
 #include "MueLu_UseShortNames.hpp"
 
   public:
 
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     //! @name Constructors / destructors
     //@{
     //TODO: update doc for Belos.
@@ -108,7 +117,11 @@ namespace MueLu {
 
 #ifndef _MSC_VER
     // Avoid error C3772: invalid friend template declaration
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template<class Scalar2, class LocalOrdinal2, class GlobalOrdinal2, class Node2>
+#else
+    template<class Scalar2, class Node2>
+#endif
     friend class BelosSmoother;
 #endif
 
@@ -184,8 +197,13 @@ namespace MueLu {
     std::string                         type_;
 
 #ifdef HAVE_MUELU_TPETRA
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::MultiVector<SC, LO, GO, NO> tMV;
     typedef Tpetra::Operator<SC, LO, GO, NO>    tOP;
+#else
+    typedef Tpetra::MultiVector<SC, NO> tMV;
+    typedef Tpetra::Operator<SC, NO>    tOP;
+#endif
     RCP<Belos::LinearProblem<Scalar, tMV, tOP> > tBelosProblem_;
     RCP<Belos::SolverManager<Scalar, tMV, tOP> > tSolver_;
 #endif
@@ -202,7 +220,11 @@ namespace MueLu {
     (!defined(EPETRA_HAVE_OMP) && (!defined(HAVE_TPETRA_INST_SERIAL) || !defined(HAVE_TPETRA_INST_INT_INT))))
   // Stub specialization for missing Epetra template args
   template<>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   class BelosSmoother<double,int,int,Xpetra::EpetraNode> : public SmootherPrototype<double,int,int,Xpetra::EpetraNode> {
+#else
+  class BelosSmoother<double,Xpetra::EpetraNode> : public SmootherPrototype<double,Xpetra::EpetraNode> {
+#endif
     typedef double              Scalar;
     typedef int                 LocalOrdinal;
     typedef int                 GlobalOrdinal;
@@ -213,7 +235,11 @@ namespace MueLu {
   public:
 #ifndef _MSC_VER
     // Avoid error C3772: invalid friend template declaration
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template<class Scalar2, class LocalOrdinal2, class GlobalOrdinal2, class Node2>
+#else
+    template<class Scalar2, class Node2>
+#endif
     friend class BelosSmoother;
 #endif
 

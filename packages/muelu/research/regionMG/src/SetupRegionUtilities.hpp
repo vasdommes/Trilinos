@@ -200,14 +200,23 @@ void findInterface(const int numDimensions, Teuchos::Array<LocalOrdinal> nodesPe
 } // findInterface
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+template<class Node>
+#endif
 void createRegionData(const int numDimensions,
                       const bool useUnstructured, const int numDofsPerNode,
                       const Teuchos::ArrayView<GlobalOrdinal> gNodesPerDim,
                       const Teuchos::ArrayView<LocalOrdinal>  lNodesPerDim,
                       const Teuchos::ArrayView<GlobalOrdinal> procsPerDim,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                       const Teuchos::RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > nodeMap,
                       const Teuchos::RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > dofMap,
+#else
+                      const Teuchos::RCP<Xpetra::Map<Node> > nodeMap,
+                      const Teuchos::RCP<Xpetra::Map<Node> > dofMap,
+#endif
                       int& maxRegPerGID, LocalOrdinal& numLocalRegionNodes,
                       Teuchos::Array<int>& boundaryConditions,
                       Teuchos::Array<GlobalOrdinal>& sendGIDs, ///< GIDs of nodes
@@ -1089,18 +1098,30 @@ void createRegionData(const int numDimensions,
 
 } // createRegionData
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <class LocalOrdinal, class GlobalOrdinal, class Node>
 void MakeRegionPerGIDWithGhosts(const Teuchos::RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> >& nodeMap,
                                 const Teuchos::RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> >& regionRowMap,
                                 const Teuchos::RCP<Xpetra::Import<LocalOrdinal, GlobalOrdinal, Node> >& rowImport,
+#else
+template <class Node>
+void MakeRegionPerGIDWithGhosts(const Teuchos::RCP<Xpetra::Map<Node> >& nodeMap,
+                                const Teuchos::RCP<Xpetra::Map<Node> >& regionRowMap,
+                                const Teuchos::RCP<Xpetra::Import<Node> >& rowImport,
+#endif
                                 const int maxRegPerGID,
                                 const LocalOrdinal numDofsPerNode,
                                 const Teuchos::Array<LocalOrdinal>&  lNodesPerDir,
                                 const Teuchos::Array<GlobalOrdinal>& sendGIDs,
                                 const Teuchos::Array<int>& sendPIDs,
                                 const Teuchos::Array<LocalOrdinal>& interfaceRegionLIDs,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                 Teuchos::RCP<Xpetra::MultiVector<LocalOrdinal, LocalOrdinal, GlobalOrdinal, Node> >& regionsPerGIDWithGhosts,
                                 Teuchos::RCP<Xpetra::MultiVector<GlobalOrdinal, LocalOrdinal, GlobalOrdinal, Node> >& interfaceGIDsMV) {
+#else
+                                Teuchos::RCP<Xpetra::MultiVector<LocalOrdinal, Node> >& regionsPerGIDWithGhosts,
+                                Teuchos::RCP<Xpetra::MultiVector<GlobalOrdinal, Node> >& interfaceGIDsMV) {
+#endif
   using LO = LocalOrdinal;
   using GO = GlobalOrdinal;
   using NO = Node;
@@ -1108,14 +1129,28 @@ void MakeRegionPerGIDWithGhosts(const Teuchos::RCP<Xpetra::Map<LocalOrdinal, Glo
   using Teuchos::Array;
   using Teuchos::ArrayRCP;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   const RCP<const Xpetra::Map<LO,GO,NO> > dofMap       = rowImport->getSourceMap();
   const RCP<const Xpetra::Map<LO,GO,NO> > quasiRegionRowMap = rowImport->getTargetMap();
+#else
+  const RCP<const Xpetra::Map<NO> > dofMap       = rowImport->getSourceMap();
+  const RCP<const Xpetra::Map<NO> > quasiRegionRowMap = rowImport->getTargetMap();
+#endif
   const int myRank = dofMap->getComm()->getRank();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Xpetra::MultiVector<LO, LO, GO, NO> >regionsPerGID =
     Xpetra::MultiVectorFactory<LO, LO, GO, NO>::Build(dofMap, maxRegPerGID, false);
+#else
+  RCP<Xpetra::MultiVector<LO, NO> >regionsPerGID =
+    Xpetra::MultiVectorFactory<LO, NO>::Build(dofMap, maxRegPerGID, false);
+#endif
   regionsPerGIDWithGhosts =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Xpetra::MultiVectorFactory<LO, LO, GO, NO>::Build(quasiRegionRowMap, maxRegPerGID, false);
+#else
+    Xpetra::MultiVectorFactory<LO, NO>::Build(quasiRegionRowMap, maxRegPerGID, false);
+#endif
 
   { // Scope for regionsPerGIDView
     Array<ArrayRCP<LO> > regionsPerGIDView(maxRegPerGID);
@@ -1149,7 +1184,11 @@ void MakeRegionPerGIDWithGhosts(const Teuchos::RCP<Xpetra::Map<LocalOrdinal, Glo
 
   regionsPerGIDWithGhosts->doImport(*regionsPerGID, *rowImport, Xpetra::INSERT);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   interfaceGIDsMV = Xpetra::MultiVectorFactory<GO, LO, GO, NO>::Build(quasiRegionRowMap, maxRegPerGID, false);
+#else
+  interfaceGIDsMV = Xpetra::MultiVectorFactory<GO, NO>::Build(quasiRegionRowMap, maxRegPerGID, false);
+#endif
   interfaceGIDsMV->putScalar(Teuchos::OrdinalTraits<GO>::zero());
   const LO numRegionInterfaceLIDs = static_cast<LO>(interfaceRegionLIDs.size());
   { // Scope for interfaceGIDsPerRegion
@@ -1176,9 +1215,17 @@ void MakeRegionPerGIDWithGhosts(const Teuchos::RCP<Xpetra::Map<LocalOrdinal, Glo
 Starting from the known list of \c interfaceRegionLIDs, we know, which entries in the \c regionRowMap
 refert to interface DOFs, so we can grab them and stick them into the list of \c interfaceRegionGIDs.
 */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+template <class Node>
+#endif
 void ExtractListOfInterfaceRegionGIDs(
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::vector<Teuchos::RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > >& regionRowMap,
+#else
+    std::vector<Teuchos::RCP<Xpetra::Map<Node> > >& regionRowMap,
+#endif
     const Teuchos::Array<LocalOrdinal>& interfaceRegionLIDs, Teuchos::Array<GlobalOrdinal>& interfaceRegionGIDs)
 {
   interfaceRegionGIDs.resize(interfaceRegionLIDs.size());

@@ -22,20 +22,34 @@
 
 // Nonmember constuctors
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
 Teuchos::RCP<EvaluatorTpetra1DFEM<Scalar, LO, GO, Node> >
+#else
+template<class Scalar, class Node>
+Teuchos::RCP<EvaluatorTpetra1DFEM<Scalar, Node> >
+#endif
 evaluatorTpetra1DFEM(const Teuchos::RCP<const Teuchos::Comm<int> >& comm,
                      const Tpetra::global_size_t numGlobalElements,
                      const Scalar zMin,
                      const Scalar zMax)
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   return Teuchos::rcp(new EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>(comm,numGlobalElements,zMin,zMax));
+#else
+  return Teuchos::rcp(new EvaluatorTpetra1DFEM<Scalar, Node>(comm,numGlobalElements,zMin,zMax));
+#endif
 }
 
 // Constructor
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
 EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::
+#else
+template<class Scalar, class Node>
+EvaluatorTpetra1DFEM<Scalar, Node>::
+#endif
 EvaluatorTpetra1DFEM(const Teuchos::RCP<const Teuchos::Comm<int> >& comm,
                      const Tpetra::global_size_t numGlobalElements,
                      const Scalar zMin,
@@ -61,7 +75,11 @@ EvaluatorTpetra1DFEM(const Teuchos::RCP<const Teuchos::Comm<int> >& comm,
   // owned space
   GO indexBase = 0;
   xOwnedMap_ = Teuchos::rcp(new const tpetra_map(numNodes, indexBase, comm_));
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   xSpace_ = ::Thyra::createVectorSpace<Scalar, LO, GO, Node>(xOwnedMap_);
+#else
+  xSpace_ = ::Thyra::createVectorSpace<Scalar, Node>(xOwnedMap_);
+#endif
 
   // ghosted space
   if (comm_->getSize() == 1) {
@@ -90,7 +108,11 @@ EvaluatorTpetra1DFEM(const Teuchos::RCP<const Teuchos::Comm<int> >& comm,
     xGhostedMap_ = Teuchos::rcp(new tpetra_map(invalid, overlapMyGlobalNodes, indexBase, comm_));
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   importer_ = Teuchos::rcp(new Tpetra::Import<LO,GO,Node>(xOwnedMap_, xGhostedMap_));
+#else
+  importer_ = Teuchos::rcp(new Tpetra::Import<Node>(xOwnedMap_, xGhostedMap_));
+#endif
 
   // residual space
   fOwnedMap_ = xOwnedMap_;
@@ -151,7 +173,11 @@ EvaluatorTpetra1DFEM(const Teuchos::RCP<const Teuchos::Comm<int> >& comm,
   pNames_[3]->push_back("Dummy p(3)");
   pNames_[4]->push_back("T_left");
   pMap_ = Teuchos::rcp(new const tpetra_map(1, 0, comm_, Tpetra::LocallyReplicated));
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   pSpace_ = ::Thyra::createVectorSpace<Scalar, LO, GO, Node>(pMap_);
+#else
+  pSpace_ = ::Thyra::createVectorSpace<Scalar, Node>(pMap_);
+#endif
   p2_ = ::Thyra::createMember(pSpace_);
   V_S(p2_.ptr(),1.0);
   nominalValues_.set_p(2,p2_);
@@ -169,16 +195,30 @@ EvaluatorTpetra1DFEM(const Teuchos::RCP<const Teuchos::Comm<int> >& comm,
   gNames_[5].push_back("Dummy g(5)");
   gNames_[6].push_back("Constraint: 2*T_left=T_right");
   gMap_ = Teuchos::rcp(new const tpetra_map(1, 0, comm_, Tpetra::LocallyReplicated));
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   gSpace_ = ::Thyra::createVectorSpace<Scalar, LO, GO, Node>(gMap_);
+#else
+  gSpace_ = ::Thyra::createVectorSpace<Scalar, Node>(gMap_);
+#endif
   dgdpMap_ = Teuchos::rcp(new const tpetra_map(1, 0, comm_, Tpetra::LocallyReplicated));
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   dgdpSpace_ = ::Thyra::createVectorSpace<Scalar, LO, GO, Node>(dgdpMap_);
+#else
+  dgdpSpace_ = ::Thyra::createVectorSpace<Scalar, Node>(dgdpMap_);
+#endif
 }
 
 // Initializers/Accessors
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
 Teuchos::RCP<const Tpetra::CrsGraph<LO, GO, Node> >
 EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::createGraph()
+#else
+template<class Scalar, class Node>
+Teuchos::RCP<const Tpetra::CrsGraph<Node> >
+EvaluatorTpetra1DFEM<Scalar, Node>::createGraph()
+#endif
 {
   typedef typename tpetra_graph::local_graph_type::size_type size_type;
 
@@ -219,8 +259,13 @@ EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::createGraph()
   return W_graph;
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
 void EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::
+#else
+template<class Scalar, class Node>
+void EvaluatorTpetra1DFEM<Scalar, Node>::
+#endif
 set_x0(const Teuchos::ArrayView<const Scalar> &x0_in)
 {
 #ifdef TEUCHOS_DEBUG
@@ -231,15 +276,25 @@ set_x0(const Teuchos::ArrayView<const Scalar> &x0_in)
 }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
 void EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::
+#else
+template<class Scalar, class Node>
+void EvaluatorTpetra1DFEM<Scalar, Node>::
+#endif
 setShowGetInvalidArgs(bool showGetInvalidArg)
 {
   showGetInvalidArg_ = showGetInvalidArg;
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
 void EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::
+#else
+template<class Scalar, class Node>
+void EvaluatorTpetra1DFEM<Scalar, Node>::
+#endif
 set_W_factory(const Teuchos::RCP<const ::Thyra::LinearOpWithSolveFactoryBase<Scalar> >& W_factory)
 {
   W_factory_ = W_factory;
@@ -248,46 +303,94 @@ set_W_factory(const Teuchos::RCP<const ::Thyra::LinearOpWithSolveFactoryBase<Sca
 // Public functions overridden from ModelEvaulator
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::get_x_space() const
+#else
+EvaluatorTpetra1DFEM<Scalar, Node>::get_x_space() const
+#endif
 {
   return xSpace_;
 }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 Teuchos::RCP<const Thyra::VectorSpaceBase<Scalar> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::get_f_space() const
+#else
+EvaluatorTpetra1DFEM<Scalar, Node>::get_f_space() const
+#endif
 {
   return fSpace_;
 }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 Thyra::ModelEvaluatorBase::InArgs<Scalar>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::getNominalValues() const
+#else
+EvaluatorTpetra1DFEM<Scalar, Node>::getNominalValues() const
+#endif
 {
   return nominalValues_;
 }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 Teuchos::RCP<Thyra::LinearOpBase<Scalar> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::create_W_op() const
+#else
+EvaluatorTpetra1DFEM<Scalar, Node>::create_W_op() const
+#endif
 {
   Teuchos::RCP<tpetra_matrix> W_tpetra = Teuchos::rcp(new tpetra_matrix(W_graph_));
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   return Thyra::tpetraLinearOp<Scalar, LO, GO, Node>(fSpace_, xSpace_, W_tpetra);
+#else
+  return Thyra::tpetraLinearOp<Scalar, Node>(fSpace_, xSpace_, W_tpetra);
+#endif
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 Teuchos::RCP< ::Thyra::PreconditionerBase<Scalar> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::create_W_prec() const
+#else
+EvaluatorTpetra1DFEM<Scalar, Node>::create_W_prec() const
+#endif
 {
   Teuchos::RCP<tpetra_matrix> W_tpetra = Teuchos::rcp(new tpetra_matrix(W_graph_));
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::RCP<thyra_op> W_op = Thyra::tpetraLinearOp<Scalar, LO, GO, Node>(fSpace_, xSpace_, W_tpetra);
+#else
+  Teuchos::RCP<thyra_op> W_op = Thyra::tpetraLinearOp<Scalar, Node>(fSpace_, xSpace_, W_tpetra);
+#endif
 
   Teuchos::RCP<Thyra::DefaultPreconditioner<Scalar> > prec =
     Teuchos::rcp(new Thyra::DefaultPreconditioner<Scalar>);
@@ -297,71 +400,145 @@ EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::create_W_prec() const
   return prec;
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
 int EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::Np() const
+#else
+template<class Scalar, class Node>
+int EvaluatorTpetra1DFEM<Scalar, Node>::Np() const
+#endif
 {return Np_;}
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
 int EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::Ng() const
+#else
+template<class Scalar, class Node>
+int EvaluatorTpetra1DFEM<Scalar, Node>::Ng() const
+#endif
 {return Ng_;}
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 Teuchos::RCP<const ::Thyra::VectorSpaceBase<Scalar> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::get_p_space(int /* l */) const
+#else
+EvaluatorTpetra1DFEM<Scalar, Node>::get_p_space(int /* l */) const
+#endif
 {
   // All parameters are locally replicated scalars of size 1
   return pSpace_;
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 Teuchos::RCP<const Teuchos::Array<std::string> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::get_p_names(int l) const
+#else
+EvaluatorTpetra1DFEM<Scalar, Node>::get_p_names(int l) const
+#endif
 {
   return pNames_[l];
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 Teuchos::RCP<const ::Thyra::VectorSpaceBase<Scalar> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::get_g_space(int /* j */) const
+#else
+EvaluatorTpetra1DFEM<Scalar, Node>::get_g_space(int /* j */) const
+#endif
 {
   // All parameters are locally replicated scalars of size 1
   return gSpace_;
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 Teuchos::ArrayView<const std::string>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::get_g_names(int j) const
+#else
+EvaluatorTpetra1DFEM<Scalar, Node>::get_g_names(int j) const
+#endif
 {
   return gNames_[j];
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 Teuchos::RCP<::Thyra::LinearOpBase<Scalar>>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::create_DfDp_op(int l) const
+#else
+EvaluatorTpetra1DFEM<Scalar, Node>::create_DfDp_op(int l) const
+#endif
 {
   TEUCHOS_ASSERT( (l == 2) || (l == 4) );
   return ::Thyra::createMembers(xSpace_,1,"LOCA::DgDx");
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 Teuchos::RCP<::Thyra::LinearOpBase<Scalar> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::create_DgDx_op(int j) const
+#else
+EvaluatorTpetra1DFEM<Scalar, Node>::create_DgDx_op(int j) const
+#endif
 {
   TEUCHOS_ASSERT( (j == 4) || (j == 6) );
   return ::Thyra::createMembers(xSpace_,1,"LOCA::DgDx");
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 Teuchos::RCP<::Thyra::LinearOpBase<Scalar> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::create_DgDx_dot_op(int j) const
+#else
+EvaluatorTpetra1DFEM<Scalar, Node>::create_DgDx_dot_op(int j) const
+#endif
 {
   TEUCHOS_ASSERT( (j == 4) || (j == 6) );
   return ::Thyra::createMembers(xSpace_,1,"LOCA::DgDx_dot");
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 ::Teuchos::RCP<::Thyra::LinearOpBase<Scalar> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::create_DgDp_op( int j, int l ) const
+#else
+EvaluatorTpetra1DFEM<Scalar, Node>::create_DgDp_op( int j, int l ) const
+#endif
 {
   TEUCHOS_ASSERT( (j == 4) || (j == 6) );
   TEUCHOS_ASSERT( (l == 2) || (l == 4) );
@@ -370,29 +547,58 @@ EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::create_DgDp_op( int j, int l ) const
   return ::Thyra::createMembers(gSpace_,1,"LOCA::DgDp");
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 Teuchos::RCP<const ::Thyra::LinearOpWithSolveFactoryBase<Scalar> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::get_W_factory() const
+#else
+EvaluatorTpetra1DFEM<Scalar, Node>::get_W_factory() const
+#endif
 {
   return W_factory_;
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 Thyra::ModelEvaluatorBase::InArgs<Scalar>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::createInArgs() const
+#else
+EvaluatorTpetra1DFEM<Scalar, Node>::createInArgs() const
+#endif
 {
   return prototypeInArgs_;
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 Thyra::ModelEvaluatorBase::OutArgs<Scalar>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::createOutArgs() const
+#else
+EvaluatorTpetra1DFEM<Scalar, Node>::createOutArgs() const
+#endif
 {
   return prototypeOutArgs_;
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
 void EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::
+#else
+template<class Scalar, class Node>
+void EvaluatorTpetra1DFEM<Scalar, Node>::
+#endif
 evalModel(const Thyra::ModelEvaluatorBase::InArgs<Scalar> &inArgs,
           const Thyra::ModelEvaluatorBase::OutArgs<Scalar> &outArgs) const
 {
@@ -442,8 +648,13 @@ evalModel(const Thyra::ModelEvaluatorBase::InArgs<Scalar> &inArgs,
               << std::endl;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using tpetra_op = Tpetra::Operator<Scalar,LO,GO,Node>;
   using tpetra_extract = ::Thyra::TpetraOperatorVectorExtraction<Scalar,LO,GO,Node>;
+#else
+  using tpetra_op = Tpetra::Operator<Scalar,Node>;
+  using tpetra_extract = ::Thyra::TpetraOperatorVectorExtraction<Scalar,Node>;
+#endif
 
   // Create ghosted objects
   if (is_null(uPtr_))
@@ -657,8 +868,13 @@ evalModel(const Thyra::ModelEvaluatorBase::InArgs<Scalar> &inArgs,
 
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LO, class GO, class Node>
 void EvaluatorTpetra1DFEM<Scalar, LO, GO, Node>::
+#else
+template<class Scalar, class Node>
+void EvaluatorTpetra1DFEM<Scalar, Node>::
+#endif
 reportFinalPoint (const ::Thyra::ModelEvaluatorBase::InArgs<Scalar> &finalPoint, const bool wasSolved)
 {}
 

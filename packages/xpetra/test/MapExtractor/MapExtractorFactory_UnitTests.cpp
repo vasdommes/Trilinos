@@ -100,16 +100,32 @@ TEUCHOS_STATIC_SETUP()
 // UNIT TESTS
 //
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_6_DECL( MapExtractorFactory, ConstructFromFullAndPartialMaps, M, MA, Scalar, LO, GO, Node )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( MapExtractorFactory, ConstructFromFullAndPartialMaps, M, MA, Scalar, Node )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   using Teuchos::RCP;
   using Teuchos::rcp;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using Map = Xpetra::Map<LO,GO,Node>;
   using MapFactory = Xpetra::MapFactory<LO,GO,Node>;
   using MapExtractor = Xpetra::MapExtractor<Scalar,LO,GO,Node>;
   using MapExtractorFactory = Xpetra::MapExtractorFactory<Scalar,LO,GO,Node>;
   using MapUtils = Xpetra::MapUtils<LO,GO,Node>;
+#else
+  using Map = Xpetra::Map<Node>;
+  using MapFactory = Xpetra::MapFactory<Node>;
+  using MapExtractor = Xpetra::MapExtractor<Scalar,Node>;
+  using MapExtractorFactory = Xpetra::MapExtractorFactory<Scalar,Node>;
+  using MapUtils = Xpetra::MapUtils<Node>;
+#endif
 
   // get a comm and node
   Teuchos::RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
@@ -149,17 +165,34 @@ TEUCHOS_UNIT_TEST_TEMPLATE_6_DECL( MapExtractorFactory, ConstructFromFullAndPart
   TEST_ASSERT(mapExtractor->getMap(1)->isSameAs(*map2));
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_6_DECL( MapExtractorFactory, ConstructFromBlockedMap, M, MA, Scalar, LO, GO, Node )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( MapExtractorFactory, ConstructFromBlockedMap, M, MA, Scalar, Node )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   using Teuchos::RCP;
   using Teuchos::rcp;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using BlockedMap = Xpetra::BlockedMap<LO,GO,Node>;
   using Map = Xpetra::Map<LO,GO,Node>;
   using MapFactory = Xpetra::MapFactory<LO,GO,Node>;
   using MapExtractor = Xpetra::MapExtractor<Scalar,LO,GO,Node>;
   using MapExtractorFactory = Xpetra::MapExtractorFactory<Scalar,LO,GO,Node>;
   using MapUtils = Xpetra::MapUtils<LO,GO,Node>;
+#else
+  using BlockedMap = Xpetra::BlockedMap<Node>;
+  using Map = Xpetra::Map<Node>;
+  using MapFactory = Xpetra::MapFactory<Node>;
+  using MapExtractor = Xpetra::MapExtractor<Scalar,Node>;
+  using MapExtractorFactory = Xpetra::MapExtractorFactory<Scalar,Node>;
+  using MapUtils = Xpetra::MapUtils<Node>;
+#endif
 
   // get a comm and node
   Teuchos::RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
@@ -211,24 +244,40 @@ TEUCHOS_UNIT_TEST_TEMPLATE_6_DECL( MapExtractorFactory, ConstructFromBlockedMap,
 //
 #ifdef HAVE_XPETRA_TPETRA
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   #define XPETRA_TPETRA_TYPES( S, LO, GO, N) \
     typedef typename Xpetra::TpetraMap<LO,GO,N> M##LO##GO##N; \
     typedef typename Xpetra::TpetraCrsMatrix<S,LO,GO,N> MA##S##LO##GO##N;
+#else
+  #define XPETRA_TPETRA_TYPES( S, N) \
+    typedef typename Xpetra::TpetraMap<N> M##LO##GO##N; \
+    typedef typename Xpetra::TpetraCrsMatrix<S,N> MA##S##LO##GO##N;
+#endif
 
 #endif
 
 #ifdef HAVE_XPETRA_EPETRA
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   #define XPETRA_EPETRA_TYPES( S, LO, GO, N) \
+#else
+  #define XPETRA_EPETRA_TYPES( S, N) \
+#endif
     typedef typename Xpetra::EpetraMapT<GO,N> M##LO##GO##N; \
     typedef typename Xpetra::EpetraCrsMatrixT<GO,N> MA##S##LO##GO##N;
 
 #endif
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define XP_MAPEXTRACTORACTORY_INSTANT(S,LO,GO,N) \
     TEUCHOS_UNIT_TEST_TEMPLATE_6_INSTANT( MapExtractorFactory, ConstructFromFullAndPartialMaps, M##LO##GO##N , MA##S##LO##GO##N, S, LO, GO, N ) \
     TEUCHOS_UNIT_TEST_TEMPLATE_6_INSTANT( MapExtractorFactory, ConstructFromBlockedMap, M##LO##GO##N , MA##S##LO##GO##N, S, LO, GO, N )
+#else
+#define XP_MAPEXTRACTORACTORY_INSTANT(S,N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( MapExtractorFactory, ConstructFromFullAndPartialMaps, M##LO##GO##N , MA##S##LO##GO##N, S, N ) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( MapExtractorFactory, ConstructFromBlockedMap, M##LO##GO##N , MA##S##LO##GO##N, S, N )
+#endif
 
 #if defined(HAVE_XPETRA_TPETRA)
 

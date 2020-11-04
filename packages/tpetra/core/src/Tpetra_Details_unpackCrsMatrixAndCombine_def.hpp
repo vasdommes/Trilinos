@@ -99,7 +99,11 @@ namespace UnpackAndCombineCrsMatrixImpl {
 ///   documentation of Map for requirements.
 /// \tparam GO The type of global indices.  See the
 ///   documentation of Map for requirements.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class ST, class LO, class GO>
+#else
+template<class ST,>
+#endif
 KOKKOS_FUNCTION int
 unpackRow(const typename PackTraits<GO>::output_array_type& gids_out,
           const typename PackTraits<int>::output_array_type& pids_out,
@@ -1004,7 +1008,11 @@ unpackAndCombineIntoCrsArrays2(
       vals_out_type vals_out = subview(tgt_vals, slice(start_row, end_row));
       pids_out_type pids_out = subview(tgt_pids, slice(start_row, end_row));
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       k_error += unpackRow<ST,LO,GO>(gids_out, pids_out, vals_out,
+#else
+      k_error += unpackRow<ST>(gids_out, pids_out, vals_out,
+#endif
                                      imports.data(), offset, num_bytes,
                                      num_ent, bytes_per_value);
 
@@ -1183,10 +1191,18 @@ unpackAndCombineIntoCrsArrays(
 /// copies back in to the Teuchos::ArrayView objects, if needed).  When
 /// CrsMatrix migrates fully to adopting Kokkos::DualView objects for its storage
 /// of data, this procedure could be bypassed.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<typename ST, typename LO, typename GO, typename Node>
+#else
+template<typename ST, typename Node>
+#endif
 void
 unpackCrsMatrixAndCombine(
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     const CrsMatrix<ST, LO, GO, Node>& sourceMatrix,
+#else
+    const CrsMatrix<ST, Node>& sourceMatrix,
+#endif
     const Teuchos::ArrayView<const char>& imports,
     const Teuchos::ArrayView<const size_t>& numPacketsPerLID,
     const Teuchos::ArrayView<const LO>& importLIDs,
@@ -1196,7 +1212,11 @@ unpackCrsMatrixAndCombine(
 {
   using Kokkos::View;
   typedef typename Node::device_type device_type;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef typename CrsMatrix<ST, LO, GO, Node>::local_matrix_type local_matrix_type;
+#else
+  typedef typename CrsMatrix<ST, Node>::local_matrix_type local_matrix_type;
+#endif
   static_assert (std::is_same<device_type, typename local_matrix_type::device_type>::value,
                  "Node::device_type and LocalMatrix::device_type must be the same.");
 
@@ -1238,23 +1258,48 @@ unpackCrsMatrixAndCombine(
 
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<typename ST, typename LO, typename GO, typename NT>
+#else
+template<typename ST, typename NT>
+#endif
 void
 unpackCrsMatrixAndCombineNew(
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   const CrsMatrix<ST, LO, GO, NT>& sourceMatrix,
+#else
+  const CrsMatrix<ST, NT>& sourceMatrix,
+#endif
   Kokkos::DualView<char*,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typename DistObject<char, LO, GO, NT>::buffer_device_type> imports,
+#else
+    typename DistObject<char,NT>::buffer_device_type> imports,
+#endif
   Kokkos::DualView<size_t*,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typename DistObject<char, LO, GO, NT>::buffer_device_type> numPacketsPerLID,
+#else
+    typename DistObject<char,NT>::buffer_device_type> numPacketsPerLID,
+#endif
   const Kokkos::DualView<const LO*,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typename DistObject<char, LO, GO, NT>::buffer_device_type>& importLIDs,
+#else
+    typename DistObject<char,NT>::buffer_device_type>& importLIDs,
+#endif
   const size_t /* constantNumPackets */,
   Distributor& /* distor */,
   const CombineMode combineMode)
 {
   using Kokkos::View;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using crs_matrix_type = CrsMatrix<ST, LO, GO, NT>;
   using dist_object_type = DistObject<char, LO, GO, NT>;
+#else
+  using crs_matrix_type = CrsMatrix<ST, NT>;
+  using dist_object_type = DistObject<char,NT>;
+#endif
   using device_type = typename crs_matrix_type::device_type;
   using local_matrix_type = typename crs_matrix_type::local_matrix_type;
   using buffer_device_type = typename dist_object_type::buffer_device_type;
@@ -1344,10 +1389,18 @@ unpackCrsMatrixAndCombineNew(
 /// copies back in to the Teuchos::ArrayView objects, if needed).  When
 /// CrsMatrix migrates fully to adopting Kokkos::DualView objects for its storage
 /// of data, this procedure could be bypassed.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<typename Scalar, typename LocalOrdinal, typename GlobalOrdinal, typename Node>
+#else
+template<typename Scalar, typename Node>
+#endif
 size_t
 unpackAndCombineWithOwningPIDsCount (
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     const CrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> & sourceMatrix,
+#else
+    const CrsMatrix<Scalar, Node> & sourceMatrix,
+#endif
     const Teuchos::ArrayView<const LocalOrdinal> &importLIDs,
     const Teuchos::ArrayView<const char> &imports,
     const Teuchos::ArrayView<const size_t>& numPacketsPerLID,
@@ -1361,7 +1414,11 @@ unpackAndCombineWithOwningPIDsCount (
   using Kokkos::MemoryUnmanaged;
   using Kokkos::View;
   typedef typename Node::device_type DT;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef typename DistObject<char, LocalOrdinal, GlobalOrdinal, Node>::buffer_device_type BDT;
+#else
+  typedef typename DistObject<char,Node>::buffer_device_type BDT;
+#endif
   const char prefix[] = "unpackAndCombineWithOwningPIDsCount: ";
 
   TEUCHOS_TEST_FOR_EXCEPTION
@@ -1415,10 +1472,18 @@ unpackAndCombineWithOwningPIDsCount (
 /// Note: The TargetPids vector (on output) will contain owning PIDs
 /// for each entry in the matrix, with the "-1 for local" for locally
 /// owned entries.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<typename Scalar, typename LocalOrdinal, typename GlobalOrdinal, typename Node>
+#else
+template<typename Scalar, typename Node>
+#endif
 void
 unpackAndCombineIntoCrsArrays (
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     const CrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> & sourceMatrix,
+#else
+    const CrsMatrix<Scalar, Node> & sourceMatrix,
+#endif
     const Teuchos::ArrayView<const LocalOrdinal>& importLIDs,
     const Teuchos::ArrayView<const char>& imports,
     const Teuchos::ArrayView<const size_t>& numPacketsPerLID,
@@ -1433,7 +1498,11 @@ unpackAndCombineIntoCrsArrays (
     const int MyTargetPID,
     const Teuchos::ArrayView<size_t>& CRS_rowptr,
     const Teuchos::ArrayView<GlobalOrdinal>& CRS_colind,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     const Teuchos::ArrayView<typename CrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>::impl_scalar_type>& CRS_vals,
+#else
+    const Teuchos::ArrayView<typename CrsMatrix<Scalar, Node>::impl_scalar_type>& CRS_vals,
+#endif
     const Teuchos::ArrayView<const int>& SourcePids,
     Teuchos::Array<int>& TargetPids)
 {
@@ -1452,7 +1521,11 @@ unpackAndCombineIntoCrsArrays (
   typedef typename Node::device_type DT;
   typedef typename DT::execution_space XS;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef CrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> matrix_type;
+#else
+  typedef CrsMatrix<Scalar, Node> matrix_type;
+#endif
   typedef typename matrix_type::impl_scalar_type ST;
   typedef typename ArrayView<const LO>::size_type size_type;
 
@@ -1611,10 +1684,19 @@ unpackAndCombineIntoCrsArrays (
 } // namespace Details
 } // namespace Tpetra
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define TPETRA_DETAILS_UNPACKCRSMATRIXANDCOMBINE_INSTANT( ST, LO, GO, NT ) \
+#else
+#define TPETRA_DETAILS_UNPACKCRSMATRIXANDCOMBINE_INSTANT( ST, NT ) \
+#endif
   template void \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Details::unpackCrsMatrixAndCombine<ST, LO, GO, NT> ( \
     const CrsMatrix<ST, LO, GO, NT>&, \
+#else
+  Details::unpackCrsMatrixAndCombine<ST, NT> ( \
+    const CrsMatrix<ST, NT>&, \
+#endif
     const Teuchos::ArrayView<const char>&, \
     const Teuchos::ArrayView<const size_t>&, \
     const Teuchos::ArrayView<const LO>&, \
@@ -1622,17 +1704,30 @@ unpackAndCombineIntoCrsArrays (
     Distributor&, \
     CombineMode); \
   template void \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Details::unpackCrsMatrixAndCombineNew<ST, LO, GO, NT> ( \
     const CrsMatrix<ST, LO, GO, NT>&, \
     Kokkos::DualView<char*, typename DistObject<char, LO, GO, NT>::buffer_device_type>, \
     Kokkos::DualView<size_t*, typename DistObject<char, LO, GO, NT>::buffer_device_type>, \
     const Kokkos::DualView<const LO*, typename DistObject<char, LO, GO, NT>::buffer_device_type>&, \
+#else
+  Details::unpackCrsMatrixAndCombineNew<ST, NT> ( \
+    const CrsMatrix<ST, NT>&, \
+    Kokkos::DualView<char*, typename DistObject<char,NT>::buffer_device_type>, \
+    Kokkos::DualView<size_t*, typename DistObject<char,NT>::buffer_device_type>, \
+    const Kokkos::DualView<const LO*, typename DistObject<char,NT>::buffer_device_type>&, \
+#endif
     const size_t, \
     Distributor&, \
     const CombineMode); \
   template void \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Details::unpackAndCombineIntoCrsArrays<ST, LO, GO, NT> ( \
     const CrsMatrix<ST, LO, GO, NT> &, \
+#else
+  Details::unpackAndCombineIntoCrsArrays<ST, NT> ( \
+    const CrsMatrix<ST, NT> &, \
+#endif
     const Teuchos::ArrayView<const LO>&, \
     const Teuchos::ArrayView<const char>&, \
     const Teuchos::ArrayView<const size_t>&, \
@@ -1647,12 +1742,21 @@ unpackAndCombineIntoCrsArrays (
     const int, \
     const Teuchos::ArrayView<size_t>&, \
     const Teuchos::ArrayView<GO>&, \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     const Teuchos::ArrayView<CrsMatrix<ST, LO, GO, NT>::impl_scalar_type>&, \
+#else
+    const Teuchos::ArrayView<CrsMatrix<ST, NT>::impl_scalar_type>&, \
+#endif
     const Teuchos::ArrayView<const int>&, \
     Teuchos::Array<int>&); \
   template size_t \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Details::unpackAndCombineWithOwningPIDsCount<ST, LO, GO, NT> ( \
     const CrsMatrix<ST, LO, GO, NT> &, \
+#else
+  Details::unpackAndCombineWithOwningPIDsCount<ST, NT> ( \
+    const CrsMatrix<ST, NT> &, \
+#endif
     const Teuchos::ArrayView<const LO> &, \
     const Teuchos::ArrayView<const char> &, \
     const Teuchos::ArrayView<const size_t>&, \

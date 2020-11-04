@@ -288,7 +288,11 @@ void separate_BC_eqns(const fei::FillableMat& mat,
 
 //----------------------------------------------------------------------------
 void create_col_to_row_map(const fei::FillableMat& mat,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                            std::multimap<int,int>& crmap)
+#else
+                           std::multimap<>& crmap)
+#endif
 {
   crmap.clear();
 
@@ -325,10 +329,18 @@ int remove_couplings(fei::FillableMat& mat)
 
   bool finished = false;
   while(!finished) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::multimap<int,int> crmap;
+#else
+    std::multimap<> crmap;
+#endif
     create_col_to_row_map(mat, crmap);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef std::multimap<int,int>::iterator MM_Iter;
+#else
+    typedef std::multimap<>::iterator MM_Iter;
+#endif
 
     fei::FillableMat::iterator
       m_iter = mat.begin(),

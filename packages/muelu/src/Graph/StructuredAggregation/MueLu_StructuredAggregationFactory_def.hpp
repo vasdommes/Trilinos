@@ -64,13 +64,23 @@
 
 namespace MueLu {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   StructuredAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  template <class Scalar, class Node>
+  StructuredAggregationFactory<Scalar, Node>::
+#endif
   StructuredAggregationFactory() : bDefinitionPhase_(true)
   { }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   RCP<const ParameterList> StructuredAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  template <class Scalar, class Node>
+  RCP<const ParameterList> StructuredAggregationFactory<Scalar, Node>::
+#endif
   GetValidParameterList() const {
     RCP<ParameterList> validParamList = rcp(new ParameterList());
 
@@ -103,8 +113,13 @@ namespace MueLu {
     return validParamList;
   } // GetValidParameterList()
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void StructuredAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  template <class Scalar, class Node>
+  void StructuredAggregationFactory<Scalar, Node>::
+#endif
   DeclareInput(Level& currentLevel) const {
     Input(currentLevel, "Graph");
     Input(currentLevel, "DofsPerNode");
@@ -149,8 +164,13 @@ namespace MueLu {
     }
   } // DeclareInput()
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void StructuredAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  template <class Scalar, class Node>
+  void StructuredAggregationFactory<Scalar, Node>::
+#endif
   Build(Level &currentLevel) const {
     FactoryMonitor m(*this, "Build", currentLevel);
 
@@ -230,7 +250,11 @@ namespace MueLu {
     // Now that we have extracted info from the level, create the IndexManager
     RCP<IndexManager > geoData;
     if(!coupled) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       geoData = rcp(new MueLu::UncoupledIndexManager<LO,GO,NO>(fineMap->getComm(),
+#else
+      geoData = rcp(new MueLu::UncoupledIndexManager<NO>(fineMap->getComm(),
+#endif
                                                                coupled,
                                                                numDimensions,
                                                                interpolationOrder,
@@ -256,7 +280,11 @@ namespace MueLu {
       // I think that it might make sense to pass ghostInterface rather than interpolationOrder.
       // For that I need to make sure that ghostInterface can be computed with minimal mesh
       // knowledge outside of the IndexManager...
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       geoData = rcp(new MueLu::LocalLexicographicIndexManager<LO,GO,NO>(fineMap->getComm(),
+#else
+      geoData = rcp(new MueLu::LocalLexicographicIndexManager<NO>(fineMap->getComm(),
+#endif
                                                                         coupled,
                                                                         numDimensions,
                                                                         interpolationOrder,
@@ -271,7 +299,11 @@ namespace MueLu {
       // I think that it might make sense to pass ghostInterface rather than interpolationOrder.
       // For that I need to make sure that ghostInterface can be computed with minimal mesh
       // knowledge outside of the IndexManager...
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       geoData = rcp(new MueLu::GlobalLexicographicIndexManager<LO,GO,NO>(fineMap->getComm(),
+#else
+      geoData = rcp(new MueLu::GlobalLexicographicIndexManager<NO>(fineMap->getComm(),
+#endif
                                                                          coupled,
                                                                          numDimensions,
                                                                          interpolationOrder,
@@ -305,7 +337,11 @@ namespace MueLu {
     // node on the fine grid to an aggregate and a processor.
     RCP<const FactoryBase> graphFact = GetFactory("Graph");
     RCP<const Map> coarseCoordinatesFineMap, coarseCoordinatesMap;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<MueLu::AggregationStructuredAlgorithm<LocalOrdinal, GlobalOrdinal, Node> >
+#else
+    RCP<MueLu::AggregationStructuredAlgorithm<Node> >
+#endif
       myStructuredAlgorithm = rcp(new AggregationStructuredAlgorithm(graphFact));
 
     if(interpolationOrder == 0 && outputAggregates){

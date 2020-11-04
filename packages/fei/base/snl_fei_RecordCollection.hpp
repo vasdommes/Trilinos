@@ -69,10 +69,18 @@ namespace snl_fei {
     }
 
     /** Get the map of global-to-local ids */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::map<int,int>& getGlobalToLocalMap()
+#else
+    std::map<>& getGlobalToLocalMap()
+#endif
     { return m_global_to_local; }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     const std::map<int,int>& getGlobalToLocalMap() const
+#else
+    const std::map<>& getGlobalToLocalMap() const
+#endif
     { return m_global_to_local; }
 
     /** Get the vector containing the records */
@@ -101,7 +109,11 @@ namespace snl_fei {
 
     int getLocalID(int global_id) const
     {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       std::map<int,int>::const_iterator iter = m_global_to_local.find(global_id);
+#else
+      std::map<>::const_iterator iter = m_global_to_local.find(global_id);
+#endif
       if (iter == m_global_to_local.end()) {
         return -1;
       }
@@ -140,7 +152,11 @@ namespace snl_fei {
   private:
 
     std::vector<fei::Record<int> > m_records;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::map<int,int> m_global_to_local;
+#else
+    std::map<> m_global_to_local;
+#endif
 
     int m_minID, m_maxID;
 

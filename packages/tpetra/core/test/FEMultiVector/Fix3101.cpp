@@ -94,7 +94,11 @@ FEMultiVectorTest::FEMultiVectorTest(
   std::cout << std::endl;
 
   // Create FEMultiVector
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Import<lno_t, gno_t> import_t;
+#else
+  typedef Tpetra::Import<> import_t;
+#endif
   Teuchos::RCP<import_t> importer = rcp(new import_t(mapOwned,
                                                      mapWithCopies));
   femv = rcp(new femv_t(mapOwned, importer, nVec, true));

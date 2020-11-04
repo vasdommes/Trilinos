@@ -485,9 +485,19 @@ namespace {
     return result3;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MakeOptColMap, Test1, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST( MakeOptColMap, Test1 )
+#endif
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::Map<LO, GO> map_type;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef Tpetra::Map<> map_type;
+#endif
     typedef typename GetImportType<map_type>::import_type import_type;
 
     Teuchos::OSTab tab0 (out);
@@ -520,9 +530,19 @@ namespace {
     TEST_ASSERT( oldColMap.isSameAs (*result.first) );
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MakeOptColMap, Test2, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST( MakeOptColMap, Test2 )
+#endif
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::Map<LO, GO> map_type;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef Tpetra::Map<> map_type;
+#endif
     typedef typename GetImportType<map_type>::import_type import_type;
 
     Teuchos::OSTab tab0 (out);
@@ -560,9 +580,19 @@ namespace {
     TEST_ASSERT( oldColMap.isSameAs (*result.first) );
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( MakeOptColMap, Test3, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST( MakeOptColMap, Test3 )
+#endif
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using map_type = Tpetra::Map<LO, GO>;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    using map_type = Tpetra::Map<>;
+#endif
     using import_type = typename GetImportType<map_type>::import_type;
 
     Teuchos::OSTab tab0 (out);
@@ -652,7 +682,10 @@ namespace {
   //
 
 #define UNIT_TEST_GROUP(LO, GO) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( MakeOptColMap, Test1, LO, GO )
+#else
+#endif
 
   // TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( MakeOptColMap, Test2, LO, GO )
   // TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( MakeOptColMap, Test3, LO, GO )

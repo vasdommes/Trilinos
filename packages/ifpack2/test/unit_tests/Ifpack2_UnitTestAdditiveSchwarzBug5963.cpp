@@ -61,8 +61,16 @@ namespace {
 // This example exercises the fix for Bug 5963.  It illustrates the
 // "Add" combine mode with overlap 0.  This example only works with
 // exactly 2 MPI processes.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(AdditiveSchwarz, AddCombineMode, ScalarType, LocalOrdinalType, GlobalOrdinalType)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL(AdditiveSchwarz, AddCombineMode, ScalarType)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinalType = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinalType = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   using Teuchos::Array;
   using Teuchos::ArrayRCP;
   using Teuchos::as;
@@ -225,8 +233,16 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(AdditiveSchwarz, AddCombineMode, ScalarType, L
 // This example exercises the fix for Bug 5963.  It illustrates the
 // "Zero" combine mode with overlap 1.  This example only works with
 // exactly 2 MPI processes.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(AdditiveSchwarz, ZeroCombineMode, ScalarType, LocalOrdinalType, GlobalOrdinalType)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL(AdditiveSchwarz, ZeroCombineMode, ScalarType)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinalType = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinalType = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   using Teuchos::Array;
   using Teuchos::ArrayRCP;
   using Teuchos::as;
@@ -434,7 +450,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(AdditiveSchwarz, ZeroCombineMode, ScalarType, 
 
 // Define the set of unit tests to instantiate in this file.
 #define UNIT_TEST_GROUP_SC_LO_GO( SC, LO, GO ) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( AdditiveSchwarz, ZeroCombineMode, SC, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( AdditiveSchwarz, ZeroCombineMode, SC )
+#endif
 
 #include "Ifpack2_ETIHelperMacros.h"
 

@@ -58,10 +58,16 @@
  |  finalize construction of this interface                             |
  *----------------------------------------------------------------------*/
 template <class ST,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           class LO,
           class GO,
+#endif
           class N >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 bool MoertelT::InterfaceT<ST, LO, GO, N>::Complete()
+#else
+bool MoertelT::InterfaceT<ST, N>::Complete()
+#endif
 { 
   if (IsComplete())
   {
@@ -130,7 +136,11 @@ bool MoertelT::InterfaceT<ST, LO, GO, N>::Complete()
           for (curr=seg_[side].begin(); curr!=seg_[side].end(); ++curr)
             sendsize += curr->second->Nnode();
         }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         Teuchos::broadcast<LO, int>(*gcomm_, proc, 1, &sendsize);
+#else
+        Teuchos::broadcast<>(*gcomm_, proc, 1, &sendsize);
+#endif
         
         // create list of all nodes adjacent to segments on proc
 		std::vector<int> ids(sendsize);
@@ -145,7 +155,11 @@ bool MoertelT::InterfaceT<ST, LO, GO, N>::Complete()
               ids[counter++] = segids[i];
           }
         }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         Teuchos::broadcast<LO, int>(*gcomm_, proc, sendsize, &ids[0]);
+#else
+        Teuchos::broadcast<>(*gcomm_, proc, sendsize, &ids[0]);
+#endif
         
         // check on all processors for nodes in ids
 		std::vector<int> foundit(sendsize);
@@ -286,7 +300,11 @@ bool MoertelT::InterfaceT<ST, LO, GO, N>::Complete()
       int lnnodes = 0;
       if (proc==lcomm_->getRank())
         lnnodes = node_[0].size() + node_[1].size();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Teuchos::broadcast<LO, int>(*lcomm_, proc, 1, &lnnodes);
+#else
+      Teuchos::broadcast<>(*lcomm_, proc, 1, &lnnodes);
+#endif
 	  std::vector<int> ids(lnnodes);
       if (proc==lcomm_->getRank())
       {
@@ -296,7 +314,11 @@ bool MoertelT::InterfaceT<ST, LO, GO, N>::Complete()
           for (curr=node_[side].begin(); curr!=node_[side].end(); ++curr)
             ids[counter++] = curr->first;
       }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Teuchos::broadcast<LO, int>(*lcomm_, proc, lnnodes, &ids[0]);
+#else
+      Teuchos::broadcast<>(*lcomm_, proc, lnnodes, &ids[0]);
+#endif
       for (int i=0; i<lnnodes; ++i)
         nodePID_.insert(std::pair<int,int>(ids[i],proc));
       ids.clear();
@@ -310,7 +332,11 @@ bool MoertelT::InterfaceT<ST, LO, GO, N>::Complete()
       int lnsegs = 0;
       if (proc==lcomm_->getRank())
         lnsegs = seg_[0].size() + seg_[1].size();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Teuchos::broadcast<LO, int>(*lcomm_, proc, 1, &lnsegs);
+#else
+      Teuchos::broadcast<>(*lcomm_, proc, 1, &lnsegs);
+#endif
 	  std::vector<int> ids(lnsegs);
       if (proc==lcomm_->getRank())
       {
@@ -320,7 +346,11 @@ bool MoertelT::InterfaceT<ST, LO, GO, N>::Complete()
           for (curr=seg_[side].begin(); curr!=seg_[side].end(); ++curr)
             ids[counter++] = curr->first;
       }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Teuchos::broadcast<LO, int>(*lcomm_, proc, lnsegs, &ids[0]);
+#else
+      Teuchos::broadcast<>(*lcomm_, proc, lnsegs, &ids[0]);
+#endif
       for (int i=0; i<lnsegs; ++i)
         segPID_.insert(std::pair<int,int>(ids[i],proc));
       ids.clear();
@@ -355,7 +385,11 @@ bool MoertelT::InterfaceT<ST, LO, GO, N>::Complete()
       int lnseg = 0;
       if (proc==lcomm_->getRank())
         lnseg = seg_[0].size() + seg_[1].size();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Teuchos::broadcast<LO, int>(*lcomm_, proc, 1, &lnseg);
+#else
+      Teuchos::broadcast<>(*lcomm_, proc, 1, &lnseg);
+#endif
       
       // allocate vector to hold adjacency
       int offset = gmaxnnode+2;
@@ -381,7 +415,11 @@ bool MoertelT::InterfaceT<ST, LO, GO, N>::Complete()
           }
         }
       }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Teuchos::broadcast<LO, int>(*lcomm_, proc, size, &adj[0]);
+#else
+      Teuchos::broadcast<>(*lcomm_, proc, size, &adj[0]);
+#endif
       
       // all procs read adj and add segment to the nodes they own
       int count = 0;

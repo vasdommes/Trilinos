@@ -248,7 +248,11 @@ protected:
 
    // storage for patterns
    std::vector<std::tuple<int,panzer::FieldType,Teuchos::RCP<const FieldPattern> > > patterns_;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
    std::map<int,int> fieldIdToPatternIdx_;
+#else
+   std::map<> fieldIdToPatternIdx_;
+#endif
 
    //! Stores the Field offsets for the fieldId key. Note that the key is the fieldId, not the index into the patterns_.
    mutable std::map<int, std::vector<int> > fieldOffsets_;

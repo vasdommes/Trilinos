@@ -74,8 +74,13 @@ namespace MueLu {
       
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   RCP<const ParameterList> FilteredAFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::GetValidParameterList() const {
+#else
+  template <class Scalar, class Node>
+  RCP<const ParameterList> FilteredAFactory<Scalar, Node>::GetValidParameterList() const {
+#endif
     RCP<ParameterList> validParamList = rcp(new ParameterList());
 
 #define SET_VALID_ENTRY(name) validParamList->setEntry(name, MasterList::getEntry(name))
@@ -100,8 +105,13 @@ namespace MueLu {
     return validParamList;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void FilteredAFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level& currentLevel) const {
+#else
+  template <class Scalar, class Node>
+  void FilteredAFactory<Scalar, Node>::DeclareInput(Level& currentLevel) const {
+#endif
     Input(currentLevel, "A");
     Input(currentLevel, "Filtering");
     Input(currentLevel, "Graph");
@@ -112,8 +122,13 @@ namespace MueLu {
     }    
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void FilteredAFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(Level& currentLevel) const {
+#else
+  template <class Scalar, class Node>
+  void FilteredAFactory<Scalar, Node>::Build(Level& currentLevel) const {
+#endif
     FactoryMonitor m(*this, "Matrix filtering", currentLevel);
 
     RCP<Matrix> A = Get< RCP<Matrix> >(currentLevel, "A");
@@ -206,14 +221,26 @@ namespace MueLu {
 
       if(MUELU_FILTEREDAFACTORY_LOTS_OF_PRINTING)
      { 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
        Xpetra::IO<SC,LO,GO,NO>::Write("filteredA.dat", *filteredA);
+#else
+       Xpetra::IO<SC,NO>::Write("filteredA.dat", *filteredA);
+#endif
 
        //original filtered A  and actual A
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
        Xpetra::IO<SC,LO,GO,NO>::Write("A.dat", *A);
+#else
+       Xpetra::IO<SC,NO>::Write("A.dat", *A);
+#endif
        RCP<Matrix> origFilteredA = MatrixFactory::Build(A->getRowMap(), A->getColMap(), A->getNodeMaxNumRowEntries());
        BuildNew(*A, *G, lumping, dirichlet_threshold,*origFilteredA);
        origFilteredA->fillComplete(A->getDomainMap(), A->getRangeMap(), fillCompleteParams);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
        Xpetra::IO<SC,LO,GO,NO>::Write("origFilteredA.dat", *origFilteredA);       
+#else
+       Xpetra::IO<SC,NO>::Write("origFilteredA.dat", *origFilteredA);       
+#endif
      }
 
 
@@ -245,8 +272,13 @@ namespace MueLu {
   // This trick allows us to bypass constructing a new matrix. Instead, we
   // make a deep copy of the original one, and fill it in with zeros, which
   // are ignored during the prolongator smoothing.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void FilteredAFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  template <class Scalar, class Node>
+  void FilteredAFactory<Scalar, Node>::
+#endif
   BuildReuse(const Matrix& A, const GraphBase& G, const bool lumping, double dirichletThresh, Matrix& filteredA) const {
     using TST = typename Teuchos::ScalarTraits<SC>;
     SC zero = TST::zero();
@@ -355,8 +387,13 @@ namespace MueLu {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void FilteredAFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  template <class Scalar, class Node>
+  void FilteredAFactory<Scalar, Node>::
+#endif
   BuildNew(const Matrix& A, const GraphBase& G, const bool lumping, double dirichletThresh, Matrix& filteredA) const {
     using TST = typename Teuchos::ScalarTraits<SC>;
     SC zero = Teuchos::ScalarTraits<SC>::zero();
@@ -453,8 +490,13 @@ namespace MueLu {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void FilteredAFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  template <class Scalar, class Node>
+  void FilteredAFactory<Scalar, Node>::
+#endif
   BuildNewUsingRootStencil(const Matrix& A, const GraphBase& G, double dirichletThresh, Level& currentLevel,  Matrix& filteredA, bool use_spread_lumping, double DdomAllowGrowthRate, double DdomCap) const {
     using TST = typename Teuchos::ScalarTraits<SC>;
     using Teuchos::arcp_const_cast;
@@ -490,7 +532,11 @@ namespace MueLu {
     // Check map nesting
     RCP<const Map> rowMap = A.getRowMap();
     RCP<const Map> colMap = A.getColMap();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     bool goodMap = MueLu::Utilities<SC,LO,GO,NO>::MapsAreNested(*rowMap, *colMap);
+#else
+    bool goodMap = MueLu::Utilities<SC,NO>::MapsAreNested(*rowMap, *colMap);
+#endif
     TEUCHOS_TEST_FOR_EXCEPTION(!goodMap, Exceptions::RuntimeError,"FilteredAFactory: Maps are not nested");
   
     // Since we're going to symmetrize this
@@ -745,8 +791,13 @@ namespace MueLu {
   // NOTE: THIS CODE assumes direct access to a row. See comments above concerning
   //       ASSUME_DIRECT_ACCESS_TO_ROW
   //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void FilteredAFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  template <class Scalar, class Node>
+  void FilteredAFactory<Scalar, Node>::
+#endif
   ExperimentalLumping(const Matrix& A, Matrix& filteredA, double irho, double irho2) const {
     using TST = typename Teuchos::ScalarTraits<SC>;
     SC zero = TST::zero();

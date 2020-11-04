@@ -655,7 +655,11 @@ PamgenMeshAdapter<User>::PamgenMeshAdapter(const Comm<int> &comm,
     for (int cnt = 0, i = 0; i < num_node_cmaps; i++) {
       try {
 	requests[cnt++] =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 	  Teuchos::ireceive<int,int>(comm,
+#else
+	  Teuchos::ireceive<>(comm,
+#endif
 				     rcp(&(recvCount[node_proc_ids[i][0]]),
 					 false),
 				     node_proc_ids[i][0]);
@@ -677,7 +681,11 @@ PamgenMeshAdapter<User>::PamgenMeshAdapter(const Comm<int> &comm,
     // Send data; can use readySend since receives are posted.
     for (int i = 0; i < num_node_cmaps; i++) {
       try {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 	Teuchos::readySend<int,int>(comm, sendCount[node_proc_ids[i][0]],
+#else
+	Teuchos::readySend<>(comm, sendCount[node_proc_ids[i][0]],
+#endif
 				    node_proc_ids[i][0]);
       }
       Z2_FORWARD_EXCEPTIONS;
@@ -731,7 +739,11 @@ PamgenMeshAdapter<User>::PamgenMeshAdapter(const Comm<int> &comm,
 	  try {
 	    requests[rcnt++] =
 	      Teuchos::
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 	      ireceive<int,gno_t>(comm,
+#else
+	      ireceive<>(comm,
+#endif
 				Teuchos::arcp(&rbuf[offset], 0,
 					      recvCount[node_proc_ids[i][0]],
 					      false),
@@ -792,7 +804,11 @@ PamgenMeshAdapter<User>::PamgenMeshAdapter(const Comm<int> &comm,
     for (int i = 0; i < num_node_cmaps; i++) {
       if (sendCount[node_proc_ids[i][0]]) {
 	try{
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 	  Teuchos::readySend<int, gno_t>(comm,
+#else
+	  Teuchos::readySend<>(comm,
+#endif
 		 Teuchos::arrayView(&sendBuf[offset],
 				    sendCount[node_proc_ids[i][0]]),
  		 node_proc_ids[i][0]);

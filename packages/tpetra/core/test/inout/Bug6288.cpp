@@ -193,7 +193,11 @@ test (const Teuchos::RCP<const Teuchos::Comm<int> >& comm)
 
   int lclSuccess = testImpl (out, comm);
   int gblSuccess = lclSuccess;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   broadcast<int, int> (*comm, 0, inOutArg (gblSuccess));
+#else
+  broadcast<> (*comm, 0, inOutArg (gblSuccess));
+#endif
   out << (gblSuccess == 1 ? standardPassMessage : standardFailMessage) << endl;
 
   return gblSuccess;
@@ -260,7 +264,11 @@ main (int argc, char **argv)
   // The above tests over subsets of commWorld only do a "global"
   // check over the subset, not over commWorld.  Thus, we do a final
   // check here over commWorld.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   broadcast<int, int> (*commWorld, 0, outArg (gblSuccess));
+#else
+  broadcast<> (*commWorld, 0, outArg (gblSuccess));
+#endif
   out << (gblSuccess == 1 ? standardPassMessage : standardFailMessage) << endl;
 
   MPI_Finalize ();

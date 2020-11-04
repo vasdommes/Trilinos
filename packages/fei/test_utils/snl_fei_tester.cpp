@@ -366,7 +366,11 @@ int snl_fei_tester::initConstraints()
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int> fieldDB;
+#else
+  std::map<> fieldDB;
+#endif
   for(i=0; i<data_->numFields_; ++i) {
     fieldDB.insert(std::pair<int,int>(data_->fieldIDs_[i], data_->fieldSizes_[i]));
   }

@@ -71,8 +71,10 @@ static int checkProc(GO gid, int proc, int correct) {
   }
   return 0;
 }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 
 template <typename LO, typename GO>
+#endif
 static int checkLid(GO gid, LO lid, LO correct) {
   //  Report error if found LID is incorrec2
   if (lid != correct) {
@@ -96,13 +98,29 @@ static int checkNotFound(GO gid, int proc) {
 }
 
 /////////////////////////////////////////////////////////////////////////////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Directory, Uniform, LO, GO )
+#else
+TEUCHOS_UNIT_TEST( Directory, Uniform )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   // Test -- three IDs on every processor
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using map_t = Tpetra::Map<LO, GO>;
+#else
+  using map_t = Tpetra::Map<>;
+#endif
   using node_t = typename map_t::node_type;
   using dir_t = 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         Tpetra::Details::DistributedContiguousDirectory<LO, GO, node_t>;
+#else
+        Tpetra::Details::DistributedContiguousDirectory<node_t>;
+#endif
 
   Teuchos::RCP<const Teuchos::Comm<int> > comm = Tpetra::getDefaultComm();
   int me = comm->getRank();
@@ -136,15 +154,31 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Directory, Uniform, LO, GO )
 }
 
 /////////////////////////////////////////////////////////////////////////////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Directory, Replicate7223, LO, GO )
+#else
+TEUCHOS_UNIT_TEST( Directory, Replicate7223 )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   // Test -- two IDs on every even-numbered processor
   // When run on seven processors, this test exhibits the same behavior
   // as seen in #7332
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using map_t = Tpetra::Map<LO, GO>;
+#else
+  using map_t = Tpetra::Map<>;
+#endif
   using node_t = typename map_t::node_type;
   using dir_t = 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         Tpetra::Details::DistributedContiguousDirectory<LO, GO, node_t>;
+#else
+        Tpetra::Details::DistributedContiguousDirectory<node_t>;
+#endif
 
   Teuchos::RCP<const Teuchos::Comm<int> > comm = Tpetra::getDefaultComm();
   int me = comm->getRank();
@@ -181,13 +215,29 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Directory, Replicate7223, LO, GO )
 }
 
 /////////////////////////////////////////////////////////////////////////////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Directory, EvenProcs, LO, GO )
+#else
+TEUCHOS_UNIT_TEST( Directory, EvenProcs )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   // Test -- two IDs on every even-numbered processor
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using map_t = Tpetra::Map<LO, GO>;
+#else
+  using map_t = Tpetra::Map<>;
+#endif
   using node_t = typename map_t::node_type;
   using dir_t = 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         Tpetra::Details::DistributedContiguousDirectory<LO, GO, node_t>;
+#else
+        Tpetra::Details::DistributedContiguousDirectory<node_t>;
+#endif
 
   Teuchos::RCP<const Teuchos::Comm<int> > comm = Tpetra::getDefaultComm();
   int me = comm->getRank();
@@ -223,13 +273,29 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Directory, EvenProcs, LO, GO )
 }
 
 /////////////////////////////////////////////////////////////////////////////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Directory, EvenProcsOffset, LO, GO )
+#else
+TEUCHOS_UNIT_TEST( Directory, EvenProcsOffset )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   // Test -- two IDs on every even-numbered processor, starting with GID 72
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using map_t = Tpetra::Map<LO, GO>;
+#else
+  using map_t = Tpetra::Map<>;
+#endif
   using node_t = typename map_t::node_type;
   using dir_t = 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         Tpetra::Details::DistributedContiguousDirectory<LO, GO, node_t>;
+#else
+        Tpetra::Details::DistributedContiguousDirectory<node_t>;
+#endif
 
   Teuchos::RCP<const Teuchos::Comm<int> > comm = Tpetra::getDefaultComm();
   int me = comm->getRank();
@@ -267,13 +333,29 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Directory, EvenProcsOffset, LO, GO )
   TEST_EQUALITY_CONST(ierr, 0);
 }
 /////////////////////////////////////////////////////////////////////////////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Directory, OddProcsOffset, LO, GO )
+#else
+TEUCHOS_UNIT_TEST( Directory, OddProcsOffset )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   // Test -- two IDs on every odd-numbered processor, starting with GID 72
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using map_t = Tpetra::Map<LO, GO>;
+#else
+  using map_t = Tpetra::Map<>;
+#endif
   using node_t = typename map_t::node_type;
   using dir_t = 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         Tpetra::Details::DistributedContiguousDirectory<LO, GO, node_t>;
+#else
+        Tpetra::Details::DistributedContiguousDirectory<node_t>;
+#endif
 
   Teuchos::RCP<const Teuchos::Comm<int> > comm = Tpetra::getDefaultComm();
   int me = comm->getRank();
@@ -312,13 +394,29 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Directory, OddProcsOffset, LO, GO )
 }
   
 /////////////////////////////////////////////////////////////////////////////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Directory, OneProcOnly, LO, GO )
+#else
+TEUCHOS_UNIT_TEST( Directory, OneProcOnly )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   // Test -- only one processor has IDs; cycle among the processors
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using map_t = Tpetra::Map<LO, GO>;
+#else
+  using map_t = Tpetra::Map<>;
+#endif
   using node_t = typename map_t::node_type;
   using dir_t = 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         Tpetra::Details::DistributedContiguousDirectory<LO, GO, node_t>;
+#else
+        Tpetra::Details::DistributedContiguousDirectory<node_t>;
+#endif
 
   Teuchos::RCP<const Teuchos::Comm<int> > comm = Tpetra::getDefaultComm();
   int np = comm->getSize();
@@ -357,8 +455,16 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Directory, OneProcOnly, LO, GO )
 }
   
 /////////////////////////////////////////////////////////////////////////////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Directory, EmptyMap, LO, GO )
+#else
+TEUCHOS_UNIT_TEST( Directory, EmptyMap )
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   // Test -- Empty directory:  no IDs on any processors
   int ierr = 0;
   Teuchos::RCP<const Teuchos::Comm<int> > comm = Tpetra::getDefaultComm();
@@ -377,6 +483,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Directory, EmptyMap, LO, GO )
 //
 
 #define UNIT_TEST_GROUP( LO, GO ) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Directory, Uniform, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Directory, Replicate7223, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Directory, EvenProcs, LO, GO ) \
@@ -384,6 +491,8 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Directory, EmptyMap, LO, GO )
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Directory, OddProcsOffset, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Directory, OneProcOnly, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Directory, EmptyMap, LO, GO )
+#else
+#endif
 
   TPETRA_ETI_MANGLING_TYPEDEFS()
 

@@ -126,8 +126,10 @@ public:
   template<class MatrixType>
   static
   Teuchos::RCP<Preconditioner<typename MatrixType::scalar_type,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                               typename MatrixType::local_ordinal_type,
                               typename MatrixType::global_ordinal_type,
+#endif
                               typename MatrixType::node_type> >
   create (const std::string& precType,
           const Teuchos::RCP<const MatrixType>& matrix)
@@ -138,13 +140,21 @@ public:
     typedef typename MatrixType::local_ordinal_type LO;
     typedef typename MatrixType::global_ordinal_type GO;
     typedef typename MatrixType::node_type NT;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::RowMatrix<SC, LO, GO, NT> row_matrix_type;
+#else
+    typedef Tpetra::RowMatrix<SC, NT> row_matrix_type;
+#endif
 
     RCP<const row_matrix_type> A;
     if (! matrix.is_null ()) {
       A = rcp_implicit_cast<const row_matrix_type> (matrix);
     }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Ifpack2::Details::Factory<SC, LO, GO, NT> factory;
+#else
+    Ifpack2::Details::Factory<SC, NT> factory;
+#endif
     return factory.create (precType, A);
   }
 
@@ -166,8 +176,10 @@ public:
   template<class MatrixType>
   static
   Teuchos::RCP<Preconditioner<typename MatrixType::scalar_type,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                               typename MatrixType::local_ordinal_type,
                               typename MatrixType::global_ordinal_type,
+#endif
                               typename MatrixType::node_type> >
   create (const std::string& precType,
           const Teuchos::RCP<const MatrixType>& matrix,
@@ -179,13 +191,21 @@ public:
     typedef typename MatrixType::local_ordinal_type LO;
     typedef typename MatrixType::global_ordinal_type GO;
     typedef typename MatrixType::node_type NT;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::RowMatrix<SC, LO, GO, NT> row_matrix_type;
+#else
+    typedef Tpetra::RowMatrix<SC, NT> row_matrix_type;
+#endif
 
     RCP<const row_matrix_type> A;
     if (! matrix.is_null ()) {
       A = rcp_implicit_cast<const row_matrix_type> (matrix);
     }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Ifpack2::Details::Factory<SC, LO, GO, NT> factory;
+#else
+    Ifpack2::Details::Factory<SC, NT> factory;
+#endif
     return factory.create (precType, A, overlap);
   }
 
@@ -199,7 +219,11 @@ public:
     typedef typename MatrixType::global_ordinal_type GO;
     typedef typename MatrixType::node_type NT;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Ifpack2::Details::Factory<SC, LO, GO, NT> factory;
+#else
+    Ifpack2::Details::Factory<SC, NT> factory;
+#endif
     return factory.isSupported (precType);
   }
 

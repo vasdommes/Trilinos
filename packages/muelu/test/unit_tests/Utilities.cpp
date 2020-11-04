@@ -62,10 +62,18 @@
 
 namespace MueLuTests {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Utilities,MatMatMult_EpetraVsTpetra,Scalar,LocalOrdinal,GlobalOrdinal,Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Utilities,MatMatMult_EpetraVsTpetra,Scalar,Node)
+#endif
   {
 #if defined(HAVE_MUELU_TPETRA) && defined(HAVE_MUELU_EPETRA) && defined(HAVE_MUELU_EPETRAEXT)
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     out << "version: " << MueLu::Version() << std::endl;
     out << "This test compares the matrix matrix multiply between Tpetra and Epetra" << std::endl;
@@ -79,8 +87,13 @@ namespace MueLuTests {
     //Calculate result = (Op*Op)*X for Epetra
     GO nx = 37*comm->getSize();
     GO ny = nx;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> Op = TestHelpers::TestFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build2DPoisson(nx,ny,Xpetra::UseEpetra);
     RCP<Matrix> OpOp = Xpetra::MatrixMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Multiply(*Op,false,*Op,false,out);
+#else
+    RCP<Matrix> Op = TestHelpers::TestFactory<Scalar, Node>::Build2DPoisson(nx,ny,Xpetra::UseEpetra);
+    RCP<Matrix> OpOp = Xpetra::MatrixMatrix<Scalar,Node>::Multiply(*Op,false,*Op,false,out);
+#endif
     RCP<MultiVector> result = MultiVectorFactory::Build(OpOp->getRangeMap(),1);
     RCP<MultiVector> X = MultiVectorFactory::Build(OpOp->getDomainMap(),1);
     Teuchos::Array<magnitude_type> xnorm(1);
@@ -100,8 +113,13 @@ namespace MueLuTests {
     check1->norm2(normCheck1);
 
     //Calculate result = (Op*Op)*X for Tpetra
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Op = TestHelpers::TestFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build2DPoisson(nx,ny,Xpetra::UseTpetra);
     OpOp = Xpetra::MatrixMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Multiply(*Op,false,*Op,false,out);
+#else
+    Op = TestHelpers::TestFactory<Scalar, Node>::Build2DPoisson(nx,ny,Xpetra::UseTpetra);
+    OpOp = Xpetra::MatrixMatrix<Scalar,Node>::Multiply(*Op,false,*Op,false,out);
+#endif
     result = MultiVectorFactory::Build(OpOp->getRangeMap(),1);
     X = MultiVectorFactory::Build(OpOp->getDomainMap(),1);
     X->setSeed(8675309);
@@ -128,15 +146,27 @@ namespace MueLuTests {
 
   } //EpetraVersusTpetra
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Utilities,DetectDirichletRows,Scalar,LocalOrdinal,GlobalOrdinal,Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Utilities,DetectDirichletRows,Scalar,Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
     typedef typename Teuchos::ScalarTraits<Scalar> TST;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers::TestFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build1DPoisson(100);
+#else
+    RCP<Matrix> A = TestHelpers::TestFactory<Scalar, Node>::Build1DPoisson(100);
+#endif
     Teuchos::ArrayView<const LocalOrdinal> indices;
     Teuchos::ArrayView<const Scalar>  values;
 
@@ -175,9 +205,17 @@ namespace MueLuTests {
 
   } //DetectDirichletRows
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Utilities,GetDiagonalInverse,Scalar,LocalOrdinal,GlobalOrdinal,Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Utilities,GetDiagonalInverse,Scalar,Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -188,7 +226,11 @@ namespace MueLuTests {
     Xpetra::UnderlyingLib lib = TestHelpers::Parameters::getLib();
 
     // blocked diagonal operator (Xpetra)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers::TestFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::CreateBlockDiagonalExampleMatrix(lib, 3, comm);
+#else
+    RCP<Matrix> A = TestHelpers::TestFactory<Scalar, Node>::CreateBlockDiagonalExampleMatrix(lib, 3, comm);
+#endif
 
     RCP<const BlockedCrsMatrix> bA = Teuchos::rcp_dynamic_cast<const BlockedCrsMatrix>(A);
     TEST_EQUALITY(bA != Teuchos::null, true);
@@ -211,7 +253,11 @@ namespace MueLuTests {
     A = Teuchos::null; bA = Teuchos::null;
 
     // blocked diagonal operator (Thyra)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     A = TestHelpers::TestFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::CreateBlockDiagonalExampleMatrixThyra(lib, 3, comm);
+#else
+    A = TestHelpers::TestFactory<Scalar, Node>::CreateBlockDiagonalExampleMatrixThyra(lib, 3, comm);
+#endif
 
     bA = Teuchos::rcp_dynamic_cast<const BlockedCrsMatrix>(A);
     TEST_EQUALITY(bA != Teuchos::null, true);
@@ -229,10 +275,18 @@ namespace MueLuTests {
       }
     }
     // reordered blocked diagonal operator (Xpetra)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     A = TestHelpers::TestFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::CreateBlockDiagonalExampleMatrix(lib, 3, comm);
+#else
+    A = TestHelpers::TestFactory<Scalar, Node>::CreateBlockDiagonalExampleMatrix(lib, 3, comm);
+#endif
     Teuchos::RCP<const Xpetra::BlockReorderManager> brm = Xpetra::blockedReorderFromString("[ [ 2 0] 1 ]");
     RCP<const BlockedCrsMatrix> bAA = Teuchos::rcp_dynamic_cast<const BlockedCrsMatrix>(A);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     bA = Teuchos::rcp_dynamic_cast<const Xpetra::ReorderedBlockedCrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >(buildReorderedBlockedCrsMatrix(brm, bAA));
+#else
+    bA = Teuchos::rcp_dynamic_cast<const Xpetra::ReorderedBlockedCrsMatrix<Scalar,Node> >(buildReorderedBlockedCrsMatrix(brm, bAA));
+#endif
 
     TEST_EQUALITY(bA->Rows(),2);
     TEST_EQUALITY(bA->Cols(),2);
@@ -253,10 +307,18 @@ namespace MueLuTests {
       }
     }
     // reordered blocked diagonal operator (Thyra)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     A = TestHelpers::TestFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::CreateBlockDiagonalExampleMatrixThyra(lib, 3, comm);
+#else
+    A = TestHelpers::TestFactory<Scalar, Node>::CreateBlockDiagonalExampleMatrixThyra(lib, 3, comm);
+#endif
     brm = Xpetra::blockedReorderFromString("[ [ 2 0] 1 ]");
     bAA = Teuchos::rcp_dynamic_cast<const BlockedCrsMatrix>(A);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     bA = Teuchos::rcp_dynamic_cast<const Xpetra::ReorderedBlockedCrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >(buildReorderedBlockedCrsMatrix(brm, bAA));
+#else
+    bA = Teuchos::rcp_dynamic_cast<const Xpetra::ReorderedBlockedCrsMatrix<Scalar,Node> >(buildReorderedBlockedCrsMatrix(brm, bAA));
+#endif
 
     TEST_EQUALITY(bA->Rows(),2);
     TEST_EQUALITY(bA->Cols(),2);
@@ -278,8 +340,16 @@ namespace MueLuTests {
     }
   } // GetDiagonalInverse
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Utilities,GetLumpedDiagonal,Scalar,LocalOrdinal,GlobalOrdinal,Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Utilities,GetLumpedDiagonal,Scalar,Node)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // lumped diagonal does not support blocked operations, yet. Skip the test
     // reactivate later
 #if 0
@@ -294,6 +364,7 @@ namespace MueLuTests {
     Xpetra::UnderlyingLib lib = TestHelpers::Parameters::getLib();
 
     std::vector<RCP<const Map> > maps = std::vector<RCP<const Map> >(3, Teuchos::null);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     maps[0] = TestHelpers::TestFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::BuildMap(100);
     maps[1] = TestHelpers::TestFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::BuildMap(100);
     maps[2] = TestHelpers::TestFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::BuildMap(100);
@@ -304,6 +375,18 @@ namespace MueLuTests {
     RCP<Matrix> A12 = TestHelpers::TestFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::BuildTridiag(maps[1], -1.0, 0.0, 0.0, lib);
     RCP<Matrix> A21 = TestHelpers::TestFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::BuildTridiag(maps[2], -1.0, 0.0, 0.0, lib);
     RCP<Matrix> A22 = TestHelpers::TestFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::BuildTridiag(maps[2], 4.0, -1.0, -1.0, lib);
+#else
+    maps[0] = TestHelpers::TestFactory<Scalar, Node>::BuildMap(100);
+    maps[1] = TestHelpers::TestFactory<Scalar, Node>::BuildMap(100);
+    maps[2] = TestHelpers::TestFactory<Scalar, Node>::BuildMap(100);
+    RCP<Matrix> A00 = TestHelpers::TestFactory<Scalar, Node>::BuildTridiag(maps[0], 4.0, -1.0, -1.0, lib);
+    RCP<Matrix> A01 = TestHelpers::TestFactory<Scalar, Node>::BuildTridiag(maps[0], -1.0, 0.0, 0.0, lib);
+    RCP<Matrix> A10 = TestHelpers::TestFactory<Scalar, Node>::BuildTridiag(maps[1], -1.0, 0.0, 0.0, lib);
+    RCP<Matrix> A11 = TestHelpers::TestFactory<Scalar, Node>::BuildTridiag(maps[1], 4.0, -1.0, -1.0, lib);
+    RCP<Matrix> A12 = TestHelpers::TestFactory<Scalar, Node>::BuildTridiag(maps[1], -1.0, 0.0, 0.0, lib);
+    RCP<Matrix> A21 = TestHelpers::TestFactory<Scalar, Node>::BuildTridiag(maps[2], -1.0, 0.0, 0.0, lib);
+    RCP<Matrix> A22 = TestHelpers::TestFactory<Scalar, Node>::BuildTridiag(maps[2], 4.0, -1.0, -1.0, lib);
+#endif
 
     // create map extractor
     // To generate the Thyra style map extractor we do not need a full map but only the
@@ -384,7 +467,11 @@ namespace MueLuTests {
     // test reordered operator
     Teuchos::RCP<const Xpetra::BlockReorderManager> brm = Xpetra::blockedReorderFromString("[ [ 2 0] 1 ]");
     Teuchos::RCP<const BlockedCrsMatrix> bAA = Teuchos::rcp_dynamic_cast<const BlockedCrsMatrix>(bop);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::RCP<const BlockedCrsMatrix> bA = Teuchos::rcp_dynamic_cast<const Xpetra::ReorderedBlockedCrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >(buildReorderedBlockedCrsMatrix(brm, bAA));
+#else
+    Teuchos::RCP<const BlockedCrsMatrix> bA = Teuchos::rcp_dynamic_cast<const Xpetra::ReorderedBlockedCrsMatrix<Scalar,Node> >(buildReorderedBlockedCrsMatrix(brm, bAA));
+#endif
 
     TEST_EQUALITY(bA->Rows(),2);
     TEST_EQUALITY(bA->Cols(),2);
@@ -460,9 +547,17 @@ namespace MueLuTests {
     }
 #endif
   }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Utilities,GetInverse,Scalar,LocalOrdinal,GlobalOrdinal,Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Utilities,GetInverse,Scalar,Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -472,10 +567,19 @@ namespace MueLuTests {
 
     Xpetra::UnderlyingLib lib = TestHelpers::Parameters::getLib();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Map> m  = Xpetra::MapFactory<LocalOrdinal,GlobalOrdinal,Node>::Build(lib, 100, 0, comm);
+#else
+    RCP<Map> m  = Xpetra::MapFactory<Node>::Build(lib, 100, 0, comm);
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Vector> v  = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(m, true);
     RCP<Vector> tv = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(m, true);
+#else
+    RCP<Vector> v  = Xpetra::VectorFactory<Scalar,Node>::Build(m, true);
+    RCP<Vector> tv = Xpetra::VectorFactory<Scalar,Node>::Build(m, true);
+#endif
     Teuchos::ArrayRCP<Scalar> vData  = v->getDataNonConst(0);
     Teuchos::ArrayRCP<Scalar> tvData = tv->getDataNonConst(0);
     for(LocalOrdinal i = 0; i < Teuchos::as<LocalOrdinal>(v->getLocalLength()); ++i) {
@@ -491,12 +595,21 @@ namespace MueLuTests {
     TEST_EQUALITY(tv->normInf(),Teuchos::ScalarTraits<Scalar>::zero());
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define MUELU_ETI_GROUP(Scalar, LO, GO, Node) \
          TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Utilities,MatMatMult_EpetraVsTpetra,Scalar,LO,GO,Node) \
          TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Utilities,DetectDirichletRows,Scalar,LO,GO,Node) \
          TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Utilities,GetDiagonalInverse,Scalar,LO,GO,Node) \
          TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Utilities,GetLumpedDiagonal,Scalar,LO,GO,Node) \
          TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Utilities,GetInverse,Scalar,LO,GO,Node)
+#else
+#define MUELU_ETI_GROUP(Scalar, Node) \
+         TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Utilities,MatMatMult_EpetraVsTpetra,Scalar,Node) \
+         TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Utilities,DetectDirichletRows,Scalar,Node) \
+         TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Utilities,GetDiagonalInverse,Scalar,Node) \
+         TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Utilities,GetLumpedDiagonal,Scalar,Node) \
+         TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Utilities,GetInverse,Scalar,Node)
+#endif
 
 #include <MueLu_ETI_4arg.hpp>
 

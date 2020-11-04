@@ -65,8 +65,13 @@ getGlobalPairing(const std::vector<std::size_t> & locallyRequiredIds,
    using LO = panzer::LocalOrdinal;
    using GO = panzer::GlobalOrdinal;
    using NODE = panzer::TpetraNodeType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
    using Map = Tpetra::Map<LO,GO,NODE>;
    using Importer = Tpetra::Import<LO,GO,NODE>;
+#else
+   using Map = Tpetra::Map<NODE>;
+   using Importer = Tpetra::Import<NODE>;
+#endif
 
    auto comm = mesh.getComm();
 
@@ -92,14 +97,22 @@ getGlobalPairing(const std::vector<std::size_t> & locallyRequiredIds,
    Importer importer(providedMap,requiredMap);
 
    // this is what to distribute
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
    Tpetra::Vector<GO,LO,GO,NODE> providedVector(providedMap);
+#else
+   Tpetra::Vector<GO,NODE> providedVector(providedMap);
+#endif
    providedVector.sync_host();
    auto pvHost = providedVector.getLocalViewHost();
    for(std::size_t i=0;i<locallyMatchedIds.size();i++) 
      pvHost(i,0) = locallyMatchedIds[i].second;
    providedVector.modify_host();
    
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
    Tpetra::Vector<GO,LO,GO,NODE> requiredVector(requiredMap);
+#else
+   Tpetra::Vector<GO,NODE> requiredVector(requiredMap);
+#endif
    requiredVector.doImport(providedVector,importer,Tpetra::INSERT);
    
 
@@ -255,8 +268,13 @@ getSideIdsAndCoords(const STK_Interface & mesh,
    using LO = panzer::LocalOrdinal;
    using GO = panzer::GlobalOrdinal;
    using NODE = panzer::TpetraNodeType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
    using Map = Tpetra::Map<LO,GO,NODE>;
    using Importer = Tpetra::Import<LO,GO,NODE>;
+#else
+   using Map = Tpetra::Map<NODE>;
+   using Importer = Tpetra::Import<NODE>;
+#endif
 
    // Epetra_MpiComm Comm(mesh.getBulkData()->parallel());
    auto comm = mesh.getComm();
@@ -278,8 +296,13 @@ getSideIdsAndCoords(const STK_Interface & mesh,
    // build local Tpetra objects
    auto computeInternally = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
    RCP<Map> idMap_ = rcp(new Map(computeInternally,nodeCount,0,comm));
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
    RCP<Tpetra::Vector<GO,LO,GO,NODE>> localIdVec_ = rcp(new Tpetra::Vector<GO,LO,GO,NODE>(idMap_));
    RCP<Tpetra::MultiVector<double,LO,GO,NODE>> localCoordVec_ = rcp(new Tpetra::MultiVector<double,LO,GO,NODE>(idMap_,physicalDim));
+#else
+   RCP<Tpetra::Vector<GO,NODE>> localIdVec_ = rcp(new Tpetra::Vector<GO,NODE>(idMap_));
+   RCP<Tpetra::MultiVector<double,NODE>> localCoordVec_ = rcp(new Tpetra::MultiVector<double,NODE>(idMap_,physicalDim));
+#endif
 
    // copy local Ids and coords into Tpetra vectors
    localIdVec_->sync_host();
@@ -305,8 +328,13 @@ getSideIdsAndCoords(const STK_Interface & mesh,
 
    // build global Tpetra objects
    RCP<Map> distMap_ = rcp(new Map(dist_nodeCount,0,comm,Tpetra::LocallyReplicated));
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
    RCP<Tpetra::Vector<GO,LO,GO,NODE>> distIdVec_ = rcp(new Tpetra::Vector<GO,LO,GO,NODE>(distMap_));
    RCP<Tpetra::MultiVector<double,LO,GO,NODE>> distCoordVec_ = rcp(new Tpetra::MultiVector<double,LO,GO,NODE>(distMap_,physicalDim));
+#else
+   RCP<Tpetra::Vector<GO,NODE>> distIdVec_ = rcp(new Tpetra::Vector<GO,NODE>(distMap_));
+   RCP<Tpetra::MultiVector<double,NODE>> distCoordVec_ = rcp(new Tpetra::MultiVector<double,NODE>(distMap_,physicalDim));
+#endif
 
    // export to the localVec object from the "vector" object
    Importer importer_(idMap_,distMap_);

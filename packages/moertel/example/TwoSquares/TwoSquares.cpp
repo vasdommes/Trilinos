@@ -161,8 +161,13 @@ int main(int argc, char *argv[])
     
     // create a list of all nodes that are linked to a face
     // with tag 10 and tag 20
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     map<int,int> nodes10;
     map<int,int> nodes20;
+#else
+    map<> nodes10;
+    map<> nodes20;
+#endif
     for (int i=0; i<Grid.NumMyBoundaryFaces(); ++i)
     {
       int tag;
@@ -196,7 +201,11 @@ int main(int argc, char *argv[])
     // tag 10 will become interface side 0
     // tag 20 will become interface side 1
     // ------------------------------------------------------------- //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     map<int,int>::iterator curr;
+#else
+    map<>::iterator curr;
+#endif
     // do tag==10 or interface side 0
     for (curr = nodes10.begin(); curr != nodes10.end(); ++curr)
     {

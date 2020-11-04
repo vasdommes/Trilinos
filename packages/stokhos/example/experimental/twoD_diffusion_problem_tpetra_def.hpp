@@ -41,7 +41,11 @@
 
 template <typename Scalar, typename MeshScalar, typename BasisScalar,
 	  typename LocalOrdinal, typename GlobalOrdinal, typename Node>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,LocalOrdinal,GlobalOrdinal,
+#else
+twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,
+#endif
 		       Node>::
 twoD_diffusion_problem(
   const Teuchos::RCP<const Teuchos::Comm<int> >& comm, 
@@ -105,20 +109,40 @@ twoD_diffusion_problem(
     n_my_dof += n_global_dof % n_proc;
   ArrayView<GlobalOrdinal> my_dof = 
     global_dof_indices.view(proc_id*(n_global_dof / n_proc), n_my_dof);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   x_map = Tpetra::createNonContigMap<LocalOrdinal,GlobalOrdinal>(my_dof, comm);
+#else
+  x_map = Tpetra::createNonContigMap<>(my_dof, comm);
+#endif
 
   // Initial guess, initialized to 0.0
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   x_init = Tpetra::createVector<Scalar,LocalOrdinal,GlobalOrdinal,Node>(x_map);
+#else
+  x_init = Tpetra::createVector<Scalar,Node>(x_map);
+#endif
   x_init->putScalar(0.0);
 
   // Parameter vector map
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   p_map = Tpetra::createLocalMap<LocalOrdinal,GlobalOrdinal>(d, comm);
+#else
+  p_map = Tpetra::createLocalMap<>(d, comm);
+#endif
 
   // Response vector map
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   g_map = Tpetra::createLocalMap<LocalOrdinal,GlobalOrdinal>(1, comm);
+#else
+  g_map = Tpetra::createLocalMap<>(1, comm);
+#endif
 
   // Initial parameters
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   p_init = Tpetra::createVector<Scalar,LocalOrdinal,GlobalOrdinal,Node>(p_map);
+#else
+  p_init = Tpetra::createVector<Scalar,Node>(p_map);
+#endif
   p_init->putScalar(0.0);
 
   // Parameter names
@@ -168,7 +192,11 @@ twoD_diffusion_problem(
   A = rcp(new Tpetra_CrsMatrix(graph));
  
   // Construct the RHS vector.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   b = Tpetra::createVector<Scalar,LocalOrdinal,GlobalOrdinal,Node>(x_map);
+#else
+  b = Tpetra::createVector<Scalar,Node>(x_map);
+#endif
   ArrayRCP<Scalar> b_view = b->get1dViewNonConst();
   for(size_t i=0; i<NumMyElements; ++i) {
     GlobalOrdinal global_idx = MyGlobalElements[i];
@@ -187,10 +215,18 @@ twoD_diffusion_problem(
 template <typename Scalar, typename MeshScalar, typename BasisScalar,
 	  typename LocalOrdinal, typename GlobalOrdinal, typename Node>
 Teuchos::RCP<const 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 	     typename twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,
 					     LocalOrdinal,GlobalOrdinal,Node
+#else
+	     typename twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,Node
+#endif
 					     >::Tpetra_Map>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,LocalOrdinal,GlobalOrdinal,
+#else
+twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,
+#endif
 		       Node>::
 get_x_map() const
 {
@@ -200,10 +236,18 @@ get_x_map() const
 template <typename Scalar, typename MeshScalar, typename BasisScalar,
 	  typename LocalOrdinal, typename GlobalOrdinal, typename Node>
 Teuchos::RCP<const 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 	     typename twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,
 					     LocalOrdinal,GlobalOrdinal,Node
+#else
+	     typename twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,Node
+#endif
 					     >::Tpetra_Map>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,LocalOrdinal,GlobalOrdinal,
+#else
+twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,
+#endif
 		       Node>::
 get_f_map() const
 {
@@ -213,10 +257,18 @@ get_f_map() const
 template <typename Scalar, typename MeshScalar, typename BasisScalar,
 	  typename LocalOrdinal, typename GlobalOrdinal, typename Node>
 Teuchos::RCP<const 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 	     typename twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,
 					     LocalOrdinal,GlobalOrdinal,Node
+#else
+	     typename twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,Node
+#endif
 					     >::Tpetra_Map>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,LocalOrdinal,GlobalOrdinal,
+#else
+twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,
+#endif
 		       Node>::
 get_p_map(LocalOrdinal l) const
 {
@@ -232,10 +284,18 @@ get_p_map(LocalOrdinal l) const
 template <typename Scalar, typename MeshScalar, typename BasisScalar,
 	  typename LocalOrdinal, typename GlobalOrdinal, typename Node>
 Teuchos::RCP<const 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 	     typename twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,
 					     LocalOrdinal,GlobalOrdinal,Node
+#else
+	     typename twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,Node
+#endif
 					     >::Tpetra_Map>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,LocalOrdinal,GlobalOrdinal,
+#else
+twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,
+#endif
 		       Node>::
 get_g_map(LocalOrdinal l) const
 {
@@ -251,7 +311,11 @@ get_g_map(LocalOrdinal l) const
 template <typename Scalar, typename MeshScalar, typename BasisScalar,
 	  typename LocalOrdinal, typename GlobalOrdinal, typename Node>
 Teuchos::RCP<const Teuchos::Array<std::string> >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,LocalOrdinal,GlobalOrdinal,
+#else
+twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,
+#endif
 		       Node>::
 get_p_names(LocalOrdinal l) const
 {
@@ -267,10 +331,18 @@ get_p_names(LocalOrdinal l) const
 template <typename Scalar, typename MeshScalar, typename BasisScalar,
 	  typename LocalOrdinal, typename GlobalOrdinal, typename Node>
 Teuchos::RCP<const 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 	     typename twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,
 					     LocalOrdinal,GlobalOrdinal,Node
+#else
+	     typename twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,Node
+#endif
 					     >::Tpetra_Vector>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,LocalOrdinal,GlobalOrdinal,
+#else
+twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,
+#endif
 		       Node>::
 get_x_init() const
 {
@@ -280,10 +352,18 @@ get_x_init() const
 template <typename Scalar, typename MeshScalar, typename BasisScalar,
 	  typename LocalOrdinal, typename GlobalOrdinal, typename Node>
 Teuchos::RCP<const 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 	     typename twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,
 					     LocalOrdinal,GlobalOrdinal,Node
+#else
+	     typename twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,Node
+#endif
 					     >::Tpetra_Vector>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,LocalOrdinal,GlobalOrdinal,
+#else
+twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,
+#endif
 		       Node>::
 get_p_init(LocalOrdinal l) const
 {
@@ -298,10 +378,18 @@ get_p_init(LocalOrdinal l) const
 
 template <typename Scalar, typename MeshScalar, typename BasisScalar,
 	  typename LocalOrdinal, typename GlobalOrdinal, typename Node>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 Teuchos::RCP<typename twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,
 					     LocalOrdinal,GlobalOrdinal,Node
+#else
+Teuchos::RCP<typename twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,Node
+#endif
 					     >::Tpetra_CrsMatrix>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,LocalOrdinal,GlobalOrdinal,
+#else
+twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,
+#endif
 		       Node>::
 create_W() const
 {
@@ -314,7 +402,11 @@ create_W() const
 template <typename Scalar, typename MeshScalar, typename BasisScalar,
 	  typename LocalOrdinal, typename GlobalOrdinal, typename Node>
 void 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,LocalOrdinal,GlobalOrdinal,
+#else
+twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,
+#endif
 		       Node>::
 computeResidual(const Tpetra_Vector& x,
 		const Tpetra_Vector& p,
@@ -332,7 +424,11 @@ computeResidual(const Tpetra_Vector& x,
 template <typename Scalar, typename MeshScalar, typename BasisScalar,
 	  typename LocalOrdinal, typename GlobalOrdinal, typename Node>
 void 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,LocalOrdinal,GlobalOrdinal,
+#else
+twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,
+#endif
 		       Node>::
 computeJacobian(const Tpetra_Vector& x,
 		const Tpetra_Vector& p,
@@ -347,7 +443,11 @@ computeJacobian(const Tpetra_Vector& x,
 template <typename Scalar, typename MeshScalar, typename BasisScalar,
 	  typename LocalOrdinal, typename GlobalOrdinal, typename Node>
 void 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,LocalOrdinal,GlobalOrdinal,
+#else
+twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,
+#endif
 		       Node>::
 computeResponse(const Tpetra_Vector& x,
 		const Tpetra_Vector& p,
@@ -363,7 +463,11 @@ template <typename Scalar, typename MeshScalar, typename BasisScalar,
 	  typename LocalOrdinal, typename GlobalOrdinal, typename Node>
 template <typename FuncT>
 void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,LocalOrdinal,GlobalOrdinal,
+#else
+twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,
+#endif
 		       Node>::
 computeA(const FuncT& func, const Tpetra_Vector& p, Tpetra_CrsMatrix& jac)
 {
@@ -435,7 +539,11 @@ computeA(const FuncT& func, const Tpetra_Vector& p, Tpetra_CrsMatrix& jac)
 
 template <typename Scalar, typename MeshScalar, typename BasisScalar,
 	  typename LocalOrdinal, typename GlobalOrdinal, typename Node>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,LocalOrdinal,GlobalOrdinal,
+#else
+twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,
+#endif
 		       Node>::KL_Diffusion_Func::
 KL_Diffusion_Func(MeshScalar xyLeft, MeshScalar xyRight, 
 		  BasisScalar mean, BasisScalar std_dev, 
@@ -464,7 +572,11 @@ KL_Diffusion_Func(MeshScalar xyLeft, MeshScalar xyRight,
 template <typename Scalar, typename MeshScalar, typename BasisScalar,
 	  typename LocalOrdinal, typename GlobalOrdinal, typename Node>
 Scalar 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,LocalOrdinal,GlobalOrdinal,
+#else
+twoD_diffusion_problem<Scalar,MeshScalar,BasisScalar,
+#endif
 		       Node>::KL_Diffusion_Func::
 operator() (MeshScalar x, MeshScalar y, const Teuchos::Array<Scalar>& rv) const 
 {

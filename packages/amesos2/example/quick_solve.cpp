@@ -75,8 +75,13 @@ int main(int argc, char *argv[]) {
   typedef Tpetra::Map<>::local_ordinal_type LO;
   typedef Tpetra::Map<>::global_ordinal_type GO;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::CrsMatrix<Scalar,LO,GO> MAT;
   typedef Tpetra::MultiVector<Scalar,LO,GO> MV;
+#else
+  typedef Tpetra::CrsMatrix<Scalar> MAT;
+  typedef Tpetra::MultiVector<Scalar> MV;
+#endif
 
   using Tpetra::global_size_t;
   using Teuchos::tuple;
@@ -124,8 +129,13 @@ int main(int argc, char *argv[]) {
 
   // create a Map
   global_size_t nrows = 6;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Tpetra::Map<LO,GO> > map
     = rcp( new Tpetra::Map<LO,GO>(nrows,0,comm) );
+#else
+  RCP<Tpetra::Map<> > map
+    = rcp( new Tpetra::Map<>(nrows,0,comm) );
+#endif
 
   std::string mat_pathname = filedir + filename;
   RCP<MAT> A = Tpetra::MatrixMarket::Reader<MAT>::readSparseFile(mat_pathname,comm);
@@ -138,8 +148,13 @@ int main(int argc, char *argv[]) {
   }
 
   // get the maps
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<const Tpetra::Map<LO,GO> > dmnmap = A->getDomainMap();
   RCP<const Tpetra::Map<LO,GO> > rngmap = A->getRangeMap();
+#else
+  RCP<const Tpetra::Map<> > dmnmap = A->getDomainMap();
+  RCP<const Tpetra::Map<> > rngmap = A->getRangeMap();
+#endif
 
   // Create random X
   RCP<MV> Xhat = rcp( new MV(dmnmap,numVectors) );

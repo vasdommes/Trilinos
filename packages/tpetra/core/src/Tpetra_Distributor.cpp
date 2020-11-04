@@ -903,10 +903,18 @@ namespace Tpetra {
         numRecvsOnEachProc.resize (numProcs);
       }
       int numReceivesAsInt = 0; // output
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       reduce<int, int> (toProcsFromMe.getRawPtr (),
+#else
+      reduce<> (toProcsFromMe.getRawPtr (),
+#endif
                         numRecvsOnEachProc.getRawPtr (),
                         numProcs, REDUCE_SUM, root, *comm_);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       scatter<int, int> (numRecvsOnEachProc.getRawPtr (), 1,
+#else
+      scatter<> (numRecvsOnEachProc.getRawPtr (), 1,
+#endif
                          &numReceivesAsInt, 1, root, *comm_);
       numReceives_ = static_cast<size_t> (numReceivesAsInt);
     }

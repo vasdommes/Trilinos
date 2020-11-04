@@ -71,10 +71,16 @@ public:
     WorksetDetailsAccessor& wda,
     Teuchos::ArrayRCP<double> & dgdx) const = 0;
 };
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 
 template <typename LO,typename GO>
+#endif
 class ProbeScatter : public ProbeScatterBase {
 public:
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+   using LO = typename Tpetra::Map<>::local_ordinal_type;
+   using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
    ProbeScatter(const Teuchos::RCP<const panzer::GlobalIndexer> & globalIndexer)
      : globalIndexer_(globalIndexer) { }
 
@@ -141,10 +147,18 @@ protected:
  */
 template<typename EvalT, typename Traits, typename LO, typename GO>
 class ResponseScatterEvaluator_Probe :
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     public ResponseScatterEvaluator_ProbeBase<EvalT,Traits,LO,GO>  {
+#else
+    public ResponseScatterEvaluator_ProbeBase<EvalT,Traits>  {
+#endif
 public:
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef ResponseScatterEvaluator_ProbeBase<EvalT,Traits,LO,GO> Base;
+#else
+  typedef ResponseScatterEvaluator_ProbeBase<EvalT,Traits> Base;
+#endif
 
   //! A constructor with concrete arguments instead of a parameter list.
   ResponseScatterEvaluator_Probe(
@@ -162,12 +176,23 @@ public:
 
 /** This class handles calculation of a DOF at a single point in space
  */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<typename LO, typename GO>
 class ResponseScatterEvaluator_Probe<panzer::Traits::Jacobian,panzer::Traits,LO,GO> :
     public ResponseScatterEvaluator_ProbeBase<panzer::Traits::Jacobian,panzer::Traits,LO,GO>  {
+#else
+class ResponseScatterEvaluator_Probe<panzer::Traits::Jacobian,panzer::Traits> :
+    public ResponseScatterEvaluator_ProbeBase<panzer::Traits::Jacobian,panzer::Traits>  {
+#endif
 public:
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef ResponseScatterEvaluator_ProbeBase<panzer::Traits::Jacobian,panzer::Traits,LO,GO> Base;
+#else
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+  typedef ResponseScatterEvaluator_ProbeBase<panzer::Traits::Jacobian,panzer::Traits> Base;
+#endif
 
   //! A constructor with concrete arguments instead of a parameter list.
   ResponseScatterEvaluator_Probe(
@@ -184,9 +209,13 @@ public:
 
   void evaluateFields(typename panzer::Traits::EvalData d);
 };
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 
 template <typename LO,typename GO>
 void ProbeScatter<LO,GO>::scatterDerivative(
+#else
+void ProbeScatter<>::scatterDerivative(
+#endif
   const panzer::Traits::Jacobian::ScalarT& probeValue,
   const size_t cell_index,
   const bool has_probe,

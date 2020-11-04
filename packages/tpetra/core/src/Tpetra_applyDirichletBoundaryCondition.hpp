@@ -109,9 +109,19 @@ applyDirichletBoundaryConditionToLocalMatrixRows
 
 namespace Details {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class SC, class LO, class GO, class NT>
+#else
+template<class SC, class NT>
+#endif
 struct ApplyDirichletBoundaryConditionToLocalMatrixRows {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using crs_matrix_type = ::Tpetra::CrsMatrix<SC, LO, GO, NT>;
+#else
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+  using crs_matrix_type = ::Tpetra::CrsMatrix<SC, NT>;
+#endif
   using execution_space = typename crs_matrix_type::execution_space;
   using local_row_indices_type =
     Kokkos::View<const LO*, Kokkos::AnonymousSpace>;
@@ -211,7 +221,11 @@ applyDirichletBoundaryConditionToLocalMatrixRows
 
   using Details::ApplyDirichletBoundaryConditionToLocalMatrixRows;
   using impl_type =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     ApplyDirichletBoundaryConditionToLocalMatrixRows<SC, LO, GO, NT>;
+#else
+    ApplyDirichletBoundaryConditionToLocalMatrixRows<SC, NT>;
+#endif
   const bool runOnHost = false;
   impl_type::run (execSpace, A, lclRowInds_a, runOnHost);
 }
@@ -240,7 +254,11 @@ applyDirichletBoundaryConditionToLocalMatrixRows
   using LO = typename CrsMatrixType::local_ordinal_type;
   using GO = typename CrsMatrixType::global_ordinal_type;
   using NT = typename CrsMatrixType::node_type;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using crs_matrix_type = ::Tpetra::CrsMatrix<SC, LO, GO, NT>;
+#else
+  using crs_matrix_type = ::Tpetra::CrsMatrix<SC, NT>;
+#endif
   using execution_space = typename crs_matrix_type::execution_space;
 
   using local_row_indices_type =
@@ -249,7 +267,11 @@ applyDirichletBoundaryConditionToLocalMatrixRows
 
   using Details::ApplyDirichletBoundaryConditionToLocalMatrixRows;
   using impl_type =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     ApplyDirichletBoundaryConditionToLocalMatrixRows<SC, LO, GO, NT>;
+#else
+    ApplyDirichletBoundaryConditionToLocalMatrixRows<SC, NT>;
+#endif
   const bool runOnHost = true;
   impl_type::run (execution_space (), A, lclRowInds_a, runOnHost);
 }

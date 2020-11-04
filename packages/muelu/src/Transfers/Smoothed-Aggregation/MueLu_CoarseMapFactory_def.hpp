@@ -65,8 +65,13 @@
 
 namespace MueLu {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   RCP<const ParameterList> CoarseMapFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::GetValidParameterList() const
+#else
+  template <class Scalar, class Node>
+  RCP<const ParameterList> CoarseMapFactory<Scalar, Node>::GetValidParameterList() const
+#endif
   {
     RCP<ParameterList> validParamList = rcp(new ParameterList());
 
@@ -89,15 +94,25 @@ namespace MueLu {
     return validParamList;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void CoarseMapFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level &currentLevel) const
+#else
+  template <class Scalar, class Node>
+  void CoarseMapFactory<Scalar, Node>::DeclareInput(Level &currentLevel) const
+#endif
   {
     Input(currentLevel, "Aggregates");
     Input(currentLevel, "Nullspace");
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void CoarseMapFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::setStridingData(std::vector<size_t> stridingInfo)
+#else
+  template <class Scalar, class Node>
+  void CoarseMapFactory<Scalar, Node>::setStridingData(std::vector<size_t> stridingInfo)
+#endif
   {
     // store striding map in internal variable
     stridingInfo_ = stridingInfo;
@@ -108,8 +123,13 @@ namespace MueLu {
     SetParameter("Striding info", ParameterEntry(strStridingInfo));
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void CoarseMapFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(Level &currentLevel) const
+#else
+  template <class Scalar, class Node>
+  void CoarseMapFactory<Scalar, Node>::Build(Level &currentLevel) const
+#endif
   {
     FactoryMonitor m(*this, "Build", currentLevel);
 
@@ -117,8 +137,13 @@ namespace MueLu {
     BuildCoarseMap(currentLevel, domainGIDOffset);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void CoarseMapFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::BuildCoarseMap(
+#else
+  template <class Scalar, class Node>
+  void CoarseMapFactory<Scalar, Node>::BuildCoarseMap(
+#endif
     Level& currentLevel, const GlobalOrdinal domainGIDOffset) const
   {
     RCP<Aggregates> aggregates = Get< RCP<Aggregates> >(currentLevel, "Aggregates");
@@ -161,8 +186,13 @@ namespace MueLu {
     Set(currentLevel, "CoarseMap", coarseMap);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   GlobalOrdinal CoarseMapFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::GetDomainGIDOffset(
+#else
+  template <class Scalar, class Node>
+  GlobalOrdinal CoarseMapFactory<Scalar, Node>::GetDomainGIDOffset(
+#endif
     Level& currentLevel) const
   {
     GlobalOrdinal domainGidOffset = Teuchos::ScalarTraits<GlobalOrdinal>::zero();
@@ -184,8 +214,13 @@ namespace MueLu {
     return domainGidOffset;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void CoarseMapFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::CheckForConsistentStridingInformation(
+#else
+  template <class Scalar, class Node>
+  void CoarseMapFactory<Scalar, Node>::CheckForConsistentStridingInformation(
+#endif
     const LocalOrdinal stridedBlockId, const size_t nullspaceDimension) const
   {
     // check for consistency of striding information with NSDim and nCoarseDofs

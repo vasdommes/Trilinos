@@ -85,7 +85,11 @@ public:
 
   virtual ~MappingSolution() {}
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef std::unordered_map<lno_t, int> rankmap_t;
+#else
+  typedef std::unordered_map<> rankmap_t;
+#endif
 
   /*! \brief Get the parts belonging to this rank
    *  \param numParts on return, set to the number of parts assigned to rank.

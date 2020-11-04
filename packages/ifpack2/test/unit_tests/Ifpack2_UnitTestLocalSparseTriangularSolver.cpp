@@ -68,14 +68,18 @@ template<class CrsMatrixType>
 void
 localSolve (Tpetra::MultiVector<
               typename CrsMatrixType::scalar_type,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
               typename CrsMatrixType::local_ordinal_type,
               typename CrsMatrixType::global_ordinal_type,
+#endif
               typename CrsMatrixType::node_type>& X,
             const CrsMatrixType& A,
             const Tpetra::MultiVector<
               typename CrsMatrixType::scalar_type,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
               typename CrsMatrixType::local_ordinal_type,
               typename CrsMatrixType::global_ordinal_type,
+#endif
               typename CrsMatrixType::node_type>& Y,
             const bool isUpperTriangular, // opposite is "lower triangular"
             const bool implicitUnitDiag, // opposite is "explicitly stored, possibly non-unit diagonal"
@@ -86,8 +90,10 @@ localSolve (Tpetra::MultiVector<
   using Teuchos::TRANS;
   using MV = Tpetra::MultiVector<
     typename CrsMatrixType::scalar_type,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typename CrsMatrixType::local_ordinal_type,
     typename CrsMatrixType::global_ordinal_type,
+#endif
     typename CrsMatrixType::node_type>;
   using scalar_type = typename CrsMatrixType::scalar_type;
   using STS = Teuchos::ScalarTraits<scalar_type>;
@@ -210,17 +216,31 @@ static bool isGblSuccess (const bool success, Teuchos::FancyOStream& out)
   return true;
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<typename Scalar, typename LocalOrdinal, typename GlobalOrdinal>
+#else
+template<typename Scalar,>
+#endif
 void testCompareToLocalSolve (bool& success, Teuchos::FancyOStream& out,
                               const TrisolverDetails::Enum trisolverType)
 {
   typedef LocalOrdinal LO;
   typedef GlobalOrdinal GO;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO, GO> map_type;
+#else
+  typedef Tpetra::Map<> map_type;
+#endif
   typedef typename map_type::device_type device_type;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::CrsMatrix<Scalar, LO, GO> crs_matrix_type;
   typedef Tpetra::RowMatrix<Scalar, LO, GO> row_matrix_type;
   typedef Tpetra::MultiVector<Scalar, LO, GO> mv_type;
+#else
+  typedef Tpetra::CrsMatrix<Scalar> crs_matrix_type;
+  typedef Tpetra::RowMatrix<Scalar> row_matrix_type;
+  typedef Tpetra::MultiVector<Scalar> mv_type;
+#endif
   typedef Ifpack2::LocalSparseTriangularSolver<row_matrix_type> solver_type;
   typedef Teuchos::ScalarTraits<Scalar> STS;
   typedef typename crs_matrix_type::mag_type mag_type;
@@ -557,20 +577,50 @@ void testCompareToLocalSolve (bool& success, Teuchos::FancyOStream& out,
   if (! isGblSuccess (success, out)) return;
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(LocalSparseTriangularSolver, CompareInternalToLocalSolve, Scalar, LocalOrdinal, GlobalOrdinal)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL(LocalSparseTriangularSolver, CompareInternalToLocalSolve, Scalar)
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   testCompareToLocalSolve<Scalar, LocalOrdinal, GlobalOrdinal> (success, out, TrisolverDetails::Internal);
+#else
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+  testCompareToLocalSolve<Scalar> (success, out, TrisolverDetails::Internal);
+#endif
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(LocalSparseTriangularSolver, CompareKSPTRSVToLocalSolve, Scalar, LocalOrdinal, GlobalOrdinal)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL(LocalSparseTriangularSolver, CompareKSPTRSVToLocalSolve, Scalar)
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   testCompareToLocalSolve<Scalar, LocalOrdinal, GlobalOrdinal> (success, out, TrisolverDetails::KSPTRSV);
+#else
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+  testCompareToLocalSolve<Scalar> (success, out, TrisolverDetails::KSPTRSV);
+#endif
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(LocalSparseTriangularSolver, CompareHTSToLocalSolve, Scalar, LocalOrdinal, GlobalOrdinal)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL(LocalSparseTriangularSolver, CompareHTSToLocalSolve, Scalar)
+#endif
 {
 #ifdef HAVE_IFPACK2_SHYLU_NODEHTS
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   testCompareToLocalSolve<Scalar, LocalOrdinal, GlobalOrdinal> (success, out, TrisolverDetails::HTS);
+#else
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+  testCompareToLocalSolve<Scalar> (success, out, TrisolverDetails::HTS);
+#endif
 #else
 
 #endif
@@ -774,16 +824,30 @@ testArrowMatrixWithDense (bool& success, Teuchos::FancyOStream& out, const LO lc
   TEST_EQUALITY( c(lclNumRows-1), c_n_expected );
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class SC = Tpetra::Vector<>::scalar_type,
          class LO = Tpetra::Vector<>::local_ordinal_type,
          class GO = Tpetra::Vector<>::global_ordinal_type>
+#else
+template<class SC = Tpetra::Vector<>::scalar_type,>
+#endif
 void testArrowMatrix (bool& success, Teuchos::FancyOStream& out)
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO, GO> map_type;
+#else
+  typedef Tpetra::Map<> map_type;
+#endif
   typedef typename map_type::device_type device_type;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::CrsMatrix<SC, LO, GO> crs_matrix_type;
   typedef Tpetra::RowMatrix<SC, LO, GO> row_matrix_type;
   typedef Tpetra::Vector<SC, LO, GO> vec_type;
+#else
+  typedef Tpetra::CrsMatrix<SC> crs_matrix_type;
+  typedef Tpetra::RowMatrix<SC> row_matrix_type;
+  typedef Tpetra::Vector<SC> vec_type;
+#endif
   typedef Ifpack2::LocalSparseTriangularSolver<row_matrix_type> solver_type;
   typedef Kokkos::Details::ArithTraits<SC> KAT;
   typedef typename KAT::val_type IST;
@@ -1277,9 +1341,17 @@ TEUCHOS_UNIT_TEST(LocalSparseTriangularSolver, ArrowMatrix)
 #endif // HAVE_TPETRA_INST_DOUBLE
 
 #define UNIT_TEST_GROUP_SC_LO_GO(SC, LO, GO) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT(LocalSparseTriangularSolver, CompareInternalToLocalSolve, SC, LO, GO) \
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT(LocalSparseTriangularSolver, CompareInternalToLocalSolve, SC) \
+#endif
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT(LocalSparseTriangularSolver, CompareKSPTRSVToLocalSolve, SC, LO, GO) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT(LocalSparseTriangularSolver, CompareHTSToLocalSolve, SC, LO, GO)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT(LocalSparseTriangularSolver, CompareHTSToLocalSolve, SC)
+#endif
 
 
 #include "Ifpack2_ETIHelperMacros.h"

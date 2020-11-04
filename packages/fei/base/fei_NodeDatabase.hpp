@@ -66,7 +66,11 @@ able to request NodeDescriptors by supplying a nodeNumber or an eqnNumber.
 class NodeDatabase {
  public:
   /** Constructor. */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   NodeDatabase(std::map<int,int>* fieldDatabase,
+#else
+  NodeDatabase(std::map<>* fieldDatabase,
+#endif
 	       NodeCommMgr* nodeCommMgr);
 
   /** Destructor. */
@@ -212,12 +216,20 @@ class NodeDatabase {
   std::map<GlobalID,int> nodeIDs_; //nodeIDs_ maps node-ID to an index into
                                 //the nodePtrs_ array of NodeDescriptors.
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int> nodeNumbers_;
+#else
+  std::map<> nodeNumbers_;
+#endif
 
   bool synchronized_;
   bool need_to_alloc_and_sync_;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>* fieldDB_;
+#else
+  std::map<>* fieldDB_;
+#endif
   NodeCommMgr* nodeCommMgr_;
 
   int numLocalNodes_;

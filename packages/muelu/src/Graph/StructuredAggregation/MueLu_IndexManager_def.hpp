@@ -58,8 +58,13 @@
 
 namespace MueLu {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template<class LocalOrdinal, class GlobalOrdinal, class Node>
   IndexManager<LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  template<class Node>
+  IndexManager<Node>::
+#endif
   IndexManager(const RCP<const Teuchos::Comm<int> > comm,
                const bool coupled,
                const bool singleCoarsePoint,
@@ -84,8 +89,13 @@ namespace MueLu {
 
   } // Constructor
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template<class LocalOrdinal, class GlobalOrdinal, class Node>
   void IndexManager<LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  template<class Node>
+  void IndexManager<Node>::
+#endif
   computeMeshParameters() {
 
     RCP<Teuchos::FancyOStream> out;

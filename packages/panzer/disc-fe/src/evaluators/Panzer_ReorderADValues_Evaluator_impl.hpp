@@ -168,7 +168,11 @@ ReorderADValues_Evaluator(const std::string & outPrefix,
   TEUCHOS_ASSERT(inDOFs.size()==outDOFs.size());
 
   // build the vector of fields that this is dependent on
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int> fieldNumberMaps;
+#else
+  std::map<> fieldNumberMaps;
+#endif
   for (std::size_t eq = 0; eq < inFieldNames.size(); ++eq) {
     inFields_.push_back(PHX::MDField<const ScalarT>(inFieldNames[eq],fieldLayouts[eq]));
     outFields_.push_back(PHX::MDField<ScalarT>(outPrefix+inFieldNames[eq],fieldLayouts[eq]));
@@ -321,7 +325,11 @@ buildSrcToDestMap(const std::string & elementBlock,
   const std::vector<int> & dstFieldsNum = indexerDest.getBlockFieldNumbers(elementBlock);
 
   // build a map between destination field numbers and source field numbers
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int> fieldNumberMaps;
+#else
+  std::map<> fieldNumberMaps;
+#endif
   for(std::size_t i=0;i<dstFieldsNum.size();i++) {
     std::string fieldName = indexerDest.getFieldString(dstFieldsNum[i]);
 
@@ -339,13 +347,22 @@ buildSrcToDestMap(const std::string & elementBlock,
 template<typename TRAITS>
 void panzer::ReorderADValues_Evaluator<typename TRAITS::Jacobian, TRAITS>::
 buildSrcToDestMap(const std::string & elementBlock,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                   const std::map<int,int> & fieldNumberMaps,
+#else
+                  const std::map<> & fieldNumberMaps,
+#endif
                   const GlobalIndexer & indexerSrc,
                   const GlobalIndexer & indexerDest)
 {
   int maxDest = -1;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int> offsetMap; // map from source to destination offsets
   for(std::map<int,int>::const_iterator itr=fieldNumberMaps.begin();
+#else
+  std::map<> offsetMap; // map from source to destination offsets
+  for(std::map<>::const_iterator itr=fieldNumberMaps.begin();
+#endif
       itr!=fieldNumberMaps.end();++itr) {
     int srcField = itr->first;
     int dstField = itr->second;
@@ -367,7 +384,11 @@ buildSrcToDestMap(const std::string & elementBlock,
   // Build map
   TEUCHOS_ASSERT(maxDest>0);
   dstFromSrcMap_ = std::vector<int>(maxDest+1,-1);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   for(std::map<int,int>::const_iterator itr=offsetMap.begin();
+#else
+  for(std::map<>::const_iterator itr=offsetMap.begin();
+#endif
       itr!=offsetMap.end();++itr) {
     dstFromSrcMap_[itr->second] = itr->first;
   }

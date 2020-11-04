@@ -58,15 +58,26 @@
 namespace MueLuTests {
 
   // Little utility to generate a LWGraph_kokkos.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   Teuchos::RCP<MueLu::LWGraph_kokkos<LocalOrdinal, GlobalOrdinal, Node> >
   gimmeLWGraph(const Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >& A,
                Teuchos::RCP<MueLu::AmalgamationInfo_kokkos<LocalOrdinal, GlobalOrdinal, Node> >& amalgInfo) {
+#else
+  template<class Scalar, class Node>
+  Teuchos::RCP<MueLu::LWGraph_kokkos<Node> >
+  gimmeLWGraph(const Teuchos::RCP<Xpetra::Matrix<Scalar,Node> >& A,
+               Teuchos::RCP<MueLu::AmalgamationInfo_kokkos<Node> >& amalgInfo) {
+#endif
 #   include "MueLu_UseShortNames.hpp"
 
     Level level;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers_kokkos::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(level);
+#else
+    TestHelpers_kokkos::TestFactory<SC,NO>::createSingleLevelHierarchy(level);
+#endif
     level.Set("A", A);
 
     RCP<AmalgamationFactory_kokkos> amalgFact = rcp(new AmalgamationFactory_kokkos());
@@ -86,9 +97,17 @@ namespace MueLuTests {
     return graph;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(LWGraph_kokkos, CreateLWGraph, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(LWGraph_kokkos, CreateLWGraph, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
@@ -98,7 +117,11 @@ namespace MueLuTests {
       return;
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers_kokkos::TestFactory<SC, LO, GO, NO>::Build1DPoisson(16);
+#else
+    RCP<Matrix> A = TestHelpers_kokkos::TestFactory<SC, NO>::Build1DPoisson(16);
+#endif
 
     RCP<AmalgamationInfo_kokkos> amalgInfo;
     RCP<LWGraph_kokkos> graph = gimmeLWGraph(A, amalgInfo);
@@ -113,9 +136,17 @@ namespace MueLuTests {
     }
   } // CreateLWGraph
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(LWGraph_kokkos, LocalGraphData, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(LWGraph_kokkos, LocalGraphData, Scalar, Node)
+#endif
   {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
@@ -125,7 +156,11 @@ namespace MueLuTests {
       return;
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers_kokkos::TestFactory<SC, LO, GO, NO>::Build1DPoisson(16);
+#else
+    RCP<Matrix> A = TestHelpers_kokkos::TestFactory<SC, NO>::Build1DPoisson(16);
+#endif
 
     RCP<AmalgamationInfo_kokkos> amalgInfo;
     RCP<LWGraph_kokkos> graph = gimmeLWGraph(A, amalgInfo);
@@ -166,9 +201,15 @@ namespace MueLuTests {
     TEST_EQUALITY(chk_colInd, true);
   } // LocalGraphData
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define MUELU_ETI_GROUP(SC, LO, GO, NO) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(LWGraph_kokkos, CreateLWGraph,  SC, LO, GO, NO) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(LWGraph_kokkos, LocalGraphData, SC, LO, GO, NO)
+#else
+#define MUELU_ETI_GROUP(SC, NO) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(LWGraph_kokkos, CreateLWGraph,  SC, NO) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(LWGraph_kokkos, LocalGraphData, SC, NO)
+#endif
 
 #include <MueLu_ETI_4arg.hpp>
 

@@ -62,23 +62,37 @@
 
 namespace panzer
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 
 template <typename LocalOrdinal,typename GlobalOrdinal>
 FaceToElement<LocalOrdinal,GlobalOrdinal>::
+#else
+FaceToElement<>::
+#endif
 FaceToElement()
 {
 }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 
 template <typename LocalOrdinal,typename GlobalOrdinal>
 FaceToElement<LocalOrdinal,GlobalOrdinal>::
+#else
+FaceToElement<>::
+#endif
 FaceToElement(panzer::ConnManager & conn)
 {
   initialize(conn);
 }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 
 template <typename LocalOrdinal,typename GlobalOrdinal>
+#endif
 void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 FaceToElement<LocalOrdinal,GlobalOrdinal>::
+#else
+FaceToElement<>::
+#endif
 initialize(panzer::ConnManager & conn)
 {
   // Create a map of elems

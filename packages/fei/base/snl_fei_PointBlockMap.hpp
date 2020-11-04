@@ -112,7 +112,11 @@ namespace snl_fei {
 
    /** Return database of point-equations
     */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
    std::map<int,int>* getPtEqns()
+#else
+   std::map<>* getPtEqns()
+#endif
      {
        return( ptEqns_ );
      }
@@ -130,7 +134,11 @@ namespace snl_fei {
 
    PointBlockMap& operator=(const PointBlockMap& src);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
    std::map<int,int>* ptEqns_; //ptEqns_ maps point-equations to block-equations
+#else
+   std::map<>* ptEqns_; //ptEqns_ maps point-equations to block-equations
+#endif
 
    std::map<int,std::pair<int,int> >* blkEqns_;
    //blkEqns_ maps block-equations to point-equations and block-sizes

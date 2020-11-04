@@ -43,7 +43,11 @@ NodeBalancer::balance_node_entities(const double targetLoadBalance,
     getInterfaceDescription(neighborProcessors,
                             interfaceNodesAndProcessors);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::map<int, int> numLocallyOwnedByRank;
+#else
+    std::map<> numLocallyOwnedByRank;
+#endif
     exchangeLocalSizes(neighborProcessors, numLocallyOwnedNodes, numLocallyOwnedByRank);
 
     changedNodeOwnership = true;
@@ -105,7 +109,11 @@ NodeBalancer::getGlobalLoadImbalance(double &loadFactor, int& numLocallyOwnedNod
 void
 NodeBalancer::exchangeLocalSizes(const std::set<int>& neighborProcessors,
                                  int& numLocallyOwnedNodes,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                  std::map<int, int> &numLocallyOwnedByRank)
+#else
+                                 std::map<> &numLocallyOwnedByRank)
+#endif
 {
   size_t numCommunications = neighborProcessors.size();
   std::vector<int> recvBuffer(numCommunications);
@@ -141,7 +149,11 @@ NodeBalancer::exchangeLocalSizes(const std::set<int>& neighborProcessors,
 
 void
 NodeBalancer::changeOwnersOfNodes(const std::map<stk::mesh::Entity, std::vector<int> >& interfaceNodesAndProcessors,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                   std::map<int, int>& numLocallyOwnedByRank,
+#else
+                                  std::map<>& numLocallyOwnedByRank,
+#endif
                                   int numLocallyOwnedNodes)
 {
   int myRank = m_bulkData.parallel_rank();

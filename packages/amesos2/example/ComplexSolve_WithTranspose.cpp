@@ -84,9 +84,17 @@ int main(int argc, char *argv[]){
   typedef Tpetra::Map<>::local_ordinal_type LO;
   typedef Tpetra::Map<>::global_ordinal_type GO;
   typedef std::complex<SCALAR> cmplx;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef CrsMatrix<cmplx,LO,GO> MAT;
+#else
+  typedef CrsMatrix<cmplx> MAT;
+#endif
   typedef ScalarTraits<cmplx> ST;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef MultiVector<cmplx,LO,GO> MV;
+#else
+  typedef MultiVector<cmplx> MV;
+#endif
   typedef ST::magnitudeType Mag;
   typedef ScalarTraits<Mag> MT;
   const size_t numVecs = 1;
@@ -99,8 +107,13 @@ int main(int argc, char *argv[]){
   RCP<MAT> A =
     Tpetra::MatrixMarket::Reader<MAT>::readSparseFile("../test/matrices/amesos2_test_mat3.mtx",comm);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<const Map<LO,GO> > dmnmap = A->getDomainMap();
   RCP<const Map<LO,GO> > rngmap = A->getRangeMap();
+#else
+  RCP<const Map<> > dmnmap = A->getDomainMap();
+  RCP<const Map<> > rngmap = A->getRangeMap();
+#endif
 
   // Create the know-solution vector
   std::map<GO,cmplx> xValues;

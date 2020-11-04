@@ -127,7 +127,11 @@ class SNL_FEI_Structure : public Lookup {
      {
        int len = fieldDatabase_->size();
        workarray_.resize(len*2);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
        fei::copyToArrays<std::map<int,int> >(*fieldDatabase_, len,
+#else
+       fei::copyToArrays<std::map<> >(*fieldDatabase_, len,
+#endif
 						 &workarray_[0],
 						 &workarray_[0]+len);
        return( &workarray_[0] );
@@ -138,7 +142,11 @@ class SNL_FEI_Structure : public Lookup {
      {
        int len = fieldDatabase_->size();
        workarray_.resize(len*2);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
        fei::copyToArrays<std::map<int,int> >(*fieldDatabase_, len,
+#else
+       fei::copyToArrays<std::map<> >(*fieldDatabase_, len,
+#endif
 						 &workarray_[0],
 						 &workarray_[0]+len);
        return( &workarray_[0]+len );
@@ -150,7 +158,11 @@ class SNL_FEI_Structure : public Lookup {
    /** implementation of Lookup::getFieldSize */
    int getFieldSize(int fieldID)
      {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
        std::map<int,int>::const_iterator
+#else
+       std::map<>::const_iterator
+#endif
 	 f_iter = fieldDatabase_->find(fieldID);
 
        return(f_iter != fieldDatabase_->end() ? (*f_iter).second : -1);
@@ -633,7 +645,11 @@ class SNL_FEI_Structure : public Lookup {
 
    std::vector<int> fieldIDs_;
    std::vector<int> fieldSizes_;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
    std::map<int,int>* fieldDatabase_;
+#else
+   std::map<>* fieldDatabase_;
+#endif
    fei::FieldDofMap<int> fieldDofMap_;
    std::vector<int> workarray_;
 

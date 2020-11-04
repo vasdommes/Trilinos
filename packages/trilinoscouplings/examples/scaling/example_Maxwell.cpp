@@ -646,7 +646,11 @@ int main(int argc, char *argv[]) {
                           &numElemBlkGlobal, &numNodeSetsGlobal,
                           &numSideSetsGlobal);
 #ifdef HAVE_XPETRA_EPETRA
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   MachineLearningStatistics_Hex3D<double, int, int, Xpetra::EpetraNode> MLStatistics(numElemsGlobal);
+#else
+  MachineLearningStatistics_Hex3D<double, Xpetra::EpetraNode> MLStatistics(numElemsGlobal);
+#endif
 #endif
 
   long long * block_ids = new long long [numElemBlk];
@@ -2494,11 +2498,21 @@ void TestMueLuMultiLevelPreconditioner_Maxwell(char ProblemType[],
   typedef LocalOrdinal LO;
   typedef GlobalOrdinal GO;
   typedef Node NO;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> Matrix;
   typedef Xpetra::CrsMatrixWrap<Scalar,LocalOrdinal,GlobalOrdinal,Node> CrsMatrixWrap;
   typedef Xpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> CrsMatrix;
+#else
+  typedef Xpetra::Matrix<Scalar,Node> Matrix;
+  typedef Xpetra::CrsMatrixWrap<Scalar,Node> CrsMatrixWrap;
+  typedef Xpetra::CrsMatrix<Scalar,Node> CrsMatrix;
+#endif
   typedef Xpetra::EpetraCrsMatrixT<GlobalOrdinal,Node> EpetraCrsMatrix;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Xpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> MultiVector;
+#else
+  typedef Xpetra::MultiVector<Scalar,Node> MultiVector;
+#endif
   typedef Xpetra::EpetraMultiVectorT<GlobalOrdinal,Node> EpetraMultiVector;
   
 
@@ -2528,8 +2542,13 @@ void TestMueLuMultiLevelPreconditioner_Maxwell(char ProblemType[],
   MLList.set("parameterlist: syntax","muelu");
 
   // construct preconditioner
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::RCP<MueLu::RefMaxwell<SC,LO,GO,NO> > preconditioner
     = Teuchos::rcp( new MueLu::RefMaxwell<SC,LO,GO,NO>(curlcurlOp,d0cOp,M0invOp,
+#else
+  Teuchos::RCP<MueLu::RefMaxwell<SC,NO> > preconditioner
+    = Teuchos::rcp( new MueLu::RefMaxwell<SC,NO>(curlcurlOp,d0cOp,M0invOp,
+#endif
                                                        M1Op,Teuchos::null,xcoords,MLList) );
 
   MueLu::AztecEpetraOperator prec(preconditioner);
@@ -2741,7 +2760,11 @@ void TestMueLuMultiLevelPreconditioner_Stratimikos(char ProblemType[],
 
   /* Stratimikos setup */
   Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Stratimikos::enableMueLuRefMaxwell<LO,GO,Node>(linearSolverBuilder);                // Register MueLu as a Stratimikos preconditioner strategy.
+#else
+  Stratimikos::enableMueLuRefMaxwell<Node>(linearSolverBuilder);                // Register MueLu as a Stratimikos preconditioner strategy.
+#endif
   linearSolverBuilder.setParameterList(rcp(&SList,false));
   RCP<Thyra::LinearOpWithSolveFactoryBase<double> > lowsFactory = createLinearSolveStrategy(linearSolverBuilder);
   RCP<Thyra::LinearOpWithSolveBase<double> > lows = Thyra::linearOpWithSolve<double>(*lowsFactory,At);

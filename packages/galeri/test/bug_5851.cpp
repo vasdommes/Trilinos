@@ -41,19 +41,32 @@ int buildCrsMatrix(int xdim, int ydim, int zdim, std::string problemType,
   Galeri::Xpetra::Parameters<gno_t> params(tclp, xdim, ydim, zdim, problemType);
 
   if (comm->getRank() == 0) cout << "BUILD MAP" << endl;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<const Tpetra::Map<lno_t, gno_t> > map =
     rcp(new Tpetra::Map<lno_t, gno_t>(
+#else
+  RCP<const Tpetra::Map<> > map =
+    rcp(new Tpetra::Map<>(
+#endif
       params.GetNumGlobalElements(), 0, comm));
 
   if (comm->getRank() == 0) cout << "BUILD MATRIX" << endl;
 
   RCP<Tpetra::CrsMatrix<scalar_t, lno_t, gno_t> > M_;
   try{
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Galeri::Xpetra::Problem<Tpetra::Map<lno_t, gno_t>,
+#else
+    RCP<Galeri::Xpetra::Problem<Tpetra::Map<>,
+#endif
                                 Tpetra::CrsMatrix<scalar_t, lno_t, gno_t>,
                                 Tpetra::MultiVector<scalar_t, lno_t, gno_t> > > Pr=
         Galeri::Xpetra::BuildProblem<scalar_t, lno_t, gno_t,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                      Tpetra::Map<lno_t, gno_t>,
+#else
+                                     Tpetra::Map<>,
+#endif
                                      Tpetra::CrsMatrix<scalar_t, lno_t, gno_t>,
                                      Tpetra::MultiVector<scalar_t, lno_t, gno_t> >
                         (params.GetMatrixType(), map, params.GetParameterList());

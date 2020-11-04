@@ -64,9 +64,19 @@ typedef Tpetra::global_size_t GST;
 //
 // Test LocalMap with a uniform contiguous Map.
 //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( LocalMap, UniformContig, LO, GO, NT )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( LocalMap, UniformContig, NT )
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO, GO, NT> map_type;
+#else
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+  typedef Tpetra::Map<NT> map_type;
+#endif
   typedef typename NT::execution_space execution_space;
   typedef Kokkos::RangePolicy<execution_space, int> range_type;
 
@@ -151,9 +161,19 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( LocalMap, UniformContig, LO, GO, NT )
 //
 // Test LocalMap with a NONuniform contiguous Map.
 //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( LocalMap, NonuniformContig, LO, GO, NT )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( LocalMap, NonuniformContig, NT )
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO, GO, NT> map_type;
+#else
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+  typedef Tpetra::Map<NT> map_type;
+#endif
   typedef typename NT::execution_space execution_space;
   typedef Kokkos::RangePolicy<execution_space, int> range_type;
 
@@ -235,9 +255,19 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( LocalMap, NonuniformContig, LO, GO, NT )
 //
 // Test LocalMap with a NONcontiguous Map.
 //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( LocalMap, Noncontig, LO, GO, NT )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( LocalMap, Noncontig, NT )
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO, GO, NT> map_type;
+#else
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+  typedef Tpetra::Map<NT> map_type;
+#endif
   typedef typename NT::execution_space execution_space;
   typedef Kokkos::RangePolicy<execution_space, int> range_type;
 
@@ -326,10 +356,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( LocalMap, Noncontig, LO, GO, NT )
 // INSTANTIATIONS
 //
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define UNIT_TEST_GROUP( LO, GO, NT ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( LocalMap, UniformContig, LO, GO, NT ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( LocalMap, NonuniformContig, LO, GO, NT ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( LocalMap, Noncontig, LO, GO, NT )
+#else
+#define UNIT_TEST_GROUP(NT ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( LocalMap, UniformContig, NT ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( LocalMap, NonuniformContig, NT ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( LocalMap, Noncontig, NT )
+#endif
 
   TPETRA_ETI_MANGLING_TYPEDEFS()
 

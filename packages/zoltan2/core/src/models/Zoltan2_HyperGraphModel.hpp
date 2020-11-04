@@ -99,7 +99,11 @@ public:
   typedef typename Adapter::node_t      node_t;
   typedef typename Adapter::user_t      user_t;
   typedef typename Adapter::userCoord_t userCoord_t;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<lno_t, gno_t>     map_t;
+#else
+  typedef Tpetra::Map<>     map_t;
+#endif
   typedef StridedData<lno_t, scalar_t>  input_t;
 #endif
 
@@ -452,7 +456,11 @@ HyperGraphModel<Adapter>::HyperGraphModel(
     mapWithCopies = rcp(new map_t(numGlobalCoords, gids_(), 0, comm));
     // TODO KDD 1/17 It would be better to use minimum GID rather than
     // TODO zero in the above Tpetra::Map constructor.  Github #1024
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     oneToOneMap = Tpetra::createOneToOne<lno_t, gno_t>(mapWithCopies);
+#else
+    oneToOneMap = Tpetra::createOneToOne<>(mapWithCopies);
+#endif
 
     numOwnedVertices_=oneToOneMap->getNodeNumElements();
     for (size_t i=0;i<numLocalVertices_;i++) {

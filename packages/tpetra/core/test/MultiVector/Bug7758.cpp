@@ -56,8 +56,16 @@ namespace {
 
 
 //////////////////////////////////////////////////////////////////////////////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, DefaultToDefault, Scalar,LO,GO,Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Bug7758, DefaultToDefault, Scalar,Node)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   // This case demonstrates that owned entries shared between the source and
   // target map are copied from the source vector into the target (during
   // copyAndPermute).  Each entry of the resulting target vector has value
@@ -69,8 +77,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, DefaultToDefault, Scalar,LO,GO,Node)
 
   Teuchos::FancyOStream foo(Teuchos::rcp(&std::cout,false));
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using vector_t = Tpetra::Vector<Scalar,LO,GO,Node>;
   using map_t = Tpetra::Map<LO,GO,Node>;
+#else
+  using vector_t = Tpetra::Vector<Scalar,Node>;
+  using map_t = Tpetra::Map<Node>;
+#endif
 
   const size_t nGlobalEntries = 8 * np;
   const Scalar tgtScalar = 100. * (me+1);
@@ -95,7 +108,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, DefaultToDefault, Scalar,LO,GO,Node)
 
   // Export Default-to-default:  should be a copy of src to tgt
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Tpetra::Export<LO,GO,Node> defaultToDefault(defaultMap, defaultMap);
+#else
+  Tpetra::Export<Node> defaultToDefault(defaultMap, defaultMap);
+#endif
   defaultVecTgt.doExport(defaultVecSrc, defaultToDefault, Tpetra::ADD);
 
   std::cout << me << " DEFAULT TO DEFAULT " << std::endl;
@@ -116,8 +133,16 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, DefaultToDefault, Scalar,LO,GO,Node)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, CyclicToDefault, Scalar,LO,GO,Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Bug7758, CyclicToDefault, Scalar,Node)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   // This case demonstrates that owned entries shared between the source and
   // target map are copied from the source vector into the target (during
   // copyAndPermute).  Owned entries that are not in the source map
@@ -130,8 +155,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, CyclicToDefault, Scalar,LO,GO,Node)
 
   Teuchos::FancyOStream foo(Teuchos::rcp(&std::cout,false));
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using vector_t = Tpetra::Vector<Scalar,LO,GO,Node>;
   using map_t = Tpetra::Map<LO,GO,Node>;
+#else
+  using vector_t = Tpetra::Vector<Scalar,Node>;
+  using map_t = Tpetra::Map<Node>;
+#endif
 
   const size_t nGlobalEntries = 8 * np;
   const Scalar tgtScalar = 100. * (me+1);
@@ -173,7 +203,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, CyclicToDefault, Scalar,LO,GO,Node)
 
   // Export Cyclic-to-default
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Tpetra::Export<LO,GO,Node> cyclicToDefault(cyclicMap, defaultMap);
+#else
+  Tpetra::Export<Node> cyclicToDefault(cyclicMap, defaultMap);
+#endif
   defaultVecTgt.doExport(cyclicVecSrc, cyclicToDefault, Tpetra::ADD);
 
   std::cout << me << " CYCLIC TO DEFAULT " << std::endl;
@@ -205,8 +239,16 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, CyclicToDefault, Scalar,LO,GO,Node)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, OverlapToDefault, Scalar,LO,GO,Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Bug7758, OverlapToDefault, Scalar,Node)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   // This case demonstrates that owned entries shared between the source and
   // target map are copied from the source vector into the target (during
   // copyAndPermute).  Owned entries that are not in the source map
@@ -220,8 +262,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, OverlapToDefault, Scalar,LO,GO,Node)
   if (np > 1) {  // Need more than one proc to avoid duplicate entries in maps
     Teuchos::FancyOStream foo(Teuchos::rcp(&std::cout,false));
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using vector_t = Tpetra::Vector<Scalar,LO,GO,Node>;
     using map_t = Tpetra::Map<LO,GO,Node>;
+#else
+    using vector_t = Tpetra::Vector<Scalar,Node>;
+    using map_t = Tpetra::Map<Node>;
+#endif
 
     const size_t nGlobalEntries = 8 * np;
     const Scalar tgtScalar = 100. * (me+1);
@@ -264,7 +311,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, OverlapToDefault, Scalar,LO,GO,Node)
 
     // Export Overlap-to-default
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Tpetra::Export<LO,GO,Node> overlapToDefault(overlapMap, defaultMap);
+#else
+    Tpetra::Export<Node> overlapToDefault(overlapMap, defaultMap);
+#endif
     defaultVecTgt.doExport(overlapVecSrc, overlapToDefault, Tpetra::ADD);
 
     std::cout << me << " OVERLAP TO DEFAULT " << std::endl;
@@ -292,8 +343,16 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, OverlapToDefault, Scalar,LO,GO,Node)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, OddEvenToSerial, Scalar,LO,GO,Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Bug7758, OddEvenToSerial, Scalar,Node)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   // Test case showing behavior when target map is all on processor zero.
   // In the source map, even numbered entries are on even numbered processors;
   // odd numbered entreis are on odd numbered processors.
@@ -309,8 +368,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, OddEvenToSerial, Scalar,LO,GO,Node)
 
   Teuchos::FancyOStream foo(Teuchos::rcp(&std::cout,false));
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using vector_t = Tpetra::Vector<Scalar,LO,GO,Node>;
   using map_t = Tpetra::Map<LO,GO,Node>;
+#else
+  using vector_t = Tpetra::Vector<Scalar,Node>;
+  using map_t = Tpetra::Map<Node>;
+#endif
 
   const size_t nGlobalEntries = 8 * np;
   const Scalar tgtScalar = 100. * (me+1);
@@ -353,7 +417,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, OddEvenToSerial, Scalar,LO,GO,Node)
 
   // Export oddEven-to-serial
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Tpetra::Export<LO,GO,Node> oddEvenToSerial(oddEvenMap, serialMap);
+#else
+  Tpetra::Export<Node> oddEvenToSerial(oddEvenMap, serialMap);
+#endif
   serialVecTgt.doExport(oddEvenVecSrc, oddEvenToSerial, Tpetra::ADD);
 
   std::cout << me << " ODDEVEN TO SERIAL " << std::endl;
@@ -378,8 +446,16 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, OddEvenToSerial, Scalar,LO,GO,Node)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, SupersetToDefault, Scalar,LO,GO,Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Bug7758, SupersetToDefault, Scalar,Node)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   // This use case is similar to matrix assembly case in which user 
   // has a map of owned entries and a map of owned+shared entries, with the
   // owned+shared map being a superset of the owned map.  In this case, 
@@ -394,8 +470,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, SupersetToDefault, Scalar,LO,GO,Node)
   if (np > 1) {  // Need more than one proc to avoid duplicate entries in maps
     Teuchos::FancyOStream foo(Teuchos::rcp(&std::cout,false));
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using vector_t = Tpetra::Vector<Scalar,LO,GO,Node>;
     using map_t = Tpetra::Map<LO,GO,Node>;
+#else
+    using vector_t = Tpetra::Vector<Scalar,Node>;
+    using map_t = Tpetra::Map<Node>;
+#endif
 
     const size_t nGlobalEntries = 8 * np;
     const Scalar tgtScalar = 100. * (me+1);
@@ -438,7 +519,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, SupersetToDefault, Scalar,LO,GO,Node)
 
     // Export Superset-to-default
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Tpetra::Export<LO,GO,Node> supersetToDefault(supersetMap, defaultMap);
+#else
+    Tpetra::Export<Node> supersetToDefault(supersetMap, defaultMap);
+#endif
     defaultVecTgt.doExport(supersetVecSrc, supersetToDefault, Tpetra::ADD);
 
     std::cout << me << " SUPERSET TO DEFAULT " << std::endl;
@@ -462,8 +547,16 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, SupersetToDefault, Scalar,LO,GO,Node)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, NoSamesToDefault, Scalar,LO,GO,Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Bug7758, NoSamesToDefault, Scalar,Node)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   // This use case is similar to matrix assembly case in which user 
   // has a map of owned entries and a map of shared entries, with no
   // overlap between the maps.  In this case, received shared entries are 
@@ -476,8 +569,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, NoSamesToDefault, Scalar,LO,GO,Node)
   if (np > 1) {  // Need more than one proc to avoid duplicate entries in maps
     Teuchos::FancyOStream foo(Teuchos::rcp(&std::cout,false));
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using vector_t = Tpetra::Vector<Scalar,LO,GO,Node>;
     using map_t = Tpetra::Map<LO,GO,Node>;
+#else
+    using vector_t = Tpetra::Vector<Scalar,Node>;
+    using map_t = Tpetra::Map<Node>;
+#endif
 
     const size_t nGlobalEntries = 8 * np;
     const Scalar tgtScalar = 100. * (me+1);
@@ -517,7 +615,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, NoSamesToDefault, Scalar,LO,GO,Node)
 
     // Export noSames-to-default
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Tpetra::Export<LO,GO,Node> noSamesToDefault(noSamesMap, defaultMap);
+#else
+    Tpetra::Export<Node> noSamesToDefault(noSamesMap, defaultMap);
+#endif
     defaultVecTgt.doExport(noSamesVecSrc, noSamesToDefault, Tpetra::ADD);
 
     std::cout << me << " NOSAMES TO DEFAULT " << std::endl;
@@ -537,6 +639,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, NoSamesToDefault, Scalar,LO,GO,Node)
   TEST_ASSERT(gerr == 0);
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define UNIT_TEST_GROUP( SCALAR, LO, GO, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Bug7758, DefaultToDefault, SCALAR, LO, GO, NODE) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Bug7758, CyclicToDefault, SCALAR, LO, GO, NODE) \
@@ -544,6 +647,15 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7758, NoSamesToDefault, Scalar,LO,GO,Node)
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Bug7758, OddEvenToSerial, SCALAR, LO, GO, NODE) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Bug7758, SupersetToDefault, SCALAR, LO, GO, NODE) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Bug7758, NoSamesToDefault, SCALAR, LO, GO, NODE)
+#else
+#define UNIT_TEST_GROUP( SCALAR, NODE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Bug7758, DefaultToDefault, SCALAR, NODE) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Bug7758, CyclicToDefault, SCALAR, NODE) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Bug7758, OverlapToDefault, SCALAR, NODE) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Bug7758, OddEvenToSerial, SCALAR, NODE) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Bug7758, SupersetToDefault, SCALAR, NODE) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Bug7758, NoSamesToDefault, SCALAR, NODE)
+#endif
 
   TPETRA_ETI_MANGLING_TYPEDEFS()
 

@@ -58,8 +58,16 @@ using Teuchos::tuple;
 
 
 ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Map, Bug5378_GoodGIDs, LO, GO)
+#else
+TEUCHOS_UNIT_TEST(Map, Bug5378_GoodGIDs)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   RCP<const Teuchos::Comm<int> > comm = rcp (new Teuchos::MpiComm<int> (MPI_COMM_WORLD));
   /**********************************************************************************/
   // Map in question:
@@ -68,7 +76,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Map, Bug5378_GoodGIDs, LO, GO)
   //
   // Lookup of any valid global ID should identify with proc 0
   //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<const Tpetra::Map<LO,GO> > map = Tpetra::createContigMap<LO,GO>(10,10,comm);
+#else
+  RCP<const Tpetra::Map<> > map = Tpetra::createContigMap<>(10,10,comm);
+#endif
   Array<GO> lookup_gids(  tuple<GO>(1,3,5) );
   Array<int> expected_ids(  tuple<int>( 0,0,0) ); // MPI process ranks are int
   Array<LO> expected_lids( tuple<LO>( 1,3,5) );
@@ -86,8 +98,16 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Map, Bug5378_GoodGIDs, LO, GO)
 }
 
 ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Map, Bug5378_BadGIDs, LO, GO)
+#else
+TEUCHOS_UNIT_TEST(Map, Bug5378_BadGIDs)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   RCP<const Teuchos::Comm<int> > comm = Teuchos::createMpiComm<int>(Teuchos::opaqueWrapper<MPI_Comm> (MPI_COMM_WORLD));
   /**********************************************************************************/
   // Map in question:
@@ -96,7 +116,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Map, Bug5378_BadGIDs, LO, GO)
   //
   // Lookup of any valid global ID should identify with proc 0
   //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<const Tpetra::Map<LO,GO> > map = Tpetra::createContigMap<LO,GO>(10,10,comm);
+#else
+  RCP<const Tpetra::Map<> > map = Tpetra::createContigMap<>(10,10,comm);
+#endif
   Array<GO> lookup_gids(  tuple<GO>(1,10,5) );
   Array<int> expected_ids(  tuple<int>( 0,-1,0) ); // MPI process ranks are int
   Array<LO> expected_lids( tuple<LO>( 1,-1,5) );
@@ -114,8 +138,16 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Map, Bug5378_BadGIDs, LO, GO)
 }
 
 ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Map, Bug5378_GoodGIDsNoLIDs, LO, GO)
+#else
+TEUCHOS_UNIT_TEST(Map, Bug5378_GoodGIDsNoLIDs)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   RCP<const Teuchos::Comm<int> > comm = Teuchos::createMpiComm<int>(Teuchos::opaqueWrapper<MPI_Comm> (MPI_COMM_WORLD));
   /**********************************************************************************/
   // Map in question:
@@ -124,7 +156,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Map, Bug5378_GoodGIDsNoLIDs, LO, GO)
   //
   // Lookup of any valid global ID should identify with proc 0
   //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<const Tpetra::Map<LO,GO> > map = Tpetra::createContigMap<LO,GO>(10,10,comm);
+#else
+  RCP<const Tpetra::Map<> > map = Tpetra::createContigMap<>(10,10,comm);
+#endif
   Array<GO> lookup_gids(  tuple<GO>(1,3,5) );
   Array<int> expected_ids(  tuple<int>( 0,0,0) ); // MPI process ranks are int
   Array<int> nodeIDs( lookup_gids.size() ); // MPI process ranks are int
@@ -139,8 +175,16 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Map, Bug5378_GoodGIDsNoLIDs, LO, GO)
 }
 
 ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Map, Bug5378_BadGIDsNoLIDs, LO, GO)
+#else
+TEUCHOS_UNIT_TEST(Map, Bug5378_BadGIDsNoLIDs)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   RCP<const Teuchos::Comm<int> > comm = Teuchos::createMpiComm<int>(Teuchos::opaqueWrapper<MPI_Comm> (MPI_COMM_WORLD));
   /**********************************************************************************/
   // Map in question:
@@ -149,7 +193,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Map, Bug5378_BadGIDsNoLIDs, LO, GO)
   //
   // Lookup of any valid global ID should identify with proc 0
   //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<const Tpetra::Map<LO,GO> > map = Tpetra::createContigMap<LO,GO>(10,10,comm);
+#else
+  RCP<const Tpetra::Map<> > map = Tpetra::createContigMap<>(10,10,comm);
+#endif
   Array<GO> lookup_gids(  tuple<GO>(1,10,5) );
   Array<int> expected_ids(  tuple<int>( 0,-1,0) ); // MPI process ranks are int
   Array<int> nodeIDs( lookup_gids.size() ); // MPI process ranks are int
@@ -164,9 +212,15 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Map, Bug5378_BadGIDsNoLIDs, LO, GO)
 }
 
 #define UNIT_TEST_GROUP(LO, GO) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Map, Bug5378_GoodGIDs, LO, GO) \
+#else
+#endif
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Map, Bug5378_BadGIDs, LO, GO) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Map, Bug5378_GoodGIDsNoLIDs, LO, GO) \
+#else
+#endif
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Map, Bug5378_BadGIDsNoLIDs, LO, GO)
 
   TPETRA_ETI_MANGLING_TYPEDEFS()

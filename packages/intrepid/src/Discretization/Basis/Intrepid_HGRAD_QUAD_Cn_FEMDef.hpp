@@ -151,8 +151,13 @@ namespace Intrepid {
     const std::vector<std::vector<int> >& xdoftags = xBasis_.getAllDofTags();
     const std::vector<std::vector<int> >& ydoftags = yBasis_.getAllDofTags();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::map<int,std::map<int,int> > total_dof_per_entity;
     std::map<int,std::map<int,int> > current_dof_per_entity;
+#else
+    std::map<int,std::map<> > total_dof_per_entity;
+    std::map<int,std::map<> > current_dof_per_entity;
+#endif
 
     for (int i=0;i<4;i++) {
       total_dof_per_entity[0][i] = 0;

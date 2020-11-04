@@ -106,7 +106,11 @@ main (int argc, char* argv[])
       gblFileExists = lclFileExists;
       f1.close ();
     }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     broadcast<int, int> (*comm, rootRank, outArg (gblFileExists));
+#else
+    broadcast<> (*comm, rootRank, outArg (gblFileExists));
+#endif
     if (gblFileExists != 1) {
       if (myRank == rootRank) {
 	cerr << "Cannot read the first Map file \"" << mapFile1 << "\"!" << endl;
@@ -120,7 +124,11 @@ main (int argc, char* argv[])
       gblFileExists = lclFileExists;
       f2.close ();
     }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     broadcast<int, int> (*comm, rootRank, outArg (gblFileExists));
+#else
+    broadcast<> (*comm, rootRank, outArg (gblFileExists));
+#endif
     if (gblFileExists != 1) {
       if (myRank == rootRank) {
 	cerr << "Cannot read the second Map file \"" << mapFile2 << "\"!" << endl;

@@ -376,7 +376,11 @@ void Environment::commitParameters()
     if (myRank_ == 0)
       numKbytes = getProcessKilobytes();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::broadcast<int, long>(*comm_, 0, 1, &numKbytes);
+#else
+    Teuchos::broadcast<>(*comm_, 0, 1, &numKbytes);
+#endif
 
     if (numKbytes == 0){
       // This is not a Linux system with proc/pid/statm.

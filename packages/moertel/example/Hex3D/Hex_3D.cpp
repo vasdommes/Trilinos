@@ -143,7 +143,11 @@ int main(int argc, char *argv[])
     // we have 4 interfaces here with each 2 sides:
     // with tags 1/2, 11/12, 21/22, 31/32
     const int ninter = 4;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::vector<std::map<int,int> > nodes(ninter*2);
+#else
+    std::vector<std::map<> > nodes(ninter*2);
+#endif
     for (int i=0; i<Grid.NumMyBoundaryFaces(); ++i)
     {
       int tag;
@@ -209,7 +213,11 @@ int main(int argc, char *argv[])
     // ------------------------------------------------------------- //
     for (int i=0; i<ninter; ++i)
     {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       std::map<int,int>::iterator curr;
+#else
+      std::map<>::iterator curr;
+#endif
       for (int j=0; j<2; ++j)
         for (curr = nodes[i*2+j].begin(); curr != nodes[i*2+j].end(); ++curr)
         {

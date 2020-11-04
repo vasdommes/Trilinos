@@ -91,9 +91,19 @@ namespace {
   //
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( StridedMap, Constructor1, M, LO, GO, N )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( StridedMap, Constructor1, M, N )
+#endif
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Xpetra::StridedMap<LO,GO,N> SM;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef Xpetra::StridedMap<N> SM;
+#endif
 
     // create a comm
     Teuchos::RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
@@ -128,9 +138,19 @@ namespace {
   }
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( StridedMap, Constructor2, M, LO, GO, N )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( StridedMap, Constructor2, M, N )
+#endif
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Xpetra::StridedMap<LO,GO,N> SM;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef Xpetra::StridedMap<N> SM;
+#endif
 
     // create a comm
     Teuchos::RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
@@ -172,9 +192,19 @@ namespace {
   }
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( StridedMap, Constructor3, M, LO, GO, N )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( StridedMap, Constructor3, M, N )
+#endif
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Xpetra::StridedMap<LO,GO,N> SM;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef Xpetra::StridedMap<N> SM;
+#endif
 
     // create a comm
     Teuchos::RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
@@ -226,9 +256,19 @@ namespace {
   }
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( StridedMap, StridedPartConstructor1, M, LO, GO, N )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( StridedMap, StridedPartConstructor1, M, N )
+#endif
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Xpetra::StridedMap<LO,GO,N> SM;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef Xpetra::StridedMap<N> SM;
+#endif
 
     // create a comm
     Teuchos::RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
@@ -266,9 +306,19 @@ namespace {
   }
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( StridedMap, StridedPartConstructor2, M, LO, GO, N )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( StridedMap, StridedPartConstructor2, M, N )
+#endif
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Xpetra::StridedMap<LO,GO,N> SM;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef Xpetra::StridedMap<N> SM;
+#endif
 
     // create a comm
     Teuchos::RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
@@ -317,9 +367,19 @@ namespace {
     TEST_EQUALITY_CONST( map3.getNodeNumElements(), numLocalElements / map.getFixedBlockSize() * stridedInfo[2]);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( StridedMap, StridedPartConstructor3, M, LO, GO, N )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( StridedMap, StridedPartConstructor3, M, N )
+#endif
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Xpetra::StridedMap<LO,GO,N> SM;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef Xpetra::StridedMap<N> SM;
+#endif
 
     // create a comm
     Teuchos::RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
@@ -372,9 +432,19 @@ namespace {
   }
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( StridedMap, StridedPartConstructorWithOffset, M, LO, GO, N )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( StridedMap, StridedPartConstructorWithOffset, M, N )
+#endif
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Xpetra::StridedMap<LO,GO,N> SM;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef Xpetra::StridedMap<N> SM;
+#endif
 
     // create a comm
     Teuchos::RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
@@ -426,9 +496,19 @@ namespace {
   }
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( StridedMap, StridedPartConstructorOffsetPlusIndexBase, M, LO, GO, N )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( StridedMap, StridedPartConstructorOffsetPlusIndexBase, M, N )
+#endif
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Xpetra::StridedMap<LO,GO,N> SM;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef Xpetra::StridedMap<N> SM;
+#endif
 
     // create a comm
     Teuchos::RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
@@ -486,19 +566,29 @@ namespace {
   //
 #ifdef HAVE_XPETRA_TPETRA
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   #define XPETRA_TPETRA_TYPES( LO, GO, N) \
     typedef typename Xpetra::TpetraMap<LO,GO,N> M##LO##GO##N;
+#else
+  #define XPETRA_TPETRA_TYPES(N) \
+    typedef typename Xpetra::TpetraMap<N> M##LO##GO##N;
+#endif
 
 #endif
 
 #ifdef HAVE_XPETRA_EPETRA
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   #define XPETRA_EPETRA_TYPES( LO, GO, N) \
+#else
+  #define XPETRA_EPETRA_TYPES(N) \
+#endif
     typedef typename Xpetra::EpetraMapT<GO,N> M##LO##GO##N;
 
 #endif
 
 // List of tests (which run both on Epetra and Tpetra)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define XP_MAP_INSTANT(LO,GO,N) \
     TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( StridedMap, Constructor1, M##LO##GO##N , LO, GO, N) \
     TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( StridedMap, Constructor2, M##LO##GO##N , LO, GO, N) \
@@ -508,6 +598,17 @@ namespace {
     TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( StridedMap, StridedPartConstructor3, M##LO##GO##N , LO, GO, N) \
     TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( StridedMap, StridedPartConstructorWithOffset, M##LO##GO##N , LO, GO, N) \
     TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( StridedMap, StridedPartConstructorOffsetPlusIndexBase, M##LO##GO##N , LO, GO, N)
+#else
+#define XP_MAP_INSTANT(N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( StridedMap, Constructor1, M##LO##GO##N, N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( StridedMap, Constructor2, M##LO##GO##N, N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( StridedMap, Constructor3, M##LO##GO##N, N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( StridedMap, StridedPartConstructor1, M##LO##GO##N, N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( StridedMap, StridedPartConstructor2, M##LO##GO##N, N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( StridedMap, StridedPartConstructor3, M##LO##GO##N, N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( StridedMap, StridedPartConstructorWithOffset, M##LO##GO##N, N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( StridedMap, StridedPartConstructorOffsetPlusIndexBase, M##LO##GO##N, N)
+#endif
 
 #if defined(HAVE_XPETRA_TPETRA)
 

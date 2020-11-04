@@ -74,19 +74,34 @@ enum PartitionOption{
   RIB = 4
 };
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 namespace bddc {
 
 template <class LO,
 	  class GO> class ZoltanPartition
+#else
+namespace bddc { class ZoltanPartition
+#endif
 {
 public:
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   //
   // Convenience typedefs
   //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO,GO>                                 Map;
   typedef Tpetra::CrsGraph<LO,GO>                            CrsGraph;
   typedef Tpetra::Export<LO,GO>                              Export;
   typedef Tpetra::Import<LO,GO>                              Import;
+#else
+  typedef Tpetra::Map<>                                 Map;
+  typedef Tpetra::CrsGraph<>                            CrsGraph;
+  typedef Tpetra::Export<>                              Export;
+  typedef Tpetra::Import<>                              Import;
+#endif
   
   ZoltanPartition(RCP<const CrsGraph> Graph,
 		  RCP< Teuchos::ParameterList > Parameters) :

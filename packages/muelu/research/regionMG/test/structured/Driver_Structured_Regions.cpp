@@ -130,7 +130,11 @@
 #include "SetupRegionHierarchy_def.hpp"
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 int main_(Teuchos::CommandLineProcessor &clp, Xpetra::UnderlyingLib& lib, int argc, char *argv[]) {
 #include <MueLu_UseShortNames.hpp>
   using Teuchos::RCP;
@@ -153,7 +157,11 @@ int main_(Teuchos::CommandLineProcessor &clp, Xpetra::UnderlyingLib& lib, int ar
   SC zero = STS::zero(), one = STS::one();
   using magnitude_type = typename Teuchos::ScalarTraits<Scalar>::magnitudeType;
   using real_type = typename STS::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
+#else
+  using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+#endif
 
   // =========================================================================
   // Parameters initialization
@@ -289,18 +297,30 @@ int main_(Teuchos::CommandLineProcessor &clp, Xpetra::UnderlyingLib& lib, int ar
   // At the moment, however, things are fragile as we hope that the Problem uses same map and coordinates inside
   if (matrixType == "Laplace1D") {
     numDimensions = 1;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     nodeMap = Galeri::Xpetra::CreateMap<LO, GO, Node>(xpetraParameters.GetLib(), "Cartesian1D", comm, galeriList);
+#else
+    nodeMap = Galeri::Xpetra::CreateMap<Node>(xpetraParameters.GetLib(), "Cartesian1D", comm, galeriList);
+#endif
     coordinates = Galeri::Xpetra::Utils::CreateCartesianCoordinates<double,LO,GO,Map,RealValuedMultiVector>("1D", nodeMap, galeriList);
 
   } else if (matrixType == "Laplace2D" || matrixType == "Star2D" ||
              matrixType == "BigStar2D" || matrixType == "Elasticity2D") {
     numDimensions = 2;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     nodeMap = Galeri::Xpetra::CreateMap<LO, GO, Node>(xpetraParameters.GetLib(), "Cartesian2D", comm, galeriList);
+#else
+    nodeMap = Galeri::Xpetra::CreateMap<Node>(xpetraParameters.GetLib(), "Cartesian2D", comm, galeriList);
+#endif
     coordinates = Galeri::Xpetra::Utils::CreateCartesianCoordinates<double,LO,GO,Map,RealValuedMultiVector>("2D", nodeMap, galeriList);
 
   } else if (matrixType == "Laplace3D" || matrixType == "Brick3D" || matrixType == "Elasticity3D") {
     numDimensions = 3;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     nodeMap = Galeri::Xpetra::CreateMap<LO, GO, Node>(xpetraParameters.GetLib(), "Cartesian3D", comm, galeriList);
+#else
+    nodeMap = Galeri::Xpetra::CreateMap<Node>(xpetraParameters.GetLib(), "Cartesian3D", comm, galeriList);
+#endif
     coordinates = Galeri::Xpetra::Utils::CreateCartesianCoordinates<double,LO,GO,Map,RealValuedMultiVector>("3D", nodeMap, galeriList);
   }
 
@@ -312,7 +332,11 @@ int main_(Teuchos::CommandLineProcessor &clp, Xpetra::UnderlyingLib& lib, int ar
   } else {
     numDofsPerNode = 1;
   }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   dofMap = Xpetra::MapFactory<LO,GO,Node>::Build(nodeMap, numDofsPerNode);
+#else
+  dofMap = Xpetra::MapFactory<Node>::Build(nodeMap, numDofsPerNode);
+#endif
 
   galeriStream << "Processor subdomains in x direction: " << galeriList.get<GO>("mx") << std::endl
                << "Processor subdomains in y direction: " << galeriList.get<GO>("my") << std::endl
@@ -368,11 +392,21 @@ int main_(Teuchos::CommandLineProcessor &clp, Xpetra::UnderlyingLib& lib, int ar
   galeriStream << "Galeri complete.\n========================================================" << std::endl;
 
 #ifdef MATLAB_COMPARE
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Xpetra::IO<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Write("Ax.mm",*B);
   Xpetra::IO<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Write("A.mm",*A);
+#else
+  Xpetra::IO<Scalar,Node>::Write("Ax.mm",*B);
+  Xpetra::IO<Scalar,Node>::Write("A.mm",*A);
+#endif
   B->putScalar(zero);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Xpetra::IO<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Write("rhs.mm",*B);
   Xpetra::IO<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Write("x.mm",*X);
+#else
+  Xpetra::IO<Scalar,Node>::Write("rhs.mm",*B);
+  Xpetra::IO<Scalar,Node>::Write("x.mm",*X);
+#endif
 #endif
   out << galeriStream.str();
 
@@ -494,8 +528,13 @@ int main_(Teuchos::CommandLineProcessor &clp, Xpetra::UnderlyingLib& lib, int ar
   // In our very particular case we know that a node is at most shared by 4 (8) regions in 2D (3D) problems.
   // Other geometries will certainly have different constrains and a parallel reduction using MAX
   // would be appropriate.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Xpetra::MultiVector<LO, LO, GO, NO> > regionsPerGID
     = Xpetra::MultiVectorFactory<LO, LO, GO, NO>::Build(dofMap, maxRegPerGID, false);
+#else
+  RCP<Xpetra::MultiVector<LO, NO> > regionsPerGID
+    = Xpetra::MultiVectorFactory<LO, NO>::Build(dofMap, maxRegPerGID, false);
+#endif
 
   { // Scope for regionsPerGIDView
     Array<ArrayRCP<LO> > regionsPerGIDView(maxRegPerGID);
@@ -540,15 +579,25 @@ int main_(Teuchos::CommandLineProcessor &clp, Xpetra::UnderlyingLib& lib, int ar
   RCP<TimeMonitor> tmLocal = rcp(new TimeMonitor(*TimeMonitor::getNewTimer("Driver: 3.1 - Build Region Maps")));
 
   const int maxRegPerProc = 1;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::vector<Teuchos::RCP<Xpetra::Map<LO,GO,NO> > > rowMapPerGrp(maxRegPerProc), colMapPerGrp(maxRegPerProc);
   std::vector<Teuchos::RCP<Xpetra::Map<LO,GO,NO> > > revisedRowMapPerGrp(maxRegPerProc), revisedColMapPerGrp(maxRegPerProc);
   rowMapPerGrp[0] = Xpetra::MapFactory<LO,GO,Node>::Build(dofMap->lib(),
+#else
+  std::vector<Teuchos::RCP<Xpetra::Map<NO> > > rowMapPerGrp(maxRegPerProc), colMapPerGrp(maxRegPerProc);
+  std::vector<Teuchos::RCP<Xpetra::Map<NO> > > revisedRowMapPerGrp(maxRegPerProc), revisedColMapPerGrp(maxRegPerProc);
+  rowMapPerGrp[0] = Xpetra::MapFactory<Node>::Build(dofMap->lib(),
+#endif
                                                           Teuchos::OrdinalTraits<GO>::invalid(),
                                                           quasiRegionGIDs(),
                                                           dofMap->getIndexBase(),
                                                           dofMap->getComm());
   colMapPerGrp[0] = rowMapPerGrp[0];
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   revisedRowMapPerGrp[0] = Xpetra::MapFactory<LO,GO,Node>::Build(dofMap->lib(),
+#else
+  revisedRowMapPerGrp[0] = Xpetra::MapFactory<Node>::Build(dofMap->lib(),
+#endif
                                                                  Teuchos::OrdinalTraits<GO>::invalid(),
                                                                  numLocalRegionNodes*numDofsPerNode,
                                                                  dofMap->getIndexBase(),
@@ -556,13 +605,21 @@ int main_(Teuchos::CommandLineProcessor &clp, Xpetra::UnderlyingLib& lib, int ar
   revisedColMapPerGrp[0] = revisedRowMapPerGrp[0];
 
   // Build objects needed to construct the region coordinates
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::RCP<Xpetra::Map<LO,GO,NO> > quasiRegCoordMap = Xpetra::MapFactory<LO,GO,Node>::
+#else
+  Teuchos::RCP<Xpetra::Map<NO> > quasiRegCoordMap = Xpetra::MapFactory<Node>::
+#endif
     Build(nodeMap->lib(),
           Teuchos::OrdinalTraits<GO>::invalid(),
           quasiRegionCoordGIDs(),
           nodeMap->getIndexBase(),
           nodeMap->getComm());
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::RCP<Xpetra::Map<LO,GO,NO> > regCoordMap = Xpetra::MapFactory<LO,GO,Node>::
+#else
+  Teuchos::RCP<Xpetra::Map<NO> > regCoordMap = Xpetra::MapFactory<Node>::
+#endif
     Build(nodeMap->lib(),
           Teuchos::OrdinalTraits<GO>::invalid(),
           numLocalRegionNodes,
@@ -587,8 +644,13 @@ int main_(Teuchos::CommandLineProcessor &clp, Xpetra::UnderlyingLib& lib, int ar
   Array<GO>  interfaceCompositeGIDs, interfaceRegionGIDs;
   ExtractListOfInterfaceRegionGIDs(revisedRowMapPerGrp, interfaceLIDsData, interfaceRegionGIDs);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Xpetra::MultiVector<LO, LO, GO, NO> > regionsPerGIDWithGhosts;
   RCP<Xpetra::MultiVector<GO, LO, GO, NO> > interfaceGIDsMV;
+#else
+  RCP<Xpetra::MultiVector<LO, NO> > regionsPerGIDWithGhosts;
+  RCP<Xpetra::MultiVector<GO, NO> > interfaceGIDsMV;
+#endif
   MakeRegionPerGIDWithGhosts(nodeMap, revisedRowMapPerGrp[0], rowImportPerGrp[0],
                              maxRegPerGID, numDofsPerNode,
                              lNodesPerDim, sendGIDs, sendPIDs, interfaceLIDsData,
@@ -603,7 +665,11 @@ int main_(Teuchos::CommandLineProcessor &clp, Xpetra::UnderlyingLib& lib, int ar
   tmLocal = Teuchos::null;
   tmLocal = rcp(new TimeMonitor(*TimeMonitor::getNewTimer("Driver: 3.4 - Build QuasiRegion Matrix")));
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::vector<RCP<Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > > quasiRegionGrpMats(1);
+#else
+  std::vector<RCP<Xpetra::Matrix<Scalar, Node> > > quasiRegionGrpMats(1);
+#endif
   MakeQuasiregionMatrices(Teuchos::rcp_dynamic_cast<CrsMatrixWrap>(A), maxRegPerProc,
                           regionsPerGIDWithGhosts, rowMapPerGrp, colMapPerGrp, rowImportPerGrp,
                           quasiRegionGrpMats);
@@ -612,7 +678,11 @@ int main_(Teuchos::CommandLineProcessor &clp, Xpetra::UnderlyingLib& lib, int ar
   tmLocal = Teuchos::null;
   tmLocal = rcp(new TimeMonitor(*TimeMonitor::getNewTimer("Driver: 3.5 - Build Region Matrix")));
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::vector<RCP<Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > > regionGrpMats(1);
+#else
+  std::vector<RCP<Xpetra::Matrix<Scalar, Node> > > regionGrpMats(1);
+#endif
   MakeRegionMatrices(Teuchos::rcp_dynamic_cast<CrsMatrixWrap>(A), A->getRowMap(), rowMapPerGrp,
                      revisedRowMapPerGrp, revisedColMapPerGrp,
                      rowImportPerGrp, maxRegPerProc, quasiRegionGrpMats, regionGrpMats);
@@ -643,13 +713,22 @@ int main_(Teuchos::CommandLineProcessor &clp, Xpetra::UnderlyingLib& lib, int ar
   regionNullspace[0]->replaceMap(revisedRowMapPerGrp[0]);
 
   // create region coordinates vector
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   regionCoordinates[0] = Xpetra::MultiVectorFactory<real_type,LO,GO,NO>::Build(quasiRegCoordMap,
+#else
+  regionCoordinates[0] = Xpetra::MultiVectorFactory<real_type,NO>::Build(quasiRegCoordMap,
+#endif
                                                                                coordinates->getNumVectors());
   regionCoordinates[0]->doImport(*coordinates, *coordImporter, Xpetra::INSERT);
   regionCoordinates[0]->replaceMap(regCoordMap);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using Tpetra_CrsMatrix = Tpetra::CrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>;
   using Tpetra_MultiVector = Tpetra::MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node>;
+#else
+  using Tpetra_CrsMatrix = Tpetra::CrsMatrix<Scalar, Node>;
+  using Tpetra_MultiVector = Tpetra::MultiVector<Scalar, Node>;
+#endif
 
   /* Stuff for multi-level algorithm
    *
@@ -660,22 +739,40 @@ int main_(Teuchos::CommandLineProcessor &clp, Xpetra::UnderlyingLib& lib, int ar
    *
    * We use Teuchos::Array<T> to store each quantity on each level.
    */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Array<RCP<Xpetra::Map<LO,GO,NO> > > compRowMaps; // composite row maps on each level
   Array<RCP<Xpetra::Map<LO,GO,NO> > > compColMaps; // composite columns maps on each level
   Array<std::vector<RCP<Xpetra::Map<LO,GO,NO> > > > regRowMaps; // regional row maps on each level
   Array<std::vector<RCP<Xpetra::Map<LO,GO,NO> > > > regColMaps; // regional column maps on each level
   Array<std::vector<RCP<Xpetra::Map<LO,GO,NO> > > > quasiRegRowMaps; // quasiRegional row maps on each level
   Array<std::vector<RCP<Xpetra::Map<LO,GO,NO> > > > quasiRegColMaps; // quasiRegional column maps on each level
+#else
+  Array<RCP<Xpetra::Map<NO> > > compRowMaps; // composite row maps on each level
+  Array<RCP<Xpetra::Map<NO> > > compColMaps; // composite columns maps on each level
+  Array<std::vector<RCP<Xpetra::Map<NO> > > > regRowMaps; // regional row maps on each level
+  Array<std::vector<RCP<Xpetra::Map<NO> > > > regColMaps; // regional column maps on each level
+  Array<std::vector<RCP<Xpetra::Map<NO> > > > quasiRegRowMaps; // quasiRegional row maps on each level
+  Array<std::vector<RCP<Xpetra::Map<NO> > > > quasiRegColMaps; // quasiRegional column maps on each level
+#endif
   Array<std::vector<RCP<Matrix> > > regMatrices; // regional matrices on each level
   Array<std::vector<RCP<Matrix> > > regProlong; // regional prolongators on each level
   Array<std::vector<RCP<Import> > > regRowImporters; // regional row importers on each level
   Array<Array<RCP<Vector> > > regInterfaceScalings; // regional interface scaling factors on each level
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Array<RCP<Xpetra::MultiVector<GO, LO, GO, Node> > > interfaceGIDsPerLevel(1);
   Array<RCP<Xpetra::MultiVector<LO, LO, GO, Node> > > regionsPerGIDWithGhostsPerLevel(1);
+#else
+  Array<RCP<Xpetra::MultiVector<GO, Node> > > interfaceGIDsPerLevel(1);
+  Array<RCP<Xpetra::MultiVector<LO, Node> > > regionsPerGIDWithGhostsPerLevel(1);
+#endif
   interfaceGIDsPerLevel[0] = interfaceGIDsMV;
   regionsPerGIDWithGhostsPerLevel[0] = regionsPerGIDWithGhosts;
   Array<ArrayRCP<LO> > regionMatVecLIDsPerLevel(1);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Array<RCP<Xpetra::Import<LO, GO, Node> > > regionInterfaceImporterPerLevel(1);
+#else
+  Array<RCP<Xpetra::Import<Node> > > regionInterfaceImporterPerLevel(1);
+#endif
   regionMatVecLIDsPerLevel[0] = regionMatVecLIDs;
   regionInterfaceImporterPerLevel[0] = regionInterfaceImporter;
   RCP<ParameterList> coarseSolverData = rcp(new ParameterList());

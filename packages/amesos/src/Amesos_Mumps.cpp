@@ -253,7 +253,11 @@ void Amesos_Mumps::SetCNTL(int pos, double value)
 //=============================================================================
 void Amesos_Mumps::SetICNTLandCNTL()
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::iterator i_iter;
+#else
+  std::map<>::iterator i_iter;
+#endif
   for (i_iter = ICNTL.begin() ; i_iter != ICNTL.end() ; ++i_iter)
   {
     int pos = i_iter->first;

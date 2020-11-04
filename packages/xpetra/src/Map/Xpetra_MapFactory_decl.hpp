@@ -58,9 +58,13 @@ namespace Xpetra {
 ///
 /// Users must specify the exact class of the object that they want
 /// to create (either an Xpetra::TpetraMap or an Xpetra::EpetraMap).
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LocalOrdinal,
          class GlobalOrdinal,
          class Node = typename Map<LocalOrdinal, GlobalOrdinal>::node_type>
+#else
+template<class Node = typename Map<>::node_type>
+#endif
 class MapFactory
 {
 
@@ -68,6 +72,10 @@ class MapFactory
   private:
 
 
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     //! Private constructor. This is a static class.
     MapFactory() {}
 
@@ -78,7 +86,11 @@ class MapFactory
     //! Map constructor with Xpetra-defined contiguous uniform distribution.
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP<Map<LocalOrdinal, GlobalOrdinal, Node>>
+#else
+    static Teuchos::RCP<Map<Node>>
+#endif
     Build(UnderlyingLib                                 lib,
           global_size_t                                 numGlobalElements,
           GlobalOrdinal                                 indexBase,
@@ -89,7 +101,11 @@ class MapFactory
     //! Map constructor with a user-defined contiguous distribution.
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP<Map<LocalOrdinal, GlobalOrdinal, Node>>
+#else
+    static Teuchos::RCP<Map<Node>>
+#endif
     Build(UnderlyingLib                                 lib,
           global_size_t                                 numGlobalElements,
           size_t                                        numLocalElements,
@@ -100,7 +116,11 @@ class MapFactory
     //! Map constructor with user-defined non-contiguous (arbitrary) distribution.
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP<Map<LocalOrdinal, GlobalOrdinal, Node>>
+#else
+    static Teuchos::RCP<Map<Node>>
+#endif
     Build(UnderlyingLib                                  lib,
           global_size_t                                  numGlobalElements,
           const Teuchos::ArrayView<const GlobalOrdinal>& elementList,
@@ -118,15 +138,24 @@ class MapFactory
 
       \note This acts like a deep copy.
     */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP<Map<LocalOrdinal, GlobalOrdinal, Node>>
     Build(const Teuchos::RCP<const Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node>>& nodeMap,
+#else
+    static Teuchos::RCP<Map<Node>>
+    Build(const Teuchos::RCP<const Xpetra::Map<Node>>& nodeMap,
+#endif
           const LocalOrdinal numDofPerNode,
           const GlobalOrdinal gidOffset = Teuchos::ScalarTraits<GlobalOrdinal>::zero());
 
 
 #ifdef HAVE_XPETRA_KOKKOS_REFACTOR
 #ifdef HAVE_XPETRA_TPETRA
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP<Map<LocalOrdinal, GlobalOrdinal, Node>>
+#else
+    static Teuchos::RCP<Map<Node>>
+#endif
     Build(UnderlyingLib                                                         lib,
           global_size_t                                                         numGlobalElements,
           const Kokkos::View<const GlobalOrdinal*, typename Node::device_type>& indexList,
@@ -137,7 +166,11 @@ class MapFactory
 
 
     //! Create a locally replicated Map with the default node.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP<const Map<LocalOrdinal, GlobalOrdinal, Node>>
+#else
+    static Teuchos::RCP<const Map<Node>>
+#endif
     createLocalMap(UnderlyingLib                                 lib,
                    size_t                                        numElements,
                    const Teuchos::RCP<const Teuchos::Comm<int>>& comm);
@@ -146,7 +179,11 @@ class MapFactory
     //! Create a locally replicated Map with a specified node.
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP<const Map<LocalOrdinal, GlobalOrdinal, Node>>
+#else
+    static Teuchos::RCP<const Map<Node>>
+#endif
     createLocalMapWithNode(UnderlyingLib                                 lib,
                            size_t                                        numElements,
                            const Teuchos::RCP<const Teuchos::Comm<int>>& comm);
@@ -155,21 +192,33 @@ class MapFactory
     //! Create a uniform, contiguous Map with a user-specified node.
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP<const Map<LocalOrdinal, GlobalOrdinal, Node>>
+#else
+    static Teuchos::RCP<const Map<Node>>
+#endif
     createUniformContigMapWithNode(UnderlyingLib                                 lib,
                                    global_size_t                                 numElements,
                                    const Teuchos::RCP<const Teuchos::Comm<int>>& comm);
 
 
     //! Create a uniform, contiguous Map with the default node.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP<const Map<LocalOrdinal, GlobalOrdinal, Node>>
+#else
+    static Teuchos::RCP<const Map<Node>>
+#endif
     createUniformContigMap(UnderlyingLib                                 lib,
                            global_size_t                                 numElements,
                            const Teuchos::RCP<const Teuchos::Comm<int>>& comm);
 
 
     //! Create a (potentially) non-uniform, contiguous Map with the default node.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP<const Map<LocalOrdinal, GlobalOrdinal, Node>>
+#else
+    static Teuchos::RCP<const Map<Node>>
+#endif
     createContigMap(UnderlyingLib                                 lib,
                     global_size_t                                 numElements,
                     size_t                                        localNumElements,
@@ -179,7 +228,11 @@ class MapFactory
     //! Create a (potentially) non-uniform, contiguous Map with a user-specified node.
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP<const Map<LocalOrdinal, GlobalOrdinal, Node>>
+#else
+    static Teuchos::RCP<const Map<Node>>
+#endif
     createContigMapWithNode(UnderlyingLib                                 lib,
                             global_size_t                                 numElements,
                             size_t                                        localNumElements,
@@ -219,7 +272,11 @@ class MapFactory
 
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static RCP<Map<LocalOrdinal,GlobalOrdinal, Node> >
+#else
+    static RCP<Map<Node> >
+#endif
     Build (UnderlyingLib lib,
            global_size_t numGlobalElements,
            int indexBase,
@@ -229,7 +286,11 @@ class MapFactory
 
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static RCP<Map<LocalOrdinal,GlobalOrdinal, Node> >
+#else
+    static RCP<Map<Node> >
+#endif
     Build (UnderlyingLib lib,
            global_size_t numGlobalElements,
            size_t numLocalElements,
@@ -239,7 +300,11 @@ class MapFactory
 
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static RCP<Map<LocalOrdinal,GlobalOrdinal, Node> >
+#else
+    static RCP<Map<Node> >
+#endif
     Build(UnderlyingLib lib,
           global_size_t numGlobalElements,
           const Teuchos::ArrayView<const GlobalOrdinal> &elementList,
@@ -256,13 +321,22 @@ class MapFactory
 
       \note This acts like a deep copy.
     */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP<Map<LocalOrdinal, GlobalOrdinal, Node>>
     Build(const Teuchos::RCP<const Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node>>& map,
+#else
+    static Teuchos::RCP<Map<Node>>
+    Build(const Teuchos::RCP<const Xpetra::Map<Node>>& map,
+#endif
           const LocalOrdinal numDofPerNode,
           const GlobalOrdinal gidOffset = Teuchos::ScalarTraits<GlobalOrdinal>::zero());
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP<const Map<LocalOrdinal,GlobalOrdinal, Node> >
+#else
+    static Teuchos::RCP<const Map<Node> >
+#endif
     createLocalMap(UnderlyingLib lib,
                    size_t numElements,
                    const Teuchos::RCP< const Teuchos::Comm< int > > &comm);
@@ -271,7 +345,11 @@ class MapFactory
     // TODO remove this
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP< const Map<LocalOrdinal,GlobalOrdinal, Node>  >
+#else
+    static Teuchos::RCP< const Map<Node>  >
+#endif
     createLocalMapWithNode(UnderlyingLib lib,
                            size_t numElements,
                            const Teuchos::RCP< const Teuchos::Comm< int > > &comm);
@@ -281,18 +359,30 @@ class MapFactory
 
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP< const Map<LocalOrdinal,GlobalOrdinal, Node>  >
+#else
+    static Teuchos::RCP< const Map<Node>  >
+#endif
     createUniformContigMapWithNode (UnderlyingLib lib, global_size_t numElements,
                                     const Teuchos::RCP< const Teuchos::Comm< int > > &comm);
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP< const Map<LocalOrdinal,GlobalOrdinal, Node> >
+#else
+    static Teuchos::RCP< const Map<Node> >
+#endif
     createUniformContigMap(UnderlyingLib lib,
                            global_size_t numElements,
                            const Teuchos::RCP< const Teuchos::Comm< int > > &comm);
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP< const Map<LocalOrdinal,GlobalOrdinal, Node>  >
+#else
+    static Teuchos::RCP< const Map<Node>  >
+#endif
     createContigMap(UnderlyingLib lib,
                     global_size_t numElements,
                     size_t localNumElements,
@@ -301,7 +391,11 @@ class MapFactory
 
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP< const Map<LocalOrdinal,GlobalOrdinal, Node>  >
+#else
+    static Teuchos::RCP< const Map<Node>  >
+#endif
     createContigMapWithNode(UnderlyingLib lib,
                             global_size_t numElements,
                             size_t localNumElements,
@@ -338,7 +432,11 @@ class MapFactory
 
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static RCP<Map<LocalOrdinal,GlobalOrdinal, Node> >
+#else
+    static RCP<Map<Node> >
+#endif
     Build (UnderlyingLib lib,
            global_size_t numGlobalElements,
            int indexBase,
@@ -348,7 +446,11 @@ class MapFactory
 
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static RCP<Map<LocalOrdinal,GlobalOrdinal, Node> >
+#else
+    static RCP<Map<Node> >
+#endif
     Build (UnderlyingLib lib,
            global_size_t numGlobalElements,
            size_t numLocalElements,
@@ -358,7 +460,11 @@ class MapFactory
 
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static RCP<Map<LocalOrdinal,GlobalOrdinal, Node> >
+#else
+    static RCP<Map<Node> >
+#endif
     Build(UnderlyingLib lib,
           global_size_t numGlobalElements,
           const Teuchos::ArrayView<const GlobalOrdinal> &elementList,
@@ -368,12 +474,21 @@ class MapFactory
 
     //! Map constructor transforming degrees of freedom
     //! for numDofPerNode this acts like a deep copy
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP<Map<LocalOrdinal,GlobalOrdinal, Node> >
     Build(const Teuchos::RCP<const Map<LocalOrdinal,GlobalOrdinal,Node> >& map,
+#else
+    static Teuchos::RCP<Map<Node> >
+    Build(const Teuchos::RCP<const Map<Node> >& map,
+#endif
           LocalOrdinal numDofPerNode);
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP<const Map<LocalOrdinal,GlobalOrdinal, Node> >
+#else
+    static Teuchos::RCP<const Map<Node> >
+#endif
     createLocalMap(UnderlyingLib lib,
                    size_t numElements,
                    const Teuchos::RCP< const Teuchos::Comm< int > > &comm);
@@ -381,7 +496,11 @@ class MapFactory
 
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP< const Map<LocalOrdinal,GlobalOrdinal, Node>  >
+#else
+    static Teuchos::RCP< const Map<Node>  >
+#endif
     createLocalMapWithNode(UnderlyingLib lib,
                            size_t numElements,
                            const Teuchos::RCP< const Teuchos::Comm< int > > &comm);
@@ -389,18 +508,30 @@ class MapFactory
 
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP< const Map<LocalOrdinal,GlobalOrdinal, Node>  >
+#else
+    static Teuchos::RCP< const Map<Node>  >
+#endif
     createUniformContigMapWithNode (UnderlyingLib lib, global_size_t numElements,
                                     const Teuchos::RCP< const Teuchos::Comm< int > > &comm);
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP< const Map<LocalOrdinal,GlobalOrdinal, Node> >
+#else
+    static Teuchos::RCP< const Map<Node> >
+#endif
     createUniformContigMap(UnderlyingLib lib,
                            global_size_t numElements,
                            const Teuchos::RCP< const Teuchos::Comm< int > > &comm);
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP< const Map<LocalOrdinal,GlobalOrdinal, Node>  >
+#else
+    static Teuchos::RCP< const Map<Node>  >
+#endif
     createContigMap(UnderlyingLib lib,
                     global_size_t numElements,
                     size_t localNumElements,
@@ -409,7 +540,11 @@ class MapFactory
 
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP< const Map<LocalOrdinal,GlobalOrdinal, Node>  >
+#else
+    static Teuchos::RCP< const Map<Node>  >
+#endif
     createContigMapWithNode(UnderlyingLib lib,
                             global_size_t numElements,
                             size_t localNumElements,

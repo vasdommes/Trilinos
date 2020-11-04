@@ -70,8 +70,13 @@ int main(int argc, char *argv[]) {
   typedef Tpetra::Map<>::local_ordinal_type LO;
   typedef Tpetra::Map<>::global_ordinal_type GO;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::CrsMatrix<Scalar,LO,GO> MAT;
   typedef Tpetra::MultiVector<Scalar,LO,GO> MV;
+#else
+  typedef Tpetra::CrsMatrix<Scalar> MAT;
+  typedef Tpetra::MultiVector<Scalar> MV;
+#endif
 
   using Tpetra::global_size_t;
   using Tpetra::Map;
@@ -119,8 +124,13 @@ int main(int argc, char *argv[]) {
   }
 
   // get the maps
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<const Map<LO,GO> > dmnmap = A->getDomainMap();
   RCP<const Map<LO,GO> > rngmap = A->getRangeMap();
+#else
+  RCP<const Map<> > dmnmap = A->getDomainMap();
+  RCP<const Map<> > rngmap = A->getRangeMap();
+#endif
 
   // Create random X
   RCP<MV> X = rcp( new MV(dmnmap,numVectors) );

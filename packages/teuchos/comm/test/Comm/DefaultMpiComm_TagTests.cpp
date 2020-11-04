@@ -148,13 +148,26 @@ TEUCHOS_UNIT_TEST( MpiCommTag, IrecvSend )
 
   // Post receives from left and right neighbors.
   Array<RCP<CommRequest<int> > > requests (2);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   requests[0] = ireceive<int, int> (leftRecvBuf, leftNeighbor, tag1, *comm);
   requests[1] = ireceive<int, int> (rightRecvBuf, rightNeighbor, tag1, *comm);
+#else
+  requests[0] = ireceive<> (leftRecvBuf, leftNeighbor, tag1, *comm);
+  requests[1] = ireceive<> (rightRecvBuf, rightNeighbor, tag1, *comm);
+#endif
 
   // Post sends to left and right neighbors.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   send<int, int> (leftSendBuf.getRawPtr (), as<int> (leftSendBuf.size ()),
+#else
+  send<> (leftSendBuf.getRawPtr (), as<int> (leftSendBuf.size ()),
+#endif
 		  leftNeighbor, tag1, *comm);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   send<int, int> (rightSendBuf.getRawPtr (), as<int> (rightSendBuf.size ()),
+#else
+  send<> (rightSendBuf.getRawPtr (), as<int> (rightSendBuf.size ()),
+#endif
 		  rightNeighbor, tag1, *comm);
 
   // Wait for the receives to complete.
@@ -200,13 +213,26 @@ TEUCHOS_UNIT_TEST( MpiCommTag, IrecvSend )
   }
 
   // Post receives from left and right neighbors.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   requests[0] = ireceive<int, int> (leftRecvBuf, leftNeighbor, tag2, *comm);
   requests[1] = ireceive<int, int> (rightRecvBuf, rightNeighbor, tag2, *comm);
+#else
+  requests[0] = ireceive<> (leftRecvBuf, leftNeighbor, tag2, *comm);
+  requests[1] = ireceive<> (rightRecvBuf, rightNeighbor, tag2, *comm);
+#endif
 
   // Post sends to left and right neighbors.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   send<int, int> (leftSendBuf.getRawPtr (), as<int> (leftSendBuf.size ()),
+#else
+  send<> (leftSendBuf.getRawPtr (), as<int> (leftSendBuf.size ()),
+#endif
 		  leftNeighbor, tag2, *comm);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   send<int, int> (rightSendBuf.getRawPtr (), as<int> (rightSendBuf.size ()),
+#else
+  send<> (rightSendBuf.getRawPtr (), as<int> (rightSendBuf.size ()),
+#endif
 		  rightNeighbor, tag2, *comm);
 
   // Wait for the receives to complete.
@@ -252,13 +278,26 @@ TEUCHOS_UNIT_TEST( MpiCommTag, IrecvSend )
   }
 
   // Post receives from left and right neighbors.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   requests[0] = ireceive<int, int> (leftRecvBuf, leftNeighbor, tag3, *comm);
   requests[1] = ireceive<int, int> (rightRecvBuf, rightNeighbor, tag3, *comm);
+#else
+  requests[0] = ireceive<> (leftRecvBuf, leftNeighbor, tag3, *comm);
+  requests[1] = ireceive<> (rightRecvBuf, rightNeighbor, tag3, *comm);
+#endif
 
   // Post sends to left and right neighbors.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   send<int, int> (leftSendBuf.getRawPtr (), as<int> (leftSendBuf.size ()),
+#else
+  send<> (leftSendBuf.getRawPtr (), as<int> (leftSendBuf.size ()),
+#endif
 		  leftNeighbor, tag3, *comm);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   send<int, int> (rightSendBuf.getRawPtr (), as<int> (rightSendBuf.size ()),
+#else
+  send<> (rightSendBuf.getRawPtr (), as<int> (rightSendBuf.size ()),
+#endif
 		  rightNeighbor, tag3, *comm);
 
   // Wait for the receives to complete.
@@ -367,12 +406,22 @@ TEUCHOS_UNIT_TEST( MpiCommTag, IrecvIsend )
   }
 
   // Post receives from left and right neighbors.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   requests[0] = ireceive<int, int> (leftRecvBuf, leftNeighbor, tag1, *comm);
   requests[1] = ireceive<int, int> (rightRecvBuf, rightNeighbor, tag1, *comm);
+#else
+  requests[0] = ireceive<> (leftRecvBuf, leftNeighbor, tag1, *comm);
+  requests[1] = ireceive<> (rightRecvBuf, rightNeighbor, tag1, *comm);
+#endif
 
   // Post sends to left and right neighbors.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   requests[2] = isend<int, int> (leftSendBuf, leftNeighbor, tag1, *comm);
   requests[3] = isend<int, int> (rightSendBuf, rightNeighbor, tag1, *comm);
+#else
+  requests[2] = isend<> (leftSendBuf, leftNeighbor, tag1, *comm);
+  requests[3] = isend<> (rightSendBuf, rightNeighbor, tag1, *comm);
+#endif
 
   // Wait for the receives to complete.
   waitAll (*comm, requests (), statuses ());
@@ -405,12 +454,22 @@ TEUCHOS_UNIT_TEST( MpiCommTag, IrecvIsend )
   }
 
   // Post receives from left and right neighbors.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   requests[0] = ireceive<int, int> (leftRecvBuf, leftNeighbor, tag2, *comm);
   requests[1] = ireceive<int, int> (rightRecvBuf, rightNeighbor, tag2, *comm);
+#else
+  requests[0] = ireceive<> (leftRecvBuf, leftNeighbor, tag2, *comm);
+  requests[1] = ireceive<> (rightRecvBuf, rightNeighbor, tag2, *comm);
+#endif
 
   // Post sends to left and right neighbors.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   requests[2] = isend<int, int> (leftSendBuf, leftNeighbor, tag2, *comm);
   requests[3] = isend<int, int> (rightSendBuf, rightNeighbor, tag2, *comm);
+#else
+  requests[2] = isend<> (leftSendBuf, leftNeighbor, tag2, *comm);
+  requests[3] = isend<> (rightSendBuf, rightNeighbor, tag2, *comm);
+#endif
 
   // Wait for the receives to complete.
   waitAll (*comm, requests (), statuses ());
@@ -445,12 +504,22 @@ TEUCHOS_UNIT_TEST( MpiCommTag, IrecvIsend )
   }
 
   // Post receives from left and right neighbors.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   requests[0] = ireceive<int, int> (leftRecvBuf, leftNeighbor, tag3, *comm);
   requests[1] = ireceive<int, int> (rightRecvBuf, rightNeighbor, tag3, *comm);
+#else
+  requests[0] = ireceive<> (leftRecvBuf, leftNeighbor, tag3, *comm);
+  requests[1] = ireceive<> (rightRecvBuf, rightNeighbor, tag3, *comm);
+#endif
 
   // Post sends to left and right neighbors.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   requests[2] = isend<int, int> (leftSendBuf, leftNeighbor, tag3, *comm);
   requests[3] = isend<int, int> (rightSendBuf, rightNeighbor, tag3, *comm);
+#else
+  requests[2] = isend<> (leftSendBuf, leftNeighbor, tag3, *comm);
+  requests[3] = isend<> (rightSendBuf, rightNeighbor, tag3, *comm);
+#endif
 
   // Wait for the receives to complete.
   waitAll (*comm, requests (), statuses ());

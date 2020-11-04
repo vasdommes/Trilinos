@@ -69,12 +69,21 @@ template <class SX> class SolverMueLu :
 public:
   typedef int LO; // Local Ordinal
   typedef Tpetra::Map<>::global_ordinal_type GO; // Global Ordinal
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO,GO>                                 Map;
   typedef Tpetra::MultiVector<double,LO,GO>                  MV;
   typedef Tpetra::CrsGraph<LO,GO>                            CrsGraph;
   typedef Tpetra::CrsMatrix<double,LO,GO>                    CrsMatrix;
   typedef Tpetra::Operator<double,LO,GO>                     Operator;
   typedef MueLu::TpetraOperator<double,LO,GO>                MTOperator;
+#else
+  typedef Tpetra::Map<>                                 Map;
+  typedef Tpetra::MultiVector<double>                  MV;
+  typedef Tpetra::CrsGraph<>                            CrsGraph;
+  typedef Tpetra::CrsMatrix<double>                    CrsMatrix;
+  typedef Tpetra::Operator<double>                     Operator;
+  typedef MueLu::TpetraOperator<double>                MTOperator;
+#endif
 
   SolverMueLu(int numRows,
 	      int* rowBegin,

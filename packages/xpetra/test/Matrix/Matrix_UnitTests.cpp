@@ -95,19 +95,38 @@ namespace {
 
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_6_DECL( Matrix, ViewSwitching, M, MA, Scalar, LO, GO, Node )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( Matrix, ViewSwitching, M, MA, Scalar, Node )
+#endif
   {
 #ifdef HAVE_XPETRA_TPETRA
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Xpetra::CrsMatrixWrap<Scalar, LO, GO, Node> CrsMatrixWrap;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef Xpetra::CrsMatrixWrap<Scalar, Node> CrsMatrixWrap;
+#endif
     Teuchos::RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
 
     const size_t numLocal = 10;
     const size_t INVALID = Teuchos::OrdinalTraits<size_t>::invalid(); // TODO: global_size_t instead of size_t
     //Teuchos::RCP<const Xpetra::Map<LO,GO,Node> > map = Xpetra::useTpetra::createContigMapWithNode<LO,GO,Node>(INVALID,numLocal,comm);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::RCP<const Xpetra::Map<LO,GO,Node> > map =
         Xpetra::MapFactory<LO,GO,Node>::createContigMapWithNode (Xpetra::UseTpetra,INVALID,numLocal,comm);
+#else
+    Teuchos::RCP<const Xpetra::Map<Node> > map =
+        Xpetra::MapFactory<Node>::createContigMapWithNode (Xpetra::UseTpetra,INVALID,numLocal,comm);
+#endif
      {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
        Xpetra::TpetraCrsMatrix<Scalar, LO, GO, Node> t =  Xpetra::TpetraCrsMatrix<Scalar,LO,GO,Node>(map, numLocal);
+#else
+       Xpetra::TpetraCrsMatrix<Scalar, Node> t =  Xpetra::TpetraCrsMatrix<Scalar,Node>(map, numLocal);
+#endif
 
        // Test of constructor
        CrsMatrixWrap op(map,1);
@@ -147,19 +166,37 @@ namespace {
   }
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_6_DECL( Matrix, StridedMaps_Tpetra, M, MA, Scalar, LO, GO, Node )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( Matrix, StridedMaps_Tpetra, M, MA, Scalar, Node )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     Teuchos::RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
     const size_t numLocal = 10;
     const size_t INVALID = Teuchos::OrdinalTraits<size_t>::invalid(); // TODO: global_size_t instead of size_t
 
 
 #ifdef HAVE_XPETRA_TPETRA
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Xpetra::CrsMatrixWrap<Scalar, LO, GO, Node> CrsMatrixWrap;
     Teuchos::RCP<const Xpetra::Map<LO,GO,Node> > map =
         Xpetra::MapFactory<LO,GO,Node>::createContigMapWithNode (Xpetra::UseTpetra,INVALID,numLocal,comm);
+#else
+    typedef Xpetra::CrsMatrixWrap<Scalar, Node> CrsMatrixWrap;
+    Teuchos::RCP<const Xpetra::Map<Node> > map =
+        Xpetra::MapFactory<Node>::createContigMapWithNode (Xpetra::UseTpetra,INVALID,numLocal,comm);
+#endif
      {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
        Xpetra::TpetraCrsMatrix<Scalar, LO, GO, Node> t =  Xpetra::TpetraCrsMatrix<Scalar,LO,GO,Node>(map, numLocal);
+#else
+       Xpetra::TpetraCrsMatrix<Scalar, Node> t =  Xpetra::TpetraCrsMatrix<Scalar,Node>(map, numLocal);
+#endif
 
        // Test of constructor
        CrsMatrixWrap op(map,1);
@@ -178,16 +215,32 @@ namespace {
   }
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_6_DECL( Matrix, StridedMaps_Epetra, M, MA, Scalar, LO, GO, Node )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( Matrix, StridedMaps_Epetra, M, MA, Scalar, Node )
+#endif
   {
 #ifdef HAVE_XPETRA_EPETRA
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     Teuchos::RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
     const size_t numLocal = 10;
     const size_t INVALID = Teuchos::OrdinalTraits<size_t>::invalid();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Xpetra::CrsMatrixWrap<double, int, GO, Xpetra::EpetraNode> EpCrsMatrix;
+#else
+    typedef Xpetra::CrsMatrixWrap<double, Xpetra::EpetraNode> EpCrsMatrix;
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::RCP<const Xpetra::Map<int,GO,Node> > epmap = Xpetra::MapFactory<int,GO,Node>::createContigMap(Xpetra::UseEpetra, INVALID, numLocal, comm);
+#else
+    Teuchos::RCP<const Xpetra::Map<Node> > epmap = Xpetra::MapFactory<Node>::createContigMap(Xpetra::UseEpetra, INVALID, numLocal, comm);
+#endif
      {
        Xpetra::EpetraCrsMatrixT<GO,Node> t =  Xpetra::EpetraCrsMatrixT<GO,Node>(epmap, numLocal);
 
@@ -209,25 +262,51 @@ namespace {
 
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_6_DECL( Matrix, BuildCopy_StridedMaps_Tpetra, M, MA, Scalar, LO, GO, Node )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( Matrix, BuildCopy_StridedMaps_Tpetra, M, MA, Scalar, Node )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     Teuchos::RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
     const size_t numLocal = 10;
     const size_t INVALID = Teuchos::OrdinalTraits<size_t>::invalid(); // TODO: global_size_t instead of size_t
 
 
 #ifdef HAVE_XPETRA_TPETRA
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Xpetra::CrsMatrixWrap<Scalar, LO, GO, Node> CrsMatrixWrap;
     Teuchos::RCP<const Xpetra::Map<LO,GO,Node> > map =
         Xpetra::MapFactory<LO,GO,Node>::createContigMapWithNode (Xpetra::UseTpetra,INVALID,numLocal,comm);
+#else
+    typedef Xpetra::CrsMatrixWrap<Scalar, Node> CrsMatrixWrap;
+    Teuchos::RCP<const Xpetra::Map<Node> > map =
+        Xpetra::MapFactory<Node>::createContigMapWithNode (Xpetra::UseTpetra,INVALID,numLocal,comm);
+#endif
      {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
        Teuchos::RCP<Xpetra::CrsMatrix<Scalar, LO, GO, Node> > s0(new Xpetra::TpetraCrsMatrix<Scalar, LO, GO, Node>(map, numLocal));
+#else
+       Teuchos::RCP<Xpetra::CrsMatrix<Scalar, Node> > s0(new Xpetra::TpetraCrsMatrix<Scalar, Node>(map, numLocal));
+#endif
        s0->fillComplete();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
        Teuchos::RCP<Xpetra::Matrix<Scalar, LO, GO, Node> > s(new CrsMatrixWrap(s0));
+#else
+       Teuchos::RCP<Xpetra::Matrix<Scalar, Node> > s(new CrsMatrixWrap(s0));
+#endif
        s->SetFixedBlockSize(2);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
        Teuchos::RCP<Xpetra::Matrix<Scalar, LO, GO, Node> > t = Xpetra::MatrixFactory2<Scalar,LO,GO,Node>::BuildCopy(s);
+#else
+       Teuchos::RCP<Xpetra::Matrix<Scalar, Node> > t = Xpetra::MatrixFactory2<Scalar,Node>::BuildCopy(s);
+#endif
        
        int blkSize = t->GetFixedBlockSize();
        TEST_EQUALITY_CONST(blkSize, 2);
@@ -236,8 +315,16 @@ namespace {
   }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_6_DECL( Matrix, BlockDiagonalUtils_Tpetra, M, MA, Scalar, LO, GO, Node )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( Matrix, BlockDiagonalUtils_Tpetra, M, MA, Scalar, Node )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     Teuchos::RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
     const size_t numLocal = 10;
     const size_t INVALID = Teuchos::OrdinalTraits<size_t>::invalid(); // TODO: global_size_t instead of size_t
@@ -249,10 +336,17 @@ namespace {
 
 
 #ifdef HAVE_XPETRA_TPETRA
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using MV  = Xpetra::MultiVector<Scalar,LO,GO,Node>;
     typedef Xpetra::CrsMatrixWrap<Scalar, LO, GO, Node> CrsMatrixWrap;
     RCP<const Xpetra::Map<LO,GO,Node> > map =
       Xpetra::MapFactory<LO,GO,Node>::createContigMapWithNode (Xpetra::UseTpetra,INVALID,numLocal,comm);   
+#else
+    using MV  = Xpetra::MultiVector<Scalar,Node>;
+    typedef Xpetra::CrsMatrixWrap<Scalar, Node> CrsMatrixWrap;
+    RCP<const Xpetra::Map<Node> > map =
+      Xpetra::MapFactory<Node>::createContigMapWithNode (Xpetra::UseTpetra,INVALID,numLocal,comm);   
+#endif
      {
        // create the identity matrix, via three arrays constructor
        ArrayRCP<size_t> rowptr(numLocal+1);
@@ -265,22 +359,46 @@ namespace {
          values[i] = SC_one + SC_one;
        }
        rowptr[numLocal]=numLocal;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
        RCP<Xpetra::CrsMatrix<Scalar, LO, GO, Node> > eye2  = Xpetra::CrsMatrixFactory<Scalar,LO,GO,Node>::Build(map,map,0);
+#else
+       RCP<Xpetra::CrsMatrix<Scalar, Node> > eye2  = Xpetra::CrsMatrixFactory<Scalar,Node>::Build(map,map,0);
+#endif
        TEST_NOTHROW( eye2->setAllValues(rowptr,colind,values) );
        TEST_NOTHROW( eye2->expertStaticFillComplete(map,map) );
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
        RCP<const Xpetra::Matrix<Scalar, LO, GO, Node> > eye2x(new CrsMatrixWrap(eye2));
+#else
+       RCP<const Xpetra::Matrix<Scalar, Node> > eye2x(new CrsMatrixWrap(eye2));
+#endif
        
        // Just extract & scale; don't test correctness (Tpetra does this)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
        RCP<const MV> diag5c = Xpetra::MultiVectorFactory<Scalar,LO,GO,Node>::Build(map,5);  
+#else
+       RCP<const MV> diag5c = Xpetra::MultiVectorFactory<Scalar,Node>::Build(map,5);  
+#endif
        RCP<MV> diag5 = rcp_const_cast<MV>(diag5c);
        diag5->putScalar(SC_one);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
        Xpetra::MatrixUtils<Scalar, LO, GO, Node>::extractBlockDiagonal(*eye2x,*diag5);
+#else
+       Xpetra::MatrixUtils<Scalar, Node>::extractBlockDiagonal(*eye2x,*diag5);
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
        RCP<MV> toScale5 = Xpetra::MultiVectorFactory<Scalar,LO,GO,Node>::Build(map,2); toScale5->putScalar(SC_one);
+#else
+       RCP<MV> toScale5 = Xpetra::MultiVectorFactory<Scalar,Node>::Build(map,2); toScale5->putScalar(SC_one);
+#endif
        
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
        Xpetra::MatrixUtils<Scalar, LO, GO, Node>::inverseScaleBlockDiagonal(*diag5c,false,*toScale5);
+#else
+       Xpetra::MatrixUtils<Scalar, Node>::inverseScaleBlockDiagonal(*diag5c,false,*toScale5);
+#endif
       
 
      }
@@ -293,33 +411,60 @@ namespace {
 //
 #ifdef HAVE_XPETRA_TPETRA
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   #define XPETRA_TPETRA_TYPES( S, LO, GO, N) \
     typedef typename Xpetra::TpetraMap<LO,GO,N> M##LO##GO##N; \
     typedef typename Xpetra::TpetraCrsMatrix<S,LO,GO,N> MA##S##LO##GO##N;
+#else
+  #define XPETRA_TPETRA_TYPES( S, N) \
+    typedef typename Xpetra::TpetraMap<N> M##LO##GO##N; \
+    typedef typename Xpetra::TpetraCrsMatrix<S,N> MA##S##LO##GO##N;
+#endif
 
 #endif
 
 #ifdef HAVE_XPETRA_EPETRA
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   #define XPETRA_EPETRA_TYPES( S, LO, GO, N) \
+#else
+  #define XPETRA_EPETRA_TYPES( S, N) \
+#endif
     typedef typename Xpetra::EpetraMapT<GO,N> M##LO##GO##N; \
     typedef typename Xpetra::EpetraCrsMatrixT<GO,N> MA##S##LO##GO##N;
 
 #endif
 
 // List of tests which run only with Tpetra
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define XP_TPETRA_MATRIX_INSTANT(S,LO,GO,N) \
     TEUCHOS_UNIT_TEST_TEMPLATE_6_INSTANT( Matrix, StridedMaps_Tpetra,  M##LO##GO##N , MA##S##LO##GO##N, S, LO, GO, N ) \
     TEUCHOS_UNIT_TEST_TEMPLATE_6_INSTANT( Matrix, BuildCopy_StridedMaps_Tpetra,  M##LO##GO##N , MA##S##LO##GO##N, S, LO, GO, N ) \
     TEUCHOS_UNIT_TEST_TEMPLATE_6_INSTANT( Matrix, ViewSwitching, M##LO##GO##N , MA##S##LO##GO##N , S, LO, GO, N ) 
+#else
+#define XP_TPETRA_MATRIX_INSTANT(S,N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( Matrix, StridedMaps_Tpetra,  M##LO##GO##N , MA##S##LO##GO##N, S, N ) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( Matrix, BuildCopy_StridedMaps_Tpetra,  M##LO##GO##N , MA##S##LO##GO##N, S, N ) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( Matrix, ViewSwitching, M##LO##GO##N , MA##S##LO##GO##N , S, N ) 
+#endif
 
 // Tpetra, but no complex
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define XP_TPETRA_MATRIX_INSTANT_NO_COMPLEX(S,LO,GO,N) \
     TEUCHOS_UNIT_TEST_TEMPLATE_6_INSTANT( Matrix, BlockDiagonalUtils_Tpetra, M##LO##GO##N , MA##S##LO##GO##N , S, LO, GO, N )
+#else
+#define XP_TPETRA_MATRIX_INSTANT_NO_COMPLEX(S,N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( Matrix, BlockDiagonalUtils_Tpetra, M##LO##GO##N , MA##S##LO##GO##N , S, N )
+#endif
 
 // List of tests which run only with Epetra
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define XP_EPETRA_MATRIX_INSTANT(S,LO,GO,N) \
     TEUCHOS_UNIT_TEST_TEMPLATE_6_INSTANT( Matrix, StridedMaps_Epetra, M##LO##GO##N , MA##S##LO##GO##N, S, LO, GO, N )
+#else
+#define XP_EPETRA_MATRIX_INSTANT(S,N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( Matrix, StridedMaps_Epetra, M##LO##GO##N , MA##S##LO##GO##N, S, N )
+#endif
 
 // list of all tests which run both with Epetra and Tpetra
 //#define XP_MATRIX_INSTANT(S,LO,GO,N)

@@ -72,18 +72,33 @@ struct BlockAssociationData
 {
     std::map<int, NodeAssociationData> node_to_geom_map;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::multimap< int, int > surface_to_node_map;
     std::multimap< int, int > curve_to_node_map;
     std::multimap< int, int > vertex_to_node_map;
+#else
+    std::multimap< > surface_to_node_map;
+    std::multimap< > curve_to_node_map;
+    std::multimap< > vertex_to_node_map;
+#endif
 
     std::map<int, EdgeAssociationData> edge_to_geom_map[3];
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::multimap<int, int> surface_to_edge_map[3];
     std::multimap<int, int> curve_to_edge_map[3];
+#else
+    std::multimap<> surface_to_edge_map[3];
+    std::multimap<> curve_to_edge_map[3];
+#endif
 
     std::map<int, FaceAssociationData> face_to_geom_map[3];
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::multimap<int, int> surface_to_face_map[3];
+#else
+    std::multimap<> surface_to_face_map[3];
+#endif
 };
 
 class PGeomAssocStructured
@@ -145,19 +160,43 @@ private:
   // node_map contains tolerance data for each node, so that needs to also be passed in when the tolerance is locally computed
   void get_surfaces_close_to_nodes(std::shared_ptr<percept::StructuredBlock> sgi,
                                    std::shared_ptr<PGeom> pgeom,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                    const std::multimap< int, int > &candidate_surf_map,
+#else
+                                   const std::multimap< > &candidate_surf_map,
+#endif
                                    std::map<int, NodeAssociationData> &node_map,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                    std::multimap< int, int > &surface_map);
+#else
+                                   std::multimap< > &surface_map);
+#endif
   void get_curves_close_to_nodes(std::shared_ptr<percept::StructuredBlock> sgi,
                                  std::shared_ptr<PGeom> pgeom,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                  const std::multimap< int, int > &candidate_curve_map,
+#else
+                                 const std::multimap< > &candidate_curve_map,
+#endif
                                  std::map<int, NodeAssociationData> &node_map,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                  std::multimap< int, int > &curve_map);
+#else
+                                 std::multimap< > &curve_map);
+#endif
   void get_vertices_close_to_nodes(std::shared_ptr<percept::StructuredBlock> sgi,
                                    std::shared_ptr<PGeom> pgeom,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                    const std::multimap< int, int > &candidate_vertex_map,
+#else
+                                   const std::multimap< > &candidate_vertex_map,
+#endif
                                    std::map<int, NodeAssociationData> &node_map,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                    std::multimap< int, int > &vertex_map);
+#else
+                                   std::multimap< > &vertex_map);
+#endif
 
   // TODO - these functions (find_common_*) are candidates to be shared for both structued and unstructured meshes
   static void find_common_curves(std::vector<int> const &elem_nodes,
@@ -187,8 +226,13 @@ private:
   static CubitVector node_coordinates(std::shared_ptr<percept::StructuredBlock> sgi,
                                       int node_index);
   static void gather_node_coordinates(std::shared_ptr<percept::StructuredBlock> sgi,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                       const std::multimap<int,int>::const_iterator lower,
                                       const std::multimap<int,int>::const_iterator upper,
+#else
+                                      const std::multimap<>::const_iterator lower,
+                                      const std::multimap<>::const_iterator upper,
+#endif
                                       std::vector<CubitVector> &node_positions);
 static void get_face_nodes(std::shared_ptr<percept::StructuredBlock> sgi,
                            uint64_t i,
@@ -225,14 +269,23 @@ static void get_face_nodes(std::shared_ptr<percept::StructuredBlock> sgi,
   static void print_ids(const std::string &label,
                         const std::vector<int> &id_list);
   static void print_multimap_ids(const std::string &label,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                  const std::multimap<int,int>::const_iterator lower,
                                  const std::multimap<int,int>::const_iterator upper);
+#else
+                                 const std::multimap<>::const_iterator lower,
+                                 const std::multimap<>::const_iterator upper);
+#endif
   static void print_close_geometry_ids(const std::string &label,
                                 const std::vector<struct CloseGeometry> &close_geom);
   static void print_geometry_association(const std::string &key_name,
                                          const std::string &value_name,
                                          const std::string &direction_string,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                          const std::multimap< int, int > &geometry_map);
+#else
+                                         const std::multimap< > &geometry_map);
+#endif
 
 private:
   static const std::string direction_string[3];

@@ -62,8 +62,16 @@
 
 namespace { // (anonymous)
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(ContainerFactory, TestTypesAndInput, SC, LO, GO)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL(ContainerFactory, TestTypesAndInput, SC)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   // We are now in a class method declared by the above macro.
   // The method has these input arguments:
   // (Teuchos::FancyOStream& out, bool& success)
@@ -74,9 +82,15 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(ContainerFactory, TestTypesAndInput, SC, LO, G
   using std::endl;
   typedef Tpetra::Map<>::node_type NT;
   typedef Tpetra::global_size_t GST;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::CrsMatrix<SC, LO, GO, NT> crs_matrix_type;
   typedef Tpetra::RowMatrix<SC, LO, GO, NT> row_matrix_type;
   typedef Tpetra::Map<LO, GO, NT> map_type;
+#else
+  typedef Tpetra::CrsMatrix<SC, NT> crs_matrix_type;
+  typedef Tpetra::RowMatrix<SC, NT> row_matrix_type;
+  typedef Tpetra::Map<NT> map_type;
+#endif
   const SC ONE = Teuchos::ScalarTraits<SC>::one ();
 
   out << "Ifpack2::Details::createContainer (\"ContainerFactory\"): "
@@ -146,7 +160,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(ContainerFactory, TestTypesAndInput, SC, LO, G
 
 // Define the set of unit tests to instantiate in this file.
 #define UNIT_TEST_GROUP_SC_LO_GO( SC, LO, GO ) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( ContainerFactory, TestTypesAndInput, SC, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( ContainerFactory, TestTypesAndInput, SC )
+#endif
 
 #include "Ifpack2_ETIHelperMacros.h"
 

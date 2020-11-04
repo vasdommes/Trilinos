@@ -523,7 +523,11 @@ namespace Amesos2
     // Throw on all ranks
     int WrongInt = Wrong;
     RCP<const Comm<int> > matComm = this->matrixA_->getComm();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::broadcast<int,int>(*matComm,0,1,&WrongInt);
+#else
+    Teuchos::broadcast<>(*matComm,0,1,&WrongInt);
+#endif
     TEUCHOS_TEST_FOR_EXCEPTION(WrongInt>0,
                                std::runtime_error,
                                "MUMPS error");

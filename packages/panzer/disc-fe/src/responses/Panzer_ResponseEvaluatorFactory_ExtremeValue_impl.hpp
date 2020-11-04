@@ -56,7 +56,11 @@
 namespace panzer {
 
 template <typename EvalT,typename LO,typename GO>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 Teuchos::RCP<ResponseBase> ResponseEvaluatorFactory_ExtremeValue<EvalT,LO,GO>::
+#else
+Teuchos::RCP<ResponseBase> ResponseEvaluatorFactory_ExtremeValue<EvalT>::
+#endif
 buildResponseObject(const std::string & responseName) const
 { 
   Teuchos::RCP<ResponseBase> response = Teuchos::rcp(new Response_ExtremeValue<EvalT>(responseName,comm_,useMax_,linearObjFactory_)); 
@@ -66,7 +70,11 @@ buildResponseObject(const std::string & responseName) const
 }
 
 template <typename EvalT,typename LO,typename GO>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 void ResponseEvaluatorFactory_ExtremeValue<EvalT,LO,GO>::
+#else
+void ResponseEvaluatorFactory_ExtremeValue<EvalT>::
+#endif
 buildAndRegisterEvaluators(const std::string & responseName,
                            PHX::FieldManager<panzer::Traits> & fm,
                            const panzer::PhysicsBlock & physicsBlock,
@@ -100,7 +108,11 @@ buildAndRegisterEvaluators(const std::string & responseName,
    // build scatter evaluator
    {
      Teuchos::RCP<ExtremeValueScatterBase> scatterObj =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
          (globalIndexer_!=Teuchos::null) ?  Teuchos::rcp(new ExtremeValueScatter<LO,GO>(globalIndexer_)) : Teuchos::null;
+#else
+         (globalIndexer_!=Teuchos::null) ?  Teuchos::rcp(new ExtremeValueScatter<>(globalIndexer_)) : Teuchos::null;
+#endif
      std::string field = (quadPointField_=="" ? responseName : quadPointField_);
      field = prefix_+field; // add prefix to help identify
 
@@ -120,7 +132,11 @@ buildAndRegisterEvaluators(const std::string & responseName,
 }
 
 template <typename EvalT,typename LO,typename GO>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 bool ResponseEvaluatorFactory_ExtremeValue<EvalT,LO,GO>::
+#else
+bool ResponseEvaluatorFactory_ExtremeValue<EvalT>::
+#endif
 typeSupported() const
 {
   if(   PHX::print<EvalT>()==PHX::print<panzer::Traits::Residual>()  ||

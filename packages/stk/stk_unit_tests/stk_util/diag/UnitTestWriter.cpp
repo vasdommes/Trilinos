@@ -229,7 +229,11 @@ TEST(UnitTestWriter, UnitTest)
     lp.push_back(new int(2));
     lp.push_back(new int(3));
     
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::map<int, int> m;
+#else
+    std::map<> m;
+#endif
     m[1] = 2;
     m[2] = 3;
     m[3] = 4;
@@ -239,10 +243,17 @@ TEST(UnitTestWriter, UnitTest)
     mp[2] = new int(3);
     mp[3] = new int(4);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::multimap<int, int> mm;
     mm.insert(std::multimap<int, int>::value_type(1, 2));
     mm.insert(std::multimap<int, int>::value_type(1, 3));
     mm.insert(std::multimap<int, int>::value_type(2, 4));
+#else
+    std::multimap<> mm;
+    mm.insert(std::multimap<>::value_type(1, 2));
+    mm.insert(std::multimap<>::value_type(1, 3));
+    mm.insert(std::multimap<>::value_type(2, 4));
+#endif
     
     std::multimap<int, int *> mmp;
     mmp.insert(std::multimap<int, int *>::value_type(1, new int(2)));

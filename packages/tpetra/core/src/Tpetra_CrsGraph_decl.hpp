@@ -72,12 +72,18 @@ namespace Tpetra {
 
 
   // Forward declaration for CrsGraph::swap() test
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template<class LocalOrdinal, class GlobalOrdinal, class Node> class crsGraph_Swap_Tester;
+#else
+  template<class Node> class crsGraph_Swap_Tester;
+#endif
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
   namespace Details {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template<class LocalOrdinal,
              class GlobalOrdinal>
+#endif
     class CrsPadding;
   } // namespace Details
 
@@ -216,26 +222,50 @@ namespace Tpetra {
   /// stored in the local graph and communicated to the appropriate
   /// node on the next call to globalAssemble() or fillComplete() (the
   /// latter calls the former).
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal,
             class GlobalOrdinal,
             class Node>
+#else
+  template <class Node>
+#endif
   class CrsGraph :
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     public RowGraph<LocalOrdinal, GlobalOrdinal, Node>,
+#else
+    public RowGraph<Node>,
+#endif
     public DistObject<GlobalOrdinal,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                       LocalOrdinal,
                       GlobalOrdinal,
+#endif
                       Node>,
     public Teuchos::ParameterListAcceptorDefaultBase
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class S, class LO, class GO, class N>
+#else
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+    template <class S, class N>
+#endif
     friend class CrsMatrix;
     template <class LO2, class GO2, class N2>
     friend class CrsGraph;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class LO, class GO, class N>
+#else
+    template <class N>
+#endif
     friend class FECrsGraph;
 
     //! The specialization of DistObject that is this class' parent class.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using dist_object_type = DistObject<GlobalOrdinal, LocalOrdinal, GlobalOrdinal, Node>;
+#else
+    using dist_object_type = DistObject<GlobalOrdinal, Node>;
+#endif
 
   public:
     //! The type of the graph's local indices.
@@ -261,11 +291,23 @@ namespace Tpetra {
                                                     size_t>;
 
     //! The Map specialization used by this class.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using map_type = ::Tpetra::Map<LocalOrdinal, GlobalOrdinal, Node>;
+#else
+    using map_type = ::Tpetra::Map<Node>;
+#endif
     //! The Import specialization used by this class.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using import_type = ::Tpetra::Import<LocalOrdinal, GlobalOrdinal, Node>;
+#else
+    using import_type = ::Tpetra::Import<Node>;
+#endif
     //! The Export specialization used by this class.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using export_type = ::Tpetra::Export<LocalOrdinal, GlobalOrdinal, Node>;
+#else
+    using export_type = ::Tpetra::Export<Node>;
+#endif
 
     //! @name Constructor/Destructor Methods
     //@{
@@ -594,7 +636,11 @@ namespace Tpetra {
     /// \return True if the other CrsGraph's data structure is identical to this
     ///         CrsGraph.
     ///
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     bool isIdenticalTo(const CrsGraph<LocalOrdinal, GlobalOrdinal, Node> &graph) const;
+#else
+    bool isIdenticalTo(const CrsGraph<Node> &graph) const;
+#endif
 
     //@}
     //! @name Implementation of Teuchos::ParameterListAcceptor
@@ -1475,6 +1521,7 @@ namespace Tpetra {
     template<class CrsGraphType>
     friend Teuchos::RCP<CrsGraphType>
     importAndFillCompleteCrsGraph (const Teuchos::RCP<const CrsGraphType>& sourceGraph,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                     const Import<typename CrsGraphType::local_ordinal_type,
                                                  typename CrsGraphType::global_ordinal_type,
                                                  typename CrsGraphType::node_type>& importer,
@@ -1484,12 +1531,18 @@ namespace Tpetra {
                                     const Teuchos::RCP<const Map<typename CrsGraphType::local_ordinal_type,
                                                                  typename CrsGraphType::global_ordinal_type,
                                                                  typename CrsGraphType::node_type> >& rangeMap,
+#else
+                                    const Import<typename CrsGraphType::node_type>& importer,
+                                    const Teuchos::RCP<const Map<typename CrsGraphType::node_type> >& domainMap,
+                                    const Teuchos::RCP<const Map<typename CrsGraphType::node_type> >& rangeMap,
+#endif
                                     const Teuchos::RCP<Teuchos::ParameterList>& params);
 
     // Friend declaration for nonmember function.
     template<class CrsGraphType>
     friend Teuchos::RCP<CrsGraphType>
     importAndFillCompleteCrsGraph (const Teuchos::RCP<const CrsGraphType>& sourceGraph,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                     const Import<typename CrsGraphType::local_ordinal_type,
                                                  typename CrsGraphType::global_ordinal_type,
                                                  typename CrsGraphType::node_type>& rowImporter,
@@ -1502,6 +1555,12 @@ namespace Tpetra {
                                     const Teuchos::RCP<const Map<typename CrsGraphType::local_ordinal_type,
                                                                  typename CrsGraphType::global_ordinal_type,
                                                                  typename CrsGraphType::node_type> >& rangeMap,
+#else
+                                    const Import<typename CrsGraphType::node_type>& rowImporter,
+                                   const Import<typename CrsGraphType::node_type>& domainImporter,
+                                    const Teuchos::RCP<const Map<typename CrsGraphType::node_type> >& domainMap,
+                                    const Teuchos::RCP<const Map<typename CrsGraphType::node_type> >& rangeMap,
+#endif
                                     const Teuchos::RCP<Teuchos::ParameterList>& params);
 
 
@@ -1509,6 +1568,7 @@ namespace Tpetra {
     template<class CrsGraphType>
     friend Teuchos::RCP<CrsGraphType>
     exportAndFillCompleteCrsGraph (const Teuchos::RCP<const CrsGraphType>& sourceGraph,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                     const Export<typename CrsGraphType::local_ordinal_type,
                                                  typename CrsGraphType::global_ordinal_type,
                                                  typename CrsGraphType::node_type>& exporter,
@@ -1518,12 +1578,18 @@ namespace Tpetra {
                                     const Teuchos::RCP<const Map<typename CrsGraphType::local_ordinal_type,
                                                                  typename CrsGraphType::global_ordinal_type,
                                                                  typename CrsGraphType::node_type> >& rangeMap,
+#else
+                                    const Export<typename CrsGraphType::node_type>& exporter,
+                                    const Teuchos::RCP<const Map<typename CrsGraphType::node_type> >& domainMap,
+                                    const Teuchos::RCP<const Map<typename CrsGraphType::node_type> >& rangeMap,
+#endif
                                     const Teuchos::RCP<Teuchos::ParameterList>& params);
 
     // Friend declaration for nonmember function.
     template<class CrsGraphType>
     friend Teuchos::RCP<CrsGraphType>
     exportAndFillCompleteCrsGraph (const Teuchos::RCP<const CrsGraphType>& sourceGraph,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                     const Export<typename CrsGraphType::local_ordinal_type,
                                                  typename CrsGraphType::global_ordinal_type,
                                                  typename CrsGraphType::node_type>& rowExporter,
@@ -1536,6 +1602,12 @@ namespace Tpetra {
                                     const Teuchos::RCP<const Map<typename CrsGraphType::local_ordinal_type,
                                                                  typename CrsGraphType::global_ordinal_type,
                                                                  typename CrsGraphType::node_type> >& rangeMap,
+#else
+                                    const Export<typename CrsGraphType::node_type>& rowExporter,
+                                    const Export<typename CrsGraphType::node_type>& domainExporter,
+                                    const Teuchos::RCP<const Map<typename CrsGraphType::node_type> >& domainMap,
+                                    const Teuchos::RCP<const Map<typename CrsGraphType::node_type> >& rangeMap,
+#endif
                                     const Teuchos::RCP<Teuchos::ParameterList>& params);
 
   public:
@@ -2359,17 +2431,30 @@ namespace Tpetra {
   ///   per row (defaults to zero).
   ///
   /// \relatesalso CrsGraph
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal, class GlobalOrdinal, class Node>
   Teuchos::RCP<CrsGraph<LocalOrdinal, GlobalOrdinal, Node> >
+#else
+  template <class Node>
+  Teuchos::RCP<CrsGraph<Node> >
+#endif
   createCrsGraph(
     const Teuchos::RCP<
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       const Map<LocalOrdinal, GlobalOrdinal, Node>>& map,
+#else
+      const Map<Node>>& map,
+#endif
     size_t maxNumEntriesPerRow = 0,
     const Teuchos::RCP<Teuchos::ParameterList>& params =
       Teuchos::null)
   {
     using Teuchos::rcp;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using graph_type = CrsGraph<LocalOrdinal, GlobalOrdinal, Node>;
+#else
+    using graph_type = CrsGraph<Node>;
+#endif
     const ProfileType pftype = TPETRA_DEFAULT_PROFILE_TYPE;
     return rcp(new graph_type(map, maxNumEntriesPerRow,
                               pftype, params));
@@ -2427,6 +2512,7 @@ namespace Tpetra {
   template<class CrsGraphType>
   Teuchos::RCP<CrsGraphType>
   importAndFillCompleteCrsGraph (const Teuchos::RCP<const CrsGraphType>& sourceGraph,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                   const Import<typename CrsGraphType::local_ordinal_type,
                                                typename CrsGraphType::global_ordinal_type,
                                                typename CrsGraphType::node_type>& importer,
@@ -2436,6 +2522,11 @@ namespace Tpetra {
                                   const Teuchos::RCP<const Map<typename CrsGraphType::local_ordinal_type,
                                                                typename CrsGraphType::global_ordinal_type,
                                                                typename CrsGraphType::node_type> >& rangeMap = Teuchos::null,
+#else
+                                  const Import<typename CrsGraphType::node_type>& importer,
+                                  const Teuchos::RCP<const Map<typename CrsGraphType::node_type> >& domainMap = Teuchos::null,
+                                  const Teuchos::RCP<const Map<typename CrsGraphType::node_type> >& rangeMap = Teuchos::null,
+#endif
                                   const Teuchos::RCP<Teuchos::ParameterList>& params = Teuchos::null)
   {
     Teuchos::RCP<CrsGraphType> destGraph;
@@ -2496,6 +2587,7 @@ namespace Tpetra {
   template<class CrsGraphType>
   Teuchos::RCP<CrsGraphType>
   importAndFillCompleteCrsGraph (const Teuchos::RCP<const CrsGraphType>& sourceGraph,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                   const Import<typename CrsGraphType::local_ordinal_type,
                                                typename CrsGraphType::global_ordinal_type,
                                                typename CrsGraphType::node_type>& rowImporter,
@@ -2508,6 +2600,12 @@ namespace Tpetra {
                                   const Teuchos::RCP<const Map<typename CrsGraphType::local_ordinal_type,
                                                                typename CrsGraphType::global_ordinal_type,
                                                                typename CrsGraphType::node_type> >& rangeMap,
+#else
+                                  const Import<typename CrsGraphType::node_type>& rowImporter,
+                                  const Import<typename CrsGraphType::node_type>& domainImporter,
+                                  const Teuchos::RCP<const Map<typename CrsGraphType::node_type> >& domainMap,
+                                  const Teuchos::RCP<const Map<typename CrsGraphType::node_type> >& rangeMap,
+#endif
                                   const Teuchos::RCP<Teuchos::ParameterList>& params)
   {
     Teuchos::RCP<CrsGraphType> destGraph;
@@ -2551,6 +2649,7 @@ namespace Tpetra {
   template<class CrsGraphType>
   Teuchos::RCP<CrsGraphType>
   exportAndFillCompleteCrsGraph (const Teuchos::RCP<const CrsGraphType>& sourceGraph,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                   const Export<typename CrsGraphType::local_ordinal_type,
                                                typename CrsGraphType::global_ordinal_type,
                                                typename CrsGraphType::node_type>& exporter,
@@ -2560,6 +2659,11 @@ namespace Tpetra {
                                   const Teuchos::RCP<const Map<typename CrsGraphType::local_ordinal_type,
                                                                typename CrsGraphType::global_ordinal_type,
                                                                typename CrsGraphType::node_type> >& rangeMap = Teuchos::null,
+#else
+                                  const Export<typename CrsGraphType::node_type>& exporter,
+                                  const Teuchos::RCP<const Map<typename CrsGraphType::node_type> >& domainMap = Teuchos::null,
+                                  const Teuchos::RCP<const Map<typename CrsGraphType::node_type> >& rangeMap = Teuchos::null,
+#endif
                                   const Teuchos::RCP<Teuchos::ParameterList>& params = Teuchos::null)
   {
     Teuchos::RCP<CrsGraphType> destGraph;
@@ -2603,6 +2707,7 @@ namespace Tpetra {
   template<class CrsGraphType>
   Teuchos::RCP<CrsGraphType>
   exportAndFillCompleteCrsGraph (const Teuchos::RCP<const CrsGraphType>& sourceGraph,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                   const Export<typename CrsGraphType::local_ordinal_type,
                                                typename CrsGraphType::global_ordinal_type,
                                                typename CrsGraphType::node_type>& rowExporter,
@@ -2615,6 +2720,12 @@ namespace Tpetra {
                                   const Teuchos::RCP<const Map<typename CrsGraphType::local_ordinal_type,
                                                                typename CrsGraphType::global_ordinal_type,
                                                                typename CrsGraphType::node_type> >& rangeMap,
+#else
+                                  const Export<typename CrsGraphType::node_type>& rowExporter,
+                                  const Export<typename CrsGraphType::node_type>& domainExporter,
+                                  const Teuchos::RCP<const Map<typename CrsGraphType::node_type> >& domainMap,
+                                  const Teuchos::RCP<const Map<typename CrsGraphType::node_type> >& rangeMap,
+#endif
                                   const Teuchos::RCP<Teuchos::ParameterList>& params)
   {
     Teuchos::RCP<CrsGraphType> destGraph;

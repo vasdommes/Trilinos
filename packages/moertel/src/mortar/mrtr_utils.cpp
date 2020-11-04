@@ -920,7 +920,11 @@ bool MOERTEL::SplitMatrix2x2(Teuchos::RCP<Epetra_CrsMatrix> A,
   const Epetra_Map&  A11map = *(A11rowmap.get());
 
   //----------------------------- create a parallel redundant map of A22map
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int> a22gmap;
+#else
+  std::map<> a22gmap;
+#endif
   {
     std::vector<int> a22global(A22map.NumGlobalElements());
     int count=0;
@@ -986,7 +990,11 @@ bool MOERTEL::SplitMatrix2x2(Teuchos::RCP<Epetra_CrsMatrix> A,
       {
         const int gcid = A->ColMap().GID(cindices[j]);
         // see whether we have gcid in a22gmap
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         std::map<int,int>::iterator curr = a22gmap.find(gcid);
+#else
+        std::map<>::iterator curr = a22gmap.find(gcid);
+#endif
         if (curr==a22gmap.end()) continue;
         //std::cout << gcid << " ";
         a22gcindices[count] = gcid;
@@ -1042,7 +1050,11 @@ bool MOERTEL::SplitMatrix2x2(Teuchos::RCP<Epetra_CrsMatrix> A,
       {
         const int gcid = A->ColMap().GID(cindices[j]);
         // see whether we have gcid as part of a22gmap
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         std::map<int,int>::iterator curr = a22gmap.find(gcid);
+#else
+        std::map<>::iterator curr = a22gmap.find(gcid);
+#endif
         if (curr!=a22gmap.end()) continue;
         a11gcindices[count] = gcid;
         a11values[count] = values[j];
@@ -1095,7 +1107,11 @@ bool MOERTEL::SplitMatrix2x2(Teuchos::RCP<Epetra_CrsMatrix> A,
       {
         const int gcid = A->ColMap().GID(cindices[j]);
         // see whether we have gcid as part of a22gmap
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         std::map<int,int>::iterator curr = a22gmap.find(gcid);
+#else
+        std::map<>::iterator curr = a22gmap.find(gcid);
+#endif
         if (curr==a22gmap.end()) continue;
         a12gcindices[count] = gcid;
         a12values[count] = values[j];
@@ -1148,7 +1164,11 @@ bool MOERTEL::SplitMatrix2x2(Teuchos::RCP<Epetra_CrsMatrix> A,
       {
         const int gcid = A->ColMap().GID(cindices[j]);
         // see whether we have gcid as part of a22gmap
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         std::map<int,int>::iterator curr = a22gmap.find(gcid);
+#else
+        std::map<>::iterator curr = a22gmap.find(gcid);
+#endif
         if (curr!=a22gmap.end()) continue;
         a21gcindices[count] = gcid;
         a21values[count] = values[j];

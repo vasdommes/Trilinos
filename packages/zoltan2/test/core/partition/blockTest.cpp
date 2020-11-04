@@ -97,7 +97,11 @@ int main(int narg, char **arg)
   // Some output
   int *origcnt = new int[nprocs];
   zscalar_t *origwgts = new zscalar_t[nprocs];
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::gather<int, int>(&numMyIdentifiers, 1, origcnt, 1, 0, *comm);
+#else
+  Teuchos::gather<>(&numMyIdentifiers, 1, origcnt, 1, 0, *comm);
+#endif
   Teuchos::gather<int, zscalar_t>(&origsumwgts, 1, origwgts, 1, 0, *comm);
   if (rank == 0) {
     std::cout << "BEFORE PART CNTS: ";

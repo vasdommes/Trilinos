@@ -67,8 +67,16 @@ using std::endl;
 typedef Tpetra::global_size_t GST;
 
 // This test is only meaningful in an MPI build.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( CrsMatrix, RemoveEmptyProcesses, Scalar, LO, GO, Node )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( CrsMatrix, RemoveEmptyProcesses, Scalar, Node )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     using Teuchos::Comm;
     using Teuchos::outArg;
     using Teuchos::RCP;
@@ -78,8 +86,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( CrsMatrix, RemoveEmptyProcesses, Scalar, LO, 
     using Teuchos::reduceAll;
     using std::cerr;
     using std::endl;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::Map<LO, GO, Node> map_type;
     typedef Tpetra::CrsMatrix<Scalar, LO, GO, Node> crs_matrix_type;
+#else
+    typedef Tpetra::Map<Node> map_type;
+    typedef Tpetra::CrsMatrix<Scalar, Node> crs_matrix_type;
+#endif
     typedef Teuchos::ScalarTraits<Scalar> STS;
     const Scalar ONE = STS::one ();
     int lclSuccess = 0;
@@ -175,8 +188,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( CrsMatrix, RemoveEmptyProcesses, Scalar, LO, 
 //
 // Instantiations of tests
 //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define UNIT_TEST_GROUP( SCALAR, LO, GO, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( CrsMatrix, RemoveEmptyProcesses, SCALAR, LO, GO, NODE )
+#else
+#define UNIT_TEST_GROUP( SCALAR, NODE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( CrsMatrix, RemoveEmptyProcesses, SCALAR, NODE )
+#endif
 
 TPETRA_ETI_MANGLING_TYPEDEFS()
 

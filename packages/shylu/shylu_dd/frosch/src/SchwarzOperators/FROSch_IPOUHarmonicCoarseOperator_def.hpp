@@ -51,16 +51,30 @@ namespace FROSch {
     using namespace Teuchos;
     using namespace Xpetra;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     IPOUHarmonicCoarseOperator<SC,LO,GO,NO>::IPOUHarmonicCoarseOperator(ConstXMatrixPtr k,
+#else
+    template <class SC,class NO>
+    IPOUHarmonicCoarseOperator<SC,NO>::IPOUHarmonicCoarseOperator(ConstXMatrixPtr k,
+#endif
                                                                          ParameterListPtr parameterList) :
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     HarmonicCoarseOperator<SC,LO,GO,NO> (k,parameterList)
+#else
+    HarmonicCoarseOperator<SC,NO> (k,parameterList)
+#endif
     {
         FROSCH_DETAILTIMER_START_LEVELID(iPOUHarmonicCoarseOperatorTime,"IPOUHarmonicCoarseOperator::IPOUHarmonicCoarseOperator");
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     int IPOUHarmonicCoarseOperator<SC,LO,GO,NO>::initialize(UN dimension,
+#else
+    template <class SC,class NO>
+    int IPOUHarmonicCoarseOperator<SC,NO>::initialize(UN dimension,
+#endif
                                                             UN dofsPerNode,
                                                             ConstXMapPtr nodesMap,
                                                             ConstXMapPtrVecPtr dofsMaps,
@@ -78,8 +92,13 @@ namespace FROSch {
         return ret;
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     int IPOUHarmonicCoarseOperator<SC,LO,GO,NO>::initialize(UN dimension,
+#else
+    template <class SC,class NO>
+    int IPOUHarmonicCoarseOperator<SC,NO>::initialize(UN dimension,
+#endif
                                                             UNVecPtr dofsPerNodeVec,
                                                             ConstXMapPtrVecPtr repeatedNodesMapVec,
                                                             ConstXMapPtrVecPtr2D repeatedDofMapsVec,
@@ -97,21 +116,36 @@ namespace FROSch {
         return 0;
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     void IPOUHarmonicCoarseOperator<SC,LO,GO,NO>::describe(FancyOStream &out,
+#else
+    template <class SC,class NO>
+    void IPOUHarmonicCoarseOperator<SC,NO>::describe(FancyOStream &out,
+#endif
                                                            const EVerbosityLevel verbLevel) const
     {
         FROSCH_ASSERT(false,"describe() has to be implemented properly...");
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     string IPOUHarmonicCoarseOperator<SC,LO,GO,NO>::description() const
+#else
+    template <class SC,class NO>
+    string IPOUHarmonicCoarseOperator<SC,NO>::description() const
+#endif
     {
         return "Interface Partition of Unity Coarse Operator";
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     typename IPOUHarmonicCoarseOperator<SC,LO,GO,NO>::XMapPtr IPOUHarmonicCoarseOperator<SC,LO,GO,NO>::BuildRepeatedMapCoarseLevel(ConstXMapPtr &nodesMap,
+#else
+    template <class SC,class NO>
+    typename IPOUHarmonicCoarseOperator<SC,NO>::XMapPtr IPOUHarmonicCoarseOperator<SC,NO>::BuildRepeatedMapCoarseLevel(ConstXMapPtr &nodesMap,
+#endif
                                                                                                                                    UN dofsPerNode,
                                                                                                                                    ConstXMapPtrVecPtr dofsMaps,
                                                                                                                                    UN partition)
@@ -159,7 +193,11 @@ namespace FROSch {
                         if (nodesMap->getComm()->getRank() == 0) std::cout<<"This should never happen\n";
                     }
                 }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                 dofsMaps[j] =   Xpetra::MapFactory<LO,GO,NO>::Build(Xpetra::UseTpetra,-1,dmapEle,0,nodesMap->getComm());
+#else
+                dofsMaps[j] =   Xpetra::MapFactory<NO>::Build(Xpetra::UseTpetra,-1,dmapEle,0,nodesMap->getComm());
+#endif
             }
         } //RGDSW type CoarseOperator
         else if (partition == 1) {
@@ -175,17 +213,30 @@ namespace FROSch {
                         dmapEle[i] = nodeEle[i]+j*NumEnt_[6]+(dofsPerNode-1)*NumEnt_[5];
                     }
                 }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                 dofsMaps[j] =   Xpetra::MapFactory<LO,GO,NO>::Build(Xpetra::UseTpetra,-1,dmapEle,0,nodesMap->getComm());
+#else
+                dofsMaps[j] =   Xpetra::MapFactory<NO>::Build(Xpetra::UseTpetra,-1,dmapEle,0,nodesMap->getComm());
+#endif
             }
         } else if (partition == 2) {
             FROSCH_ASSERT(false,"GDSWStar is not implemented yet!");
         }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         Teuchos::RCP<Xpetra::Map<LO,GO,NO> > tmpMap =   Xpetra::MapFactory<LO,GO,NO>::Build(Xpetra::UseTpetra,-1,dofEle,0,nodesMap->getComm());
+#else
+        Teuchos::RCP<Xpetra::Map<NO> > tmpMap =   Xpetra::MapFactory<NO>::Build(Xpetra::UseTpetra,-1,dofEle,0,nodesMap->getComm());
+#endif
         return tmpMap;
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     int  IPOUHarmonicCoarseOperator<SC,LO,GO,NO>::buildCoarseSpace(UN dimension,
+#else
+    template <class SC,class NO>
+    int  IPOUHarmonicCoarseOperator<SC,NO>::buildCoarseSpace(UN dimension,
+#endif
                                                                    UN dofsPerNode,
                                                                    ConstXMapPtr nodesMap,
                                                                    ConstXMapPtrVecPtr dofsMaps,
@@ -208,8 +259,13 @@ namespace FROSch {
         return resetCoarseSpaceBlock(this->NumberOfBlocks_-1,dimension,dofsPerNode,nodesMap,dofsMaps,nullSpaceBasis,dirichletBoundaryDofs,nodeList);
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     int IPOUHarmonicCoarseOperator<SC,LO,GO,NO>::buildCoarseSpace(UN dimension,
+#else
+    template <class SC,class NO>
+    int IPOUHarmonicCoarseOperator<SC,NO>::buildCoarseSpace(UN dimension,
+#endif
                                                                   UNVecPtr dofsPerNodeVec,
                                                                   ConstXMapPtrVecPtr repeatedNodesMapVec,
                                                                   ConstXMapPtrVecPtr2D repeatedDofMapsVec,
@@ -233,8 +289,13 @@ namespace FROSch {
     }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class SC,class LO,class GO,class NO>
     int IPOUHarmonicCoarseOperator<SC,LO,GO,NO>::resetCoarseSpaceBlock(UN blockId,
+#else
+    template <class SC,class NO>
+    int IPOUHarmonicCoarseOperator<SC,NO>::resetCoarseSpaceBlock(UN blockId,
+#endif
                                                                        UN dimension,
                                                                        UN dofsPerNode,
                                                                        ConstXMapPtr nodesMap,
@@ -309,15 +370,27 @@ namespace FROSch {
             InterfacePartitionOfUnityPtr interfacePartitionOfUnity;
             if (!coarseSpaceList->sublist("InterfacePartitionOfUnity").get("Type","GDSW").compare("GDSW")) {
                 coarseSpaceList->sublist("InterfacePartitionOfUnity").sublist("GDSW").set("Test Unconnected Interface",this->ParameterList_->get("Test Unconnected Interface",true));
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                 interfacePartitionOfUnity = InterfacePartitionOfUnityPtr(new GDSWInterfacePartitionOfUnity<SC,LO,GO,NO>(this->MpiComm_,this->SerialComm_,dimension,this->DofsPerNode_[blockId],nodesMap,this->DofsMaps_[blockId],sublist(sublist(coarseSpaceList,"InterfacePartitionOfUnity"),"GDSW"),verbosity,this->LevelID_));
+#else
+                interfacePartitionOfUnity = InterfacePartitionOfUnityPtr(new GDSWInterfacePartitionOfUnity<SC,NO>(this->MpiComm_,this->SerialComm_,dimension,this->DofsPerNode_[blockId],nodesMap,this->DofsMaps_[blockId],sublist(sublist(coarseSpaceList,"InterfacePartitionOfUnity"),"GDSW"),verbosity,this->LevelID_));
+#endif
                 this->PartitionType_ = 0;
             } else if (!coarseSpaceList->sublist("InterfacePartitionOfUnity").get("Type","GDSW").compare("GDSWStar")) {
                 coarseSpaceList->sublist("InterfacePartitionOfUnity").sublist("GDSWStar").set("Test Unconnected Interface",this->ParameterList_->get("Test Unconnected Interface",true));
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                 interfacePartitionOfUnity = InterfacePartitionOfUnityPtr(new GDSWStarInterfacePartitionOfUnity<SC,LO,GO,NO>(this->MpiComm_,this->SerialComm_,dimension,this->DofsPerNode_[blockId],nodesMap,this->DofsMaps_[blockId],sublist(sublist(coarseSpaceList,"InterfacePartitionOfUnity"),"GDSWStar"),verbosity,this->LevelID_));
+#else
+                interfacePartitionOfUnity = InterfacePartitionOfUnityPtr(new GDSWStarInterfacePartitionOfUnity<SC,NO>(this->MpiComm_,this->SerialComm_,dimension,this->DofsPerNode_[blockId],nodesMap,this->DofsMaps_[blockId],sublist(sublist(coarseSpaceList,"InterfacePartitionOfUnity"),"GDSWStar"),verbosity,this->LevelID_));
+#endif
                 this->PartitionType_ = 2;
             } else if (!coarseSpaceList->sublist("InterfacePartitionOfUnity").get("Type","GDSW").compare("RGDSW")) {
                 coarseSpaceList->sublist("InterfacePartitionOfUnity").sublist("RGDSW").set("Test Unconnected Interface",this->ParameterList_->get("Test Unconnected Interface",true));
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                 interfacePartitionOfUnity = InterfacePartitionOfUnityPtr(new RGDSWInterfacePartitionOfUnity<SC,LO,GO,NO>(this->MpiComm_,this->SerialComm_,dimension,this->DofsPerNode_[blockId],nodesMap,this->DofsMaps_[blockId],sublist(sublist(coarseSpaceList,"InterfacePartitionOfUnity"),"RGDSW"),verbosity,this->LevelID_));
+#else
+                interfacePartitionOfUnity = InterfacePartitionOfUnityPtr(new RGDSWInterfacePartitionOfUnity<SC,NO>(this->MpiComm_,this->SerialComm_,dimension,this->DofsPerNode_[blockId],nodesMap,this->DofsMaps_[blockId],sublist(sublist(coarseSpaceList,"InterfacePartitionOfUnity"),"RGDSW"),verbosity,this->LevelID_));
+#endif
                 this->PartitionType_ = 1;
             } else {
                 FROSCH_ASSERT(false,"InterfacePartitionOfUnity Type is unknown.");
@@ -331,7 +404,11 @@ namespace FROSch {
             if (interface->getNumNodes()==0) {
                 FROSCH_NOTIFICATION("FROSch::IPOUHarmonicCoarseOperator",this->Verbose_,"No interface found => A Constant Partition of Unity will be used instead.");
                 coarseSpaceList->sublist("InterfacePartitionOfUnity").sublist("RGDSW").set("Test Unconnected Interface",this->ParameterList_->get("Test Unconnected Interface",true));
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                 PartitionOfUnity_ = PartitionOfUnityPtr(new ConstantPartitionOfUnity<SC,LO,GO,NO>(this->MpiComm_,
+#else
+                PartitionOfUnity_ = PartitionOfUnityPtr(new ConstantPartitionOfUnity<SC,NO>(this->MpiComm_,
+#endif
                                                                                                   this->SerialComm_,
                                                                                                   dimension,
                                                                                                   this->DofsPerNode_[blockId],
@@ -378,8 +455,13 @@ namespace FROSch {
 
             // Construct local Interface nullspace basis (in case the interface was empty before, it was replaced by the interior. Therfore, this should be correct as well)
             ConstXMapPtr nullSpaceBasisMap = nullSpaceBasis->getMap();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
             XMapPtr serialInterfaceMap = MapFactory<LO,GO,NO>::Build(nullSpaceBasisMap->lib(),this->GammaDofs_[blockId].size(),this->GammaDofs_[blockId].size(),0,this->SerialComm_);
             XMultiVectorPtr interfaceNullspaceBasis = MultiVectorFactory<SC,LO,GO,NO>::Build(serialInterfaceMap,nullSpaceBasis->getNumVectors());
+#else
+            XMapPtr serialInterfaceMap = MapFactory<NO>::Build(nullSpaceBasisMap->lib(),this->GammaDofs_[blockId].size(),this->GammaDofs_[blockId].size(),0,this->SerialComm_);
+            XMultiVectorPtr interfaceNullspaceBasis = MultiVectorFactory<SC,NO>::Build(serialInterfaceMap,nullSpaceBasis->getNumVectors());
+#endif
             for (UN i=0; i<nullSpaceBasis->getNumVectors(); i++) {
                 SCVecPtr interfaceNullspaceBasisData = interfaceNullspaceBasis->getDataNonConst(i);
                 ConstSCVecPtr nullSpaceBasisData = nullSpaceBasis->getData(i);
@@ -400,14 +482,22 @@ namespace FROSch {
 
             if (!this->DistributionList_->get("Type","linear").compare("ZoltanDual")) {
                 FROSCH_ASSERT(this->NumberOfBlocks_==1,"Distribution Type ZoltanDual only works for one Block");
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                 Teuchos::RCP<DDInterface<SC,LO,GO,NO> > theInterface =Teuchos::rcp_const_cast<DDInterface<SC,LO,GO,NO> >(interfacePartitionOfUnity->getDDInterface());
+#else
+                Teuchos::RCP<DDInterface<SC,NO> > theInterface =Teuchos::rcp_const_cast<DDInterface<SC,NO> >(interfacePartitionOfUnity->getDDInterface());
+#endif
                 this->buildGlobalGraph(theInterface);
                 int dim = dimension;
                 sublist(this->ParameterList_,"CoarseSolver")->set("Dimension",dim);
             }
 
             // Build local basis
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
             LocalPartitionOfUnityBasis_ = LocalPartitionOfUnityBasisPtr(new LocalPartitionOfUnityBasis<SC,LO,GO,NO>(this->MpiComm_,this->SerialComm_,this->DofsPerNode_[blockId],sublist(coarseSpaceList,"LocalPartitionOfUnityBasis"),interfaceNullspaceBasis.getConst(),PartitionOfUnity_->getLocalPartitionOfUnity(),PartitionOfUnity_->getPartitionOfUnityMaps())); // sublist(coarseSpaceList,"LocalPartitionOfUnityBasis") testen
+#else
+            LocalPartitionOfUnityBasis_ = LocalPartitionOfUnityBasisPtr(new LocalPartitionOfUnityBasis<SC,NO>(this->MpiComm_,this->SerialComm_,this->DofsPerNode_[blockId],sublist(coarseSpaceList,"LocalPartitionOfUnityBasis"),interfaceNullspaceBasis.getConst(),PartitionOfUnity_->getLocalPartitionOfUnity(),PartitionOfUnity_->getPartitionOfUnityMaps())); // sublist(coarseSpaceList,"LocalPartitionOfUnityBasis") testen
+#endif
 
             LocalPartitionOfUnityBasis_->buildLocalPartitionOfUnityBasis();
 

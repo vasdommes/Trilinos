@@ -57,9 +57,15 @@ namespace Amesos2 {
   AMESOS2_SOLVER_EPETRA_INST(cuSOLVER);
 #endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   #define AMESOS2_CUSOLVER_LOCAL_INSTANT(S,LO,GO,N) \
   template class Amesos2::cuSOLVER<Tpetra::CrsMatrix<S, LO, GO, N>, \
                               Tpetra::MultiVector<S, LO, GO, N> >;
+#else
+  #define AMESOS2_CUSOLVER_LOCAL_INSTANT(S,N) \
+  template class Amesos2::cuSOLVER<Tpetra::CrsMatrix<S, N>, \
+                              Tpetra::MultiVector<S, N> >;
+#endif
 
   TPETRA_ETI_MANGLING_TYPEDEFS()
 

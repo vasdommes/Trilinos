@@ -67,9 +67,15 @@ namespace panzer
 /** Build a face to element mapping. This returns neighboring
   * cell information for each face in the mesh.
   */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <typename LocalOrdinal,typename GlobalOrdinal>
+#endif
 class FaceToElement {
 private:
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   FaceToElement(const FaceToElement &); // disallowed
 
 public:
@@ -114,10 +120,17 @@ protected:
   Kokkos::View<int *[2]> procs_by_face_;
 
   typedef Kokkos::Compat::KokkosDeviceWrapperNode<PHX::Device> NodeType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LocalOrdinal, GlobalOrdinal, NodeType> Map;
   typedef Tpetra::Export<LocalOrdinal, GlobalOrdinal, NodeType> Export;
   typedef Tpetra::Import<LocalOrdinal, GlobalOrdinal, NodeType> Import;
   typedef Tpetra::MultiVector<GlobalOrdinal, LocalOrdinal, GlobalOrdinal, NodeType> GOMultiVector;
+#else
+  typedef Tpetra::Map<NodeType> Map;
+  typedef Tpetra::Export<NodeType> Export;
+  typedef Tpetra::Import<NodeType> Import;
+  typedef Tpetra::MultiVector<GlobalOrdinal, NodeType> GOMultiVector;
+#endif
 
 
   Teuchos::RCP<const Map> face_map_;

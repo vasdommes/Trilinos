@@ -482,7 +482,11 @@ snl_fei::mergeSparseRowGraphs(const fei::SparseRowGraph* srg1,
   newgraph->rowOffsets.resize(numrows+1);
   newgraph->packedColumnIndices.resize(nnz);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int> rowmap;
+#else
+  std::map<> rowmap;
+#endif
 
   for(unsigned i=0; i<srg1->rowNumbers.size(); ++i) {
     int rowlen = srg1->rowOffsets[i+1]-srg1->rowOffsets[i];
@@ -494,7 +498,11 @@ snl_fei::mergeSparseRowGraphs(const fei::SparseRowGraph* srg1,
     rowmap.insert(std::make_pair(srg2->rowNumbers[i], rowlen));
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::iterator
+#else
+  std::map<>::iterator
+#endif
     r_iter = rowmap.begin(),
     r_end  = rowmap.end();
 

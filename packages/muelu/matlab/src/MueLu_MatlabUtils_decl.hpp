@@ -178,10 +178,18 @@ template<typename T>
 const T& getLevelVariable(std::string& name, Level& lvl);
 
 //Functions used to put data through matlab factories - first arg is "this" pointer of matlab factory
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<typename Scalar = double, typename LocalOrdinal = mm_LocalOrd, typename GlobalOrdinal = mm_GlobalOrd, typename Node = mm_node_t>
+#else
+template<typename Scalar = double, typename Node = mm_node_t>
+#endif
 std::vector<Teuchos::RCP<MuemexArg>> processNeeds(const Factory* factory, std::string& needsParam, Level& lvl);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<typename Scalar = double, typename LocalOrdinal = mm_LocalOrd, typename GlobalOrdinal = mm_GlobalOrd, typename Node = mm_node_t>
+#else
+template<typename Scalar = double, typename Node = mm_node_t>
+#endif
 void processProvides(std::vector<Teuchos::RCP<MuemexArg>>& mexOutput, const Factory* factory, std::string& providesParam, Level& lvl);
 
 //create a sparse array in Matlab
@@ -200,13 +208,21 @@ Teuchos::RCP<MuemexArg> convertMatlabVar(const mxArray* mxa);
 
 // trim from start
 static inline std::string &ltrim(std::string &s) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+#else
+  s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<>(std::isspace))));
+#endif
   return s;
 }
 
 // trim from end
 static inline std::string &rtrim(std::string &s) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+#else
+  s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<>(std::isspace))).base(), s.end());
+#endif
   return s;
 }
 

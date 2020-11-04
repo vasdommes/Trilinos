@@ -393,15 +393,30 @@ private:
 };
 
 //////////////////////////////////////////////////////////////////////////////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7745, RectangularDefault,
                                   Scalar, LO, GO, Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Bug7745, RectangularDefault,
+                                  Scalar, Node)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   // Use default Tpetra maps for range and domain maps
   const Teuchos::RCP<const Teuchos::Comm<int> > comm = Tpetra::getDefaultComm();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using map_t = Tpetra::Map<LO,GO,Node>;
   using vector_t = Tpetra::Vector<Scalar,LO,GO,Node>;
   using matrix_t = Tpetra::CrsMatrix<Scalar,LO,GO,Node>;
+#else
+  using map_t = Tpetra::Map<Node>;
+  using vector_t = Tpetra::Vector<Scalar,Node>;
+  using matrix_t = Tpetra::CrsMatrix<Scalar,Node>;
+#endif
 
   MatrixBuilder<map_t, vector_t, matrix_t> mb(comm, false);
 
@@ -423,15 +438,30 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7745, RectangularDefault,
 }
 
 //////////////////////////////////////////////////////////////////////////////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7745, RectangularDefaultTranspose,
                                   Scalar, LO, GO, Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Bug7745, RectangularDefaultTranspose,
+                                  Scalar, Node)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   // Use default Tpetra maps for range and domain maps
   const Teuchos::RCP<const Teuchos::Comm<int> > comm = Tpetra::getDefaultComm();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using map_t = Tpetra::Map<LO,GO,Node>;
   using vector_t = Tpetra::Vector<Scalar,LO,GO,Node>;
   using matrix_t = Tpetra::CrsMatrix<Scalar,LO,GO,Node>;
+#else
+  using map_t = Tpetra::Map<Node>;
+  using vector_t = Tpetra::Vector<Scalar,Node>;
+  using matrix_t = Tpetra::CrsMatrix<Scalar,Node>;
+#endif
 
   MatrixBuilder<map_t, vector_t, matrix_t> mb(comm, false);
 
@@ -453,15 +483,30 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7745, RectangularDefaultTranspose,
 }
 
 //////////////////////////////////////////////////////////////////////////////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7745, SquareDefault,
                                   Scalar, LO, GO, Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Bug7745, SquareDefault,
+                                  Scalar, Node)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   // Use default Tpetra maps for range and domain maps
   const Teuchos::RCP<const Teuchos::Comm<int> > comm = Tpetra::getDefaultComm();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using map_t = Tpetra::Map<LO,GO,Node>;
   using vector_t = Tpetra::Vector<Scalar,LO,GO,Node>;
   using matrix_t = Tpetra::CrsMatrix<Scalar,LO,GO,Node>;
+#else
+  using map_t = Tpetra::Map<Node>;
+  using vector_t = Tpetra::Vector<Scalar,Node>;
+  using matrix_t = Tpetra::CrsMatrix<Scalar,Node>;
+#endif
 
   MatrixBuilder<map_t, vector_t, matrix_t> mb(comm, true);
 
@@ -482,15 +527,30 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7745, SquareDefault,
 }
 
 //////////////////////////////////////////////////////////////////////////////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7745, SquareDefaultTranspose,
                                   Scalar, LO, GO, Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Bug7745, SquareDefaultTranspose,
+                                  Scalar, Node)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   // Use default Tpetra maps for range and domain maps
   const Teuchos::RCP<const Teuchos::Comm<int> > comm = Tpetra::getDefaultComm();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using map_t = Tpetra::Map<LO,GO,Node>;
   using vector_t = Tpetra::Vector<Scalar,LO,GO,Node>;
   using matrix_t = Tpetra::CrsMatrix<Scalar,LO,GO,Node>;
+#else
+  using map_t = Tpetra::Map<Node>;
+  using vector_t = Tpetra::Vector<Scalar,Node>;
+  using matrix_t = Tpetra::CrsMatrix<Scalar,Node>;
+#endif
 
   MatrixBuilder<map_t, vector_t, matrix_t> mb(comm, true);
 
@@ -512,16 +572,31 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7745, SquareDefaultTranspose,
 }
 
 //////////////////////////////////////////////////////////////////////////////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7745, RectangularCyclic,
                                   Scalar, LO, GO, Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Bug7745, RectangularCyclic,
+                                  Scalar, Node)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   Teuchos::RCP<const Teuchos::Comm<int> > comm = Tpetra::getDefaultComm();
   int me = comm->getRank();
   int np = comm->getSize();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using map_t = Tpetra::Map<LO,GO,Node>;
   using vector_t = Tpetra::Vector<Scalar,LO,GO,Node>;
   using matrix_t = Tpetra::CrsMatrix<Scalar,LO,GO,Node>;
+#else
+  using map_t = Tpetra::Map<Node>;
+  using vector_t = Tpetra::Vector<Scalar,Node>;
+  using matrix_t = Tpetra::CrsMatrix<Scalar,Node>;
+#endif
 
   MatrixBuilder<map_t, vector_t, matrix_t> mb(comm, false);
   Teuchos::Array<GO> myEntries(mb.nGlobalCols());
@@ -566,16 +641,31 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7745, RectangularCyclic,
 }
 
 //////////////////////////////////////////////////////////////////////////////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7745, RectangularCyclicTranspose,
                                   Scalar, LO, GO, Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Bug7745, RectangularCyclicTranspose,
+                                  Scalar, Node)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   Teuchos::RCP<const Teuchos::Comm<int> > comm = Tpetra::getDefaultComm();
   int me = comm->getRank();
   int np = comm->getSize();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using map_t = Tpetra::Map<LO,GO,Node>;
   using vector_t = Tpetra::Vector<Scalar,LO,GO,Node>;
   using matrix_t = Tpetra::CrsMatrix<Scalar,LO,GO,Node>;
+#else
+  using map_t = Tpetra::Map<Node>;
+  using vector_t = Tpetra::Vector<Scalar,Node>;
+  using matrix_t = Tpetra::CrsMatrix<Scalar,Node>;
+#endif
 
   MatrixBuilder<map_t, vector_t, matrix_t> mb(comm, false);
   Teuchos::Array<GO> myEntries(mb.nGlobalCols());
@@ -621,16 +711,31 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7745, RectangularCyclicTranspose,
 }
 
 //////////////////////////////////////////////////////////////////////////////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7745, SquareCyclic,
                                   Scalar, LO, GO, Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Bug7745, SquareCyclic,
+                                  Scalar, Node)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   Teuchos::RCP<const Teuchos::Comm<int> > comm = Tpetra::getDefaultComm();
   int me = comm->getRank();
   int np = comm->getSize();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using map_t = Tpetra::Map<LO,GO,Node>;
   using vector_t = Tpetra::Vector<Scalar,LO,GO,Node>;
   using matrix_t = Tpetra::CrsMatrix<Scalar,LO,GO,Node>;
+#else
+  using map_t = Tpetra::Map<Node>;
+  using vector_t = Tpetra::Vector<Scalar,Node>;
+  using matrix_t = Tpetra::CrsMatrix<Scalar,Node>;
+#endif
 
   MatrixBuilder<map_t, vector_t, matrix_t> mb(comm, true);
   Teuchos::Array<GO> myEntries(mb.nGlobalCols());
@@ -675,16 +780,31 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7745, SquareCyclic,
 }
 
 //////////////////////////////////////////////////////////////////////////////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7745, SquareCyclicTranspose,
                                   Scalar, LO, GO, Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Bug7745, SquareCyclicTranspose,
+                                  Scalar, Node)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   Teuchos::RCP<const Teuchos::Comm<int> > comm = Tpetra::getDefaultComm();
   int me = comm->getRank();
   int np = comm->getSize();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using map_t = Tpetra::Map<LO,GO,Node>;
   using vector_t = Tpetra::Vector<Scalar,LO,GO,Node>;
   using matrix_t = Tpetra::CrsMatrix<Scalar,LO,GO,Node>;
+#else
+  using map_t = Tpetra::Map<Node>;
+  using vector_t = Tpetra::Vector<Scalar,Node>;
+  using matrix_t = Tpetra::CrsMatrix<Scalar,Node>;
+#endif
 
   MatrixBuilder<map_t, vector_t, matrix_t> mb(comm, true);
   Teuchos::Array<GO> myEntries(mb.nGlobalCols());
@@ -729,16 +849,31 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7745, SquareCyclicTranspose,
   TEST_ASSERT(gerr == 0);
 }
 //////////////////////////////////////////////////////////////////////////////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7745, SquareCyclicBatched,
                                   Scalar, LO, GO, Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Bug7745, SquareCyclicBatched,
+                                  Scalar, Node)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   Teuchos::RCP<const Teuchos::Comm<int> > comm = Tpetra::getDefaultComm();
   int me = comm->getRank();
   int np = comm->getSize();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using map_t = Tpetra::Map<LO,GO,Node>;
   using vector_t = Tpetra::Vector<Scalar,LO,GO,Node>;
   using matrix_t = Tpetra::CrsMatrix<Scalar,LO,GO,Node>;
+#else
+  using map_t = Tpetra::Map<Node>;
+  using vector_t = Tpetra::Vector<Scalar,Node>;
+  using matrix_t = Tpetra::CrsMatrix<Scalar,Node>;
+#endif
 
   MatrixBuilder<map_t, vector_t, matrix_t> mb(comm, true);
   Teuchos::Array<GO> myEntries(mb.nGlobalCols());
@@ -782,6 +917,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7745, SquareCyclicBatched,
   TEST_ASSERT(gerr == 0);
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define UNIT_TEST_GROUP( SCALAR, LO, GO, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Bug7745, RectangularDefault, SCALAR, LO, GO, NODE) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Bug7745, RectangularDefaultTranspose, SCALAR, LO, GO, NODE) \
@@ -792,6 +928,18 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Bug7745, SquareCyclicBatched,
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Bug7745, SquareCyclic, SCALAR, LO, GO, NODE) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Bug7745, SquareCyclicTranspose, SCALAR, LO, GO, NODE) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Bug7745, SquareCyclicBatched, SCALAR, LO, GO, NODE) 
+#else
+#define UNIT_TEST_GROUP( SCALAR, NODE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Bug7745, RectangularDefault, SCALAR, NODE) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Bug7745, RectangularDefaultTranspose, SCALAR, NODE) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Bug7745, SquareDefault, SCALAR, NODE) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Bug7745, SquareDefaultTranspose, SCALAR, NODE) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Bug7745, RectangularCyclic, SCALAR, NODE) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Bug7745, RectangularCyclicTranspose, SCALAR, NODE) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Bug7745, SquareCyclic, SCALAR, NODE) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Bug7745, SquareCyclicTranspose, SCALAR, NODE) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Bug7745, SquareCyclicBatched, SCALAR, NODE) 
+#endif
 
   TPETRA_ETI_MANGLING_TYPEDEFS()
 

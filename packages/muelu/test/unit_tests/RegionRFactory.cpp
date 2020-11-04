@@ -61,10 +61,15 @@ namespace MueLuTests {
 // createRegionMatrix is a helper function that allows us to easily
 // generate a region matrix based on the corresponding composite
 // matrix.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+template <class Scalar, class Node>
+#endif
 void createRegionMatrix(const Teuchos::ParameterList galeriList,
                         const int numDofsPerNode,
                         const int maxRegPerProc,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                         const RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > nodeMap,
                         const RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > dofMap,
                         const RCP<Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > A,
@@ -75,9 +80,25 @@ void createRegionMatrix(const Teuchos::ParameterList galeriList,
                         std::vector<RCP<Xpetra::Import<LocalOrdinal, GlobalOrdinal, Node> > >& rowImportPerGrp,
                         std::vector<RCP<Xpetra::Import<LocalOrdinal, GlobalOrdinal, Node> > >& colImportPerGrp,
                         std::vector<RCP<Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > >& regionGrpMats,
+#else
+                        const RCP<Xpetra::Map<Node> > nodeMap,
+                        const RCP<Xpetra::Map<Node> > dofMap,
+                        const RCP<Xpetra::Matrix<Scalar, Node> > A,
+                        std::vector<RCP<Xpetra::Map<Node> > >& rowMapPerGrp,
+                        std::vector<RCP<Xpetra::Map<Node> > >& colMapPerGrp,
+                        std::vector<RCP<Xpetra::Map<Node> > >& revisedRowMapPerGrp,
+                        std::vector<RCP<Xpetra::Map<Node> > >& revisedColMapPerGrp,
+                        std::vector<RCP<Xpetra::Import<Node> > >& rowImportPerGrp,
+                        std::vector<RCP<Xpetra::Import<Node> > >& colImportPerGrp,
+                        std::vector<RCP<Xpetra::Matrix<Scalar, Node> > >& regionGrpMats,
+#endif
                         Teuchos::ArrayRCP<LocalOrdinal>&  regionMatVecLIDs,
                         Teuchos::Array<GlobalOrdinal>& quasiRegionCoordGIDs,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                         Teuchos::RCP<Xpetra::Import<LocalOrdinal, GlobalOrdinal, Node> >& regionInterfaceImporter,
+#else
+                        Teuchos::RCP<Xpetra::Import<Node> >& regionInterfaceImporter,
+#endif
                         Teuchos::Array<LocalOrdinal>& rNodesPerDim,
                         LocalOrdinal& numLocalRegionNodes) {
 #include <MueLu_UseShortNames.hpp>
@@ -139,14 +160,22 @@ void createRegionMatrix(const Teuchos::ParameterList galeriList,
   // std::cout << "p=" << myRank << " | interfaceCompositeGIDs" << interfaceCompositeGIDs << std::endl;
   // std::cout << "p=" << myRank << " | interfaceRegionLIDs" << interfaceRegionLIDs() << std::endl;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   rowMapPerGrp[0] = Xpetra::MapFactory<LO,GO,Node>::Build(A->getRowMap()->lib(),
+#else
+  rowMapPerGrp[0] = Xpetra::MapFactory<Node>::Build(A->getRowMap()->lib(),
+#endif
                                                           Teuchos::OrdinalTraits<GO>::invalid(),
                                                           quasiRegionGIDs(),
                                                           A->getRowMap()->getIndexBase(),
                                                           A->getRowMap()->getComm());
   colMapPerGrp[0] = rowMapPerGrp[0];
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   revisedRowMapPerGrp[0] = Xpetra::MapFactory<LO,GO,Node>::Build(A->getRowMap()->lib(),
+#else
+  revisedRowMapPerGrp[0] = Xpetra::MapFactory<Node>::Build(A->getRowMap()->lib(),
+#endif
                                                                  Teuchos::OrdinalTraits<GO>::invalid(),
                                                                  quasiRegionGIDs.size(),
                                                                  A->getRowMap()->getIndexBase(),
@@ -158,8 +187,13 @@ void createRegionMatrix(const Teuchos::ParameterList galeriList,
   rowImportPerGrp[0] = ImportFactory::Build(dofMap, rowMapPerGrp[0]);
   colImportPerGrp[0] = ImportFactory::Build(dofMap, colMapPerGrp[0]);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Xpetra::MultiVector<LO, LO, GO, NO> > regionsPerGIDWithGhosts;
   RCP<Xpetra::MultiVector<GO, LO, GO, NO> > interfaceGIDsMV;
+#else
+  RCP<Xpetra::MultiVector<LO, NO> > regionsPerGIDWithGhosts;
+  RCP<Xpetra::MultiVector<GO, NO> > interfaceGIDsMV;
+#endif
   MakeRegionPerGIDWithGhosts(nodeMap, revisedRowMapPerGrp[0], rowImportPerGrp[0],
                              maxRegPerGID, numDofsPerNode,
                              lNodesPerDir, sendGIDs, sendPIDs, interfaceRegionLIDs,
@@ -186,26 +220,47 @@ void createRegionMatrix(const Teuchos::ParameterList galeriList,
 // comm [in]: the MPI communicator used with distributed objects
 // A [out]: composite matrix
 // regionGrpMats [out]: the region matrix
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+template <class Scalar, class Node>
+#endif
 void createProblem(const int maxRegPerProc, 
                    const LocalOrdinal numDofsPerNode,
                    Galeri::Xpetra::Parameters<GlobalOrdinal>& galeriParameters,
                    RCP<const Teuchos::Comm<int> > comm,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                    RCP<Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> >& A,
                    std::vector<RCP<Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > >& regionGrpMats,
                    Teuchos::Array<RCP<Xpetra::MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node> > >& regionNullspace,
                    Teuchos::Array<RCP<Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::coordinateType, LocalOrdinal, GlobalOrdinal, Node> > >& regionCoordinates,
                    std::vector<RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > >& revisedRowMapPerGrp,
                    std::vector<RCP<Xpetra::Import<LocalOrdinal, GlobalOrdinal, Node> > >& rowImportPerGrp,
+#else
+                   RCP<Xpetra::Matrix<Scalar, Node> >& A,
+                   std::vector<RCP<Xpetra::Matrix<Scalar, Node> > >& regionGrpMats,
+                   Teuchos::Array<RCP<Xpetra::MultiVector<Scalar, Node> > >& regionNullspace,
+                   Teuchos::Array<RCP<Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::coordinateType,Node> > >& regionCoordinates,
+                   std::vector<RCP<Xpetra::Map<Node> > >& revisedRowMapPerGrp,
+                   std::vector<RCP<Xpetra::Import<Node> > >& rowImportPerGrp,
+#endif
                    Teuchos::ArrayRCP<LocalOrdinal>& regionMatVecLIDs,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                    RCP<Xpetra::Import<LocalOrdinal, GlobalOrdinal, Node> >& regionInterfaceImporter,
+#else
+                   RCP<Xpetra::Import<Node> >& regionInterfaceImporter,
+#endif
                    Teuchos::Array<LocalOrdinal>& rNodesPerDim) {
 #include <MueLu_UseShortNames.hpp>
   using TST                   = Teuchos::ScalarTraits<SC>;
   using magnitude_type        = typename TST::magnitudeType;
   using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
   using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
+#else
+  using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+#endif
 
   Teuchos::ParameterList galeriList = galeriParameters.GetParameterList();
   std::string matrixType = galeriParameters.GetMatrixType();
@@ -219,9 +274,17 @@ void createProblem(const int maxRegPerProc,
   }
 
   // Build maps for the problem
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Map> nodeMap = Galeri::Xpetra::CreateMap<LO, GO, Node>(TestHelpers::Parameters::getLib(),
+#else
+  RCP<Map> nodeMap = Galeri::Xpetra::CreateMap<Node>(TestHelpers::Parameters::getLib(),
+#endif
                                                              mapType, comm, galeriList);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Map> dofMap  = Xpetra::MapFactory<LO,GO,Node>::Build(nodeMap, numDofsPerNode);
+#else
+  RCP<Map> dofMap  = Xpetra::MapFactory<Node>::Build(nodeMap, numDofsPerNode);
+#endif
 
   // Build the Xpetra problem
   RCP<Galeri::Xpetra::Problem<Map,CrsMatrixWrap,MultiVector> > Pr =
@@ -253,13 +316,21 @@ void createProblem(const int maxRegPerProc,
   std::vector<RCP<Map> > regCoordMap(maxRegPerProc);
   std::vector<RCP<Import> > coordImporter(maxRegPerProc);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   quasiRegCoordMap[0] = Xpetra::MapFactory<LO,GO,Node>::
+#else
+  quasiRegCoordMap[0] = Xpetra::MapFactory<Node>::
+#endif
     Build(nodeMap->lib(),
           Teuchos::OrdinalTraits<GO>::invalid(),
           quasiRegionCoordGIDs(),
           nodeMap->getIndexBase(),
           nodeMap->getComm());
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   regCoordMap[0] = Xpetra::MapFactory<LO,GO,Node>::
+#else
+  regCoordMap[0] = Xpetra::MapFactory<Node>::
+#endif
     Build(nodeMap->lib(),
           Teuchos::OrdinalTraits<GO>::invalid(),
           numLocalRegionNodes,
@@ -269,7 +340,11 @@ void createProblem(const int maxRegPerProc,
   coordImporter[0] = ImportFactory::Build(nodeMap, quasiRegCoordMap[0]);
 
   // create region coordinates vector
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   regionCoordinates[0] = Xpetra::MultiVectorFactory<real_type,LO,GO,NO>::Build(quasiRegCoordMap[0],
+#else
+  regionCoordinates[0] = Xpetra::MultiVectorFactory<real_type,NO>::Build(quasiRegCoordMap[0],
+#endif
                                                                                coordinates->getNumVectors());
   regionCoordinates[0]->doImport(*coordinates, *coordImporter[0], Xpetra::INSERT);
   regionCoordinates[0]->replaceMap(regCoordMap[0]);
@@ -286,9 +361,17 @@ void createProblem(const int maxRegPerProc,
 } // createProblem
 
 // This test aims at checking that RegionRFactory has a working constructor.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionRFactory, RegionRFactCtor, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(RegionRFactory, RegionRFactCtor, Scalar, Node)
+#endif
 {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   MUELU_TESTING_SET_OSTREAM;
   MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -301,9 +384,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionRFactory, RegionRFactCtor, Scalar, Local
 
 // This test aims at checking that RegionRFactory produces a reasonable transfer
 // operator on a simple Laplace 3D problem.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionRFactory, RegionRFactLaplace3D, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(RegionRFactory, RegionRFactLaplace3D, Scalar, Node)
+#endif
 {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   MUELU_TESTING_SET_OSTREAM;
   MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -311,8 +402,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionRFactory, RegionRFactLaplace3D, Scalar, 
   using magnitude_type        = typename TST::magnitudeType;
   using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
   using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
   using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+  using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+  using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
   out << "version: " << MueLu::Version() << std::endl;
 
@@ -392,7 +488,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionRFactory, RegionRFactLaplace3D, Scalar, 
   coarseLevel.Release("Nullspace", myRFact.get());
   TEST_EQUALITY(coarseNullspace != Teuchos::null, true);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Xpetra::MultiVector<typename Teuchos::ScalarTraits<SC>::coordinateType, LO, GO, NO> > coarseCoordinates;
+#else
+  RCP<Xpetra::MultiVector<typename Teuchos::ScalarTraits<SC>::coordinateType,NO> > coarseCoordinates;
+#endif
   coarseLevel.Get("Coordinates", coarseCoordinates, myRFact.get());
   coarseLevel.Release("Coordinates", myRFact.get());
   TEST_EQUALITY(coarseCoordinates != Teuchos::null, true);
@@ -469,9 +569,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionRFactory, RegionRFactLaplace3D, Scalar, 
 
 // This test aims at checking that RegionRFactory produces a reasonable transfer
 // operator on a simple Elasticity 3D problem.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionRFactory, RegionRFactElasticity3D, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(RegionRFactory, RegionRFactElasticity3D, Scalar, Node)
+#endif
 {
 #   include "MueLu_UseShortNames.hpp"
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   MUELU_TESTING_SET_OSTREAM;
   MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
@@ -479,8 +587,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionRFactory, RegionRFactElasticity3D, Scala
   using magnitude_type        = typename TST::magnitudeType;
   using TMT                   = Teuchos::ScalarTraits<magnitude_type>;
   using real_type             = typename TST::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using RealValuedMultiVector = Xpetra::MultiVector<real_type,LO,GO,NO>;
   using test_factory          = TestHelpers::TestFactory<SC, LO, GO, NO>;
+#else
+  using RealValuedMultiVector = Xpetra::MultiVector<real_type,NO>;
+  using test_factory          = TestHelpers::TestFactory<SC, NO>;
+#endif
 
   out << "version: " << MueLu::Version() << std::endl;
 
@@ -560,7 +673,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionRFactory, RegionRFactElasticity3D, Scala
   coarseLevel.Release("Nullspace", myRFact.get());
   TEST_EQUALITY(coarseNullspace != Teuchos::null, true);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Xpetra::MultiVector<typename Teuchos::ScalarTraits<SC>::coordinateType, LO, GO, NO> > coarseCoordinates;
+#else
+  RCP<Xpetra::MultiVector<typename Teuchos::ScalarTraits<SC>::coordinateType,NO> > coarseCoordinates;
+#endif
   coarseLevel.Get("Coordinates", coarseCoordinates, myRFact.get());
   coarseLevel.Release("Coordinates", myRFact.get());
   TEST_EQUALITY(coarseCoordinates != Teuchos::null, true);
@@ -646,10 +763,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(RegionRFactory, RegionRFactElasticity3D, Scala
 
 } // RegionRFactElasticity3D
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #  define MUELU_ETI_GROUP(Scalar, LO, GO, Node) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(RegionRFactory,RegionRFactCtor,Scalar,LO,GO,Node) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(RegionRFactory,RegionRFactLaplace3D,Scalar,LO,GO,Node) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(RegionRFactory,RegionRFactElasticity3D,Scalar,LO,GO,Node)
+#else
+#  define MUELU_ETI_GROUP(Scalar, Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(RegionRFactory,RegionRFactCtor,Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(RegionRFactory,RegionRFactLaplace3D,Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(RegionRFactory,RegionRFactElasticity3D,Scalar,Node)
+#endif
 
 #include <MueLu_ETI_4arg.hpp>
 

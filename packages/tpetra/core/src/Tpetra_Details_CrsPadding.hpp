@@ -15,9 +15,17 @@ namespace Tpetra {
     /// \brief Keep track of how much more space a CrsGraph or
     ///   CrsMatrix needs, when the graph or matrix is the target of a
     ///   doExport or doImport.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template<class LocalOrdinal, class GlobalOrdinal>
+#else
+
+#endif
     class CrsPadding {
     private:
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+      using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+      using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
       using LO = LocalOrdinal;
       using GO = GlobalOrdinal;
 

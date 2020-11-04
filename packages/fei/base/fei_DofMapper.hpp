@@ -38,7 +38,11 @@ namespace fei {
  * Fields are assumed to be scalar fields (have 1 component) unless a field-size
  * is set using the setFieldSize method.
  */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LocalOrdinal, class GlobalOrdinal, class DofOrder=less_rank_id_field<LocalOrdinal, GlobalOrdinal> >
+#else
+template<class LocalOrdinal, class GlobalOrdinal, class DofOrder=less_rank_id_field<> >
+#endif
 class DofMapper {
  public:
   /** constructor */
@@ -53,7 +57,11 @@ class DofMapper {
 	if (m_field_sizes.find(field) == m_field_sizes.end()) m_field_sizes.insert(std::make_pair(field,1));
     //m_maps_are_valid is false when a new Dof is inserted.
     m_maps_are_valid =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       m_dof_idx.insert(std::make_pair(Dof<LocalOrdinal,GlobalOrdinal>(rank, id, field), 0)).second;
+#else
+      m_dof_idx.insert(std::make_pair(Dof<>(rank, id, field), 0)).second;
+#endif
   }
 
   /** Set the specified field to have the specified field_size.
@@ -66,12 +74,20 @@ class DofMapper {
 
   GlobalOrdinal getGlobalIndex(LocalOrdinal rank, GlobalOrdinal id, LocalOrdinal field) const;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::pair<const Dof<LocalOrdinal,GlobalOrdinal>*,LocalOrdinal> getDof(GlobalOrdinal global_index) const;
+#else
+  std::pair<const Dof<>*,LocalOrdinal> getDof(GlobalOrdinal global_index) const;
+#endif
 
   bool maps_are_valid() const { return m_maps_are_valid; }
   void set_maps_are_valid(bool flag) { m_maps_are_valid = flag; }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef typename std::map<Dof<LocalOrdinal,GlobalOrdinal>,GlobalOrdinal,DofOrder> DofMap;
+#else
+  typedef typename std::map<Dof<>,GlobalOrdinal,DofOrder> DofMap;
+#endif
 
   typename DofMap::const_iterator begin_dof() const
   { return m_dof_idx.begin(); }
@@ -85,7 +101,11 @@ class DofMapper {
   typename DofMap::iterator end_dof()
   { return m_dof_idx.end(); }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef typename std::map<GlobalOrdinal,const Dof<LocalOrdinal,GlobalOrdinal>*> IdxMap;
+#else
+  typedef typename std::map<GlobalOrdinal,const Dof<>*> IdxMap;
+#endif
 
   typename IdxMap::const_iterator begin_idx() const
   { return m_idx_dof.begin(); }
@@ -109,15 +129,28 @@ class DofMapper {
   const FieldSizeMap& getFieldSizeMap() const {return m_field_sizes;}
 
  private:
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<Dof<LocalOrdinal, GlobalOrdinal>, GlobalOrdinal, DofOrder > m_dof_idx;
+#else
+  std::map<Dof<>, GlobalOrdinal, DofOrder > m_dof_idx;
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<GlobalOrdinal, const Dof<LocalOrdinal, GlobalOrdinal>*> m_idx_dof;
+#else
+  std::map<GlobalOrdinal, const Dof<>*> m_idx_dof;
+#endif
   bool m_maps_are_valid;
 
   std::map<LocalOrdinal,LocalOrdinal> m_field_sizes;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   DofMapper(const DofMapper<LocalOrdinal,GlobalOrdinal>& src);
   DofMapper& operator=(const DofMapper<LocalOrdinal,GlobalOrdinal>& src);
+#else
+  DofMapper(const DofMapper<>& src);
+  DofMapper& operator=(const DofMapper<>& src);
+#endif
 };//class DofMapper
 
 template<class LocalOrdinal,class GlobalOrdinal,class DofOrder>
@@ -150,7 +183,11 @@ LocalOrdinal DofMapper<LocalOrdinal,GlobalOrdinal,DofOrder>::getFieldSize(LocalO
 template<class LocalOrdinal,class GlobalOrdinal,class DofOrder>
 GlobalOrdinal DofMapper<LocalOrdinal,GlobalOrdinal,DofOrder>::getGlobalIndex(LocalOrdinal rank, GlobalOrdinal id, LocalOrdinal field) const
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typename DofMap::const_iterator iter = m_dof_idx.find(Dof<LocalOrdinal,GlobalOrdinal>(rank,id,field));
+#else
+  typename DofMap::const_iterator iter = m_dof_idx.find(Dof<>(rank,id,field));
+#endif
   if (iter == m_dof_idx.end()) {
     std::ostringstream osstr;
     osstr << "fei::DofMapper::getGlobalIndex ERROR, dof("
@@ -163,7 +200,11 @@ GlobalOrdinal DofMapper<LocalOrdinal,GlobalOrdinal,DofOrder>::getGlobalIndex(Loc
 }
 
 template<class LocalOrdinal,class GlobalOrdinal,class DofOrder>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 std::pair<const Dof<LocalOrdinal,GlobalOrdinal>*,LocalOrdinal>
+#else
+std::pair<const Dof<>*,LocalOrdinal>
+#endif
 DofMapper<LocalOrdinal,GlobalOrdinal,DofOrder>::getDof(GlobalOrdinal global_index) const
 {
   typename IdxMap::const_iterator iter = m_idx_dof.lower_bound(global_index);

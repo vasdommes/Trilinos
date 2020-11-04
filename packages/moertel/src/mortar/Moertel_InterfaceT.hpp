@@ -210,12 +210,18 @@ The \ref MoertelT::Interface class supports the std::ostream& operator <<
 
 */
 template <class ST,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           class LO,
           class GO,
+#endif
           class N >
 class  InterfaceT
 {
 public:
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   
   /*!
   \brief Type of projections to be used to construct the Mortar projection from the
@@ -259,7 +265,11 @@ public:
   
   Constructs a deep copy. 
   */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   InterfaceT(const MoertelT::InterfaceT<ST, LO, GO, N>& old);
+#else
+  InterfaceT(const MoertelT::InterfaceT<ST, N>& old);
+#endif
   
   /*!
   \brief Destructor
@@ -750,7 +760,11 @@ public:
   
   \return True if successful, false otherwise
   */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   bool Mortar_Assemble(Tpetra::CrsMatrix<ST, LO, GO, N>& D, Tpetra::CrsMatrix<ST, LO, GO, N>& M);
+#else
+  bool Mortar_Assemble(Tpetra::CrsMatrix<ST, N>& D, Tpetra::CrsMatrix<ST, N>& M);
+#endif
 
   bool AssembleJFNKVec(MOERTEL::Lmselector *sel);
   
@@ -764,7 +778,11 @@ public:
   - \ref MoertelT::Interface::proj_continousnormalfield (recommended in 1D and 2D interfaces)
   - \ref MoertelT::Interface::proj_orthogonal (1D interfaces only)
   */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   void SetProjectionType(MoertelT::InterfaceT<ST, LO, GO, N>::ProjectionType typ) { ptype_ = typ; } 
+#else
+  void SetProjectionType(MoertelT::InterfaceT<ST, N>::ProjectionType typ) { ptype_ = typ; } 
+#endif
 
   /*!
   \brief Build averaged nodal normals and projects nodes to other side
@@ -897,7 +915,11 @@ private:
   bool Integrate_3D_Section(MOERTEL::Segment& sseg, MOERTEL::Segment& mseg);
 
   // Assemble values from integration this interface (3D problem)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   bool Assemble_3D(Tpetra::CrsMatrix<ST, LO, GO, N>& D, Tpetra::CrsMatrix<ST, LO, GO, N>& M);
+#else
+  bool Assemble_3D(Tpetra::CrsMatrix<ST, N>& D, Tpetra::CrsMatrix<ST, N>& M);
+#endif
 
   // Check and see if the master seg and slave seg are even close to each other
   bool QuickOverlapTest_2D(MOERTEL::Segment& sseg, MOERTEL::Segment& mseg);
@@ -920,11 +942,19 @@ private:
   
   std::map<int,Teuchos::RCP<MOERTEL::Segment> > seg_[2];    // local segments of interface (both sides)
   std::map<int,Teuchos::RCP<MOERTEL::Segment> > rseg_[2];   // global segments of interface (both sides)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>                            segPID_;    // maps all global seg ids to process holding segment
+#else
+  std::map<>                            segPID_;    // maps all global seg ids to process holding segment
+#endif
   
   std::map<int,Teuchos::RCP<MOERTEL::Node> >    node_[2];   // local nodes of interface (both sides)
   std::map<int,Teuchos::RCP<MOERTEL::Node> >    rnode_[2];  // global nodes of interface (both sides)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>                            nodePID_;   // maps all global node ids to process holding the node
+#else
+  std::map<>                            nodePID_;   // maps all global node ids to process holding the node
+#endif
   
   MOERTEL::Function::FunctionType         primal_;    // the type of functions to be set as trace space function
   MOERTEL::Function::FunctionType         dual_;      // the type of functions to be set as LM space function
@@ -935,10 +965,16 @@ private:
 
 // operator <<
 template <class ST,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           class LO,
           class GO,
+#endif
           class N >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 std::ostream& operator << (std::ostream& os, const MoertelT::InterfaceT<ST, LO, GO, N>& inter); 
+#else
+std::ostream& operator << (std::ostream& os, const MoertelT::InterfaceT<ST, N>& inter); 
+#endif
 
 #ifndef HAVE_MOERTEL_EXPLICIT_INSTANTIATION
 #include "Moertel_InterfaceT.hpp"

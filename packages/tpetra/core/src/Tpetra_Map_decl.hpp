@@ -222,11 +222,19 @@ namespace Tpetra {
   /// product functions produce small dense matrices that are required
   /// by all images.  Replicated local objects handle these
   /// situations.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal,
             class GlobalOrdinal,
             class Node>
+#else
+  template <class Node>
+#endif
   class Map : public Teuchos::Describable {
   public:
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     //! @name Typedefs
     //@{
 
@@ -1330,8 +1338,13 @@ namespace Tpetra {
   /// \param comm [in] The Map's communicator.
   ///
   /// \relatesalso Map
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal, class GlobalOrdinal>
   Teuchos::RCP<const Map<LocalOrdinal, GlobalOrdinal> >
+#else
+
+  Teuchos::RCP<const Map<> >
+#endif
   createLocalMap (const size_t numElements,
                   const Teuchos::RCP<const Teuchos::Comm<int> >& comm);
 
@@ -1349,8 +1362,13 @@ namespace Tpetra {
   ///
   ///
   /// \relatesalso Map
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal, class GlobalOrdinal, class Node>
   Teuchos::RCP<const Map<LocalOrdinal,GlobalOrdinal,Node> >
+#else
+  template <class Node>
+  Teuchos::RCP<const Map<Node> >
+#endif
   createLocalMapWithNode (const size_t numElements,
                           const Teuchos::RCP<const Teuchos::Comm<int> >& comm);
 
@@ -1362,8 +1380,13 @@ namespace Tpetra {
   /// Node type.  The resulting Map uses zero-based indexing.
   ///
   /// \relatesalso Map
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal, class GlobalOrdinal>
   Teuchos::RCP< const Map<LocalOrdinal,GlobalOrdinal> >
+#else
+
+  Teuchos::RCP< const Map<> >
+#endif
   createUniformContigMap (const global_size_t numElements,
                           const Teuchos::RCP<const Teuchos::Comm<int> >& comm);
 
@@ -1373,8 +1396,13 @@ namespace Tpetra {
   /// The resulting Map uses zero-based indexing.
   ///
   /// \relatesalso Map
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal, class GlobalOrdinal, class Node>
   Teuchos::RCP<const Map<LocalOrdinal,GlobalOrdinal,Node> >
+#else
+  template <class Node>
+  Teuchos::RCP<const Map<Node> >
+#endif
   createUniformContigMapWithNode (const global_size_t numElements,
                                   const Teuchos::RCP<const Teuchos::Comm<int> >& comm);
 
@@ -1385,8 +1413,13 @@ namespace Tpetra {
   /// The Map is configured to use zero-based indexing.
   ///
   /// \relatesalso Map
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal, class GlobalOrdinal>
   Teuchos::RCP<const Map<LocalOrdinal,GlobalOrdinal> >
+#else
+
+  Teuchos::RCP<const Map<> >
+#endif
   createContigMap (const global_size_t numElements,
                    const size_t localNumElements,
                    const Teuchos::RCP<const Teuchos::Comm<int> >& comm);
@@ -1399,8 +1432,13 @@ namespace Tpetra {
   /// The Map is configured to use zero-based indexing.
   ///
   /// \relatesalso Map
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal, class GlobalOrdinal, class Node>
   Teuchos::RCP<const Map<LocalOrdinal,GlobalOrdinal,Node> >
+#else
+  template <class Node>
+  Teuchos::RCP<const Map<Node> >
+#endif
   createContigMapWithNode (const global_size_t numElements,
                            const size_t localNumElements,
                            const Teuchos::RCP<const Teuchos::Comm<int> >& comm);
@@ -1412,8 +1450,13 @@ namespace Tpetra {
   /// The Map is configured to use zero-based indexing.
   ///
   /// \relatesalso Map
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal, class GlobalOrdinal>
   Teuchos::RCP<const Map<LocalOrdinal,GlobalOrdinal> >
+#else
+
+  Teuchos::RCP<const Map<> >
+#endif
   createNonContigMap (const Teuchos::ArrayView<const GlobalOrdinal>& elementList,
                       const Teuchos::RCP<const Teuchos::Comm<int> >& comm);
 
@@ -1424,8 +1467,13 @@ namespace Tpetra {
   /// The Map is configured to use zero-based indexing.
   ///
   /// \relatesalso Map
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class LocalOrdinal, class GlobalOrdinal, class Node>
   Teuchos::RCP< const Map<LocalOrdinal,GlobalOrdinal,Node> >
+#else
+  template <class Node>
+  Teuchos::RCP< const Map<Node> >
+#endif
   createNonContigMapWithNode (const Teuchos::ArrayView<const GlobalOrdinal> &elementList,
                               const Teuchos::RCP<const Teuchos::Comm<int> > &comm);
 
@@ -1441,19 +1489,32 @@ namespace Tpetra {
   ///   GID lives on only one process.
   ///
   /// \relatesalso Map
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template<class LocalOrdinal, class GlobalOrdinal, class Node>
   Teuchos::RCP< const Map<LocalOrdinal,GlobalOrdinal,Node> >
   createOneToOne (const Teuchos::RCP<const Map<LocalOrdinal,GlobalOrdinal,Node> >& M);
+#else
+  template<class Node>
+  Teuchos::RCP< const Map<Node> >
+  createOneToOne (const Teuchos::RCP<const Map<Node> >& M);
+#endif
 
   /// \brief Creates a one-to-one version of the given Map where each
   ///   GID lives on only one process.  The given TieBreak object
   ///   specifies the rule to break ties.
   ///
   /// \relatesalso Map
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template<class LocalOrdinal, class GlobalOrdinal, class Node>
   Teuchos::RCP< const Map<LocalOrdinal,GlobalOrdinal,Node> >
   createOneToOne(const Teuchos::RCP<const Map<LocalOrdinal,GlobalOrdinal,Node> > &M,
                  const ::Tpetra::Details::TieBreak<LocalOrdinal,GlobalOrdinal> & tie_break);
+#else
+  template<class Node>
+  Teuchos::RCP< const Map<Node> >
+  createOneToOne(const Teuchos::RCP<const Map<Node> > &M,
+                 const ::Tpetra::Details::TieBreak<> & tie_break);
+#endif
 
 } // namespace Tpetra
 
@@ -1461,16 +1522,28 @@ namespace Tpetra {
 
 /// \brief True if map1 is the same as (in the sense of isSameAs()) map2, else false.
 /// \relatesalso Tpetra::Map
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <class LocalOrdinal, class GlobalOrdinal, class Node>
 bool operator== (const Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> &map1,
                  const Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> &map2)
+#else
+template <class Node>
+bool operator== (const Tpetra::Map<Node> &map1,
+                 const Tpetra::Map<Node> &map2)
+#endif
 { return map1.isSameAs (map2); }
 
 /// \brief True if map1 is not the same as (in the sense of isSameAs()) map2, else false.
 /// \relatesalso Tpetra::Map
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <class LocalOrdinal, class GlobalOrdinal, class Node>
 bool operator!= (const Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> &map1,
                  const Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> &map2)
+#else
+template <class Node>
+bool operator!= (const Tpetra::Map<Node> &map1,
+                 const Tpetra::Map<Node> &map2)
+#endif
 { return ! map1.isSameAs (map2); }
 
 

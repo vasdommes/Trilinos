@@ -522,7 +522,11 @@ void run_test_sptrsv() {
     }
 
 #ifdef KOKKOSKERNELS_ENABLE_TPL_CUSPARSE
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     if (std::is_same<size_type,int>::value && std::is_same<lno_t,int>::value && std::is_same<typename device::execution_space, Kokkos::Cuda>::value)
+#else
+    if (std::is_same<size_type,int>::value && std::is_same<>::value && std::is_same<typename device::execution_space, Kokkos::Cuda>::value)
+#endif
     {
       Kokkos::deep_copy(lhs, ZERO);
       KernelHandle kh;
@@ -700,7 +704,11 @@ void run_test_sptrsv() {
     }
 
 #ifdef KOKKOSKERNELS_ENABLE_TPL_CUSPARSE
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     if (std::is_same<size_type,int>::value && std::is_same<lno_t,int>::value && std::is_same<typename device::execution_space, Kokkos::Cuda>::value)
+#else
+    if (std::is_same<size_type,int>::value && std::is_same<>::value && std::is_same<typename device::execution_space, Kokkos::Cuda>::value)
+#endif
     {
       Kokkos::deep_copy(lhs, ZERO);
       KernelHandle kh;

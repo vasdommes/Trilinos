@@ -55,18 +55,30 @@
 
 using std::string;
 using Teuchos::ArrayView;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 
 template <typename lno_t, typename gno_t>
  void printTpetraGraph(const Tpetra::CrsGraph<lno_t, gno_t> &graph,
+#else
+ void printTpetraGraph(const Tpetra::CrsGraph<> &graph,
+#endif
    std::ostream &os, size_t maxSize, string info)
 {
   size_t nrows = graph.getNodeNumRows();
   if (nrows > maxSize)
     return;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   const RCP<const typename Tpetra::Map<lno_t, gno_t> > &rowMap=
+#else
+  const RCP<const typename Tpetra::Map<> > &rowMap=
+#endif
     graph.getRowMap();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   const RCP<const typename Tpetra::Map<lno_t, gno_t> > &colMap=
+#else
+  const RCP<const typename Tpetra::Map<> > &colMap=
+#endif
     graph.getColMap();
 
   if (info.size() > 0)
@@ -97,10 +109,16 @@ template <typename lno_t, typename gno_t>
     }
   }
 }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 
 template <typename lno_t, typename gno_t>
+#endif
   void printTpetraGraph(const RCP<const Comm<int> > &comm,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   const Tpetra::CrsGraph<lno_t, gno_t> &graph, std::ostream &os,
+#else
+  const Tpetra::CrsGraph<> &graph, std::ostream &os,
+#endif
   size_t maxSize, string info)
 {
   int rank = comm->getRank();
@@ -114,7 +132,11 @@ template <typename lno_t, typename gno_t>
 
   for (int p=0; p < comm->getSize(); p++){
     if (p == rank)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       printTpetraGraph<lno_t, gno_t>(graph, os, maxSize, oss.str());
+#else
+      printTpetraGraph<>(graph, os, maxSize, oss.str());
+#endif
     comm->barrier();
   }
 }

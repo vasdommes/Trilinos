@@ -76,10 +76,17 @@ template <class SX,
   //
   // Convenience typedefs
   //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO,GO>                                 Map;
   typedef Tpetra::CrsGraph<LO,GO>                            CrsGraph;
   typedef Tpetra::Export<LO,GO>                              Export;
   typedef Tpetra::Import<LO,GO>                              Import;
+#else
+  typedef Tpetra::Map<>                                 Map;
+  typedef Tpetra::CrsGraph<>                            CrsGraph;
+  typedef Tpetra::Export<>                              Export;
+  typedef Tpetra::Import<>                              Import;
+#endif
 
   PartitionOfUnity()
   {
@@ -279,7 +286,11 @@ template <class SX,
   {
     int numSub = m_subNodes.size();
     int numSubScan;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::scan<int, int> (*m_Comm, Teuchos::REDUCE_SUM, 1, &numSub, 
+#else
+    Teuchos::scan<> (*m_Comm, Teuchos::REDUCE_SUM, 1, &numSub, 
+#endif
 			     &numSubScan);
     m_startingSub = numSubScan - numSub;
   }
@@ -308,7 +319,11 @@ template <class SX,
       }
     }
     std::vector< std::vector<GO> > unionSubData;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     bddc::unionData<LO,GO>(m_numNodes, m_nodeGlobalIDs, nodeSend.data(),
+#else
+    bddc::unionData<>(m_numNodes, m_nodeGlobalIDs, nodeSend.data(),
+#endif
 			   distributor, mySubData, unionSubData);
     nodeSubdomains.resize(m_numNodes);
     LO den(1);

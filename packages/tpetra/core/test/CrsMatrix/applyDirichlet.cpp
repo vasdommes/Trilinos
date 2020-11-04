@@ -75,14 +75,28 @@ namespace { // (anonymous)
     return ToValue<OutputType, InputType>::toValue (x);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( CrsMatrix, ApplyDirichlet, SC, LO, GO, NT )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( CrsMatrix, ApplyDirichlet, SC, NT )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     using Tpetra::createContigMapWithNode;
     using Teuchos::RCP;
     using std::endl;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using crs_matrix_type = Tpetra::CrsMatrix<SC,LO,GO,NT>;
     using map_type = Tpetra::Map<LO,GO,NT>;
     using vec_type = Tpetra::Vector<SC,LO,GO,NT>;
+#else
+    using crs_matrix_type = Tpetra::CrsMatrix<SC,NT>;
+    using map_type = Tpetra::Map<NT>;
+    using vec_type = Tpetra::Vector<SC,NT>;
+#endif
     using mag_type = typename vec_type::mag_type;
     using IST = typename vec_type::impl_scalar_type;    
     using GST = Tpetra::global_size_t;
@@ -98,7 +112,11 @@ namespace { // (anonymous)
     const auto comm = Tpetra::getDefaultComm ();
     const LO lclNumRows = 10;
     RCP<const map_type> rowMap =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       createContigMapWithNode<LO,GO,NT> (INVALID, lclNumRows,
+#else
+      createContigMapWithNode<NT> (INVALID, lclNumRows,
+#endif
                                          comm);
     RCP<const map_type> colMap = rowMap;
     RCP<const map_type> domMap = rowMap;
@@ -213,8 +231,13 @@ namespace { // (anonymous)
 // INSTANTIATIONS
 //
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define UNIT_TEST_GROUP( SCALAR, LO, GO, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( CrsMatrix, ApplyDirichlet, SCALAR, LO, GO, NODE )
+#else
+#define UNIT_TEST_GROUP( SCALAR, NODE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( CrsMatrix, ApplyDirichlet, SCALAR, NODE )
+#endif
 
   TPETRA_ETI_MANGLING_TYPEDEFS()
 

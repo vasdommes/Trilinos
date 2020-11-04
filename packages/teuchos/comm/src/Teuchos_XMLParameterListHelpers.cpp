@@ -62,13 +62,21 @@ void Teuchos::updateParametersFromXmlFileAndBroadcast(
       XMLObject xmlParams = xmlFile.getObject();
       std::string xmlString = toString(xmlParams);
       int strsize = static_cast<int>(xmlString.size());
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       broadcast<int, int>(comm, 0, &strsize);
+#else
+      broadcast<>(comm, 0, &strsize);
+#endif
       broadcast<int, char>(comm, 0, strsize, &xmlString[0]);
       updateParametersFromXmlString(xmlString, paramList,overwrite);
     }
     else {
       int strsize;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       broadcast<int, int>(comm, 0, &strsize);
+#else
+      broadcast<>(comm, 0, &strsize);
+#endif
       std::string xmlString;
       xmlString.resize(strsize);
       broadcast<int, char>(comm, 0, strsize, &xmlString[0]);

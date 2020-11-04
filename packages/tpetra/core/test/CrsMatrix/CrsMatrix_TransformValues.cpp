@@ -47,8 +47,16 @@
 
 namespace { // (anonymous)
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( CrsMatrix, TransformLocalValues, Scalar, LO, GO, Node )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( CrsMatrix, TransformLocalValues, Scalar, Node )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     using Teuchos::Comm;
     using Teuchos::outArg;
     using Teuchos::RCP;
@@ -56,8 +64,13 @@ namespace { // (anonymous)
     using Teuchos::REDUCE_MIN;
     using Teuchos::reduceAll;
     using std::endl;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::Map<LO, GO, Node> map_type;
     typedef Tpetra::CrsMatrix<Scalar, LO, GO, Node> crs_matrix_type;
+#else
+    typedef Tpetra::Map<Node> map_type;
+    typedef Tpetra::CrsMatrix<Scalar, Node> crs_matrix_type;
+#endif
     const Scalar ONE = static_cast<Scalar> (1.0);
     const Scalar FIVE = static_cast<Scalar> (5.0);
     const Scalar SIX = static_cast<Scalar> (6.0);
@@ -217,8 +230,16 @@ namespace { // (anonymous)
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( CrsMatrix, TransformGlobalValues, Scalar, LO, GO, Node )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( CrsMatrix, TransformGlobalValues, Scalar, Node )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     using Teuchos::Comm;
     using Teuchos::outArg;
     using Teuchos::RCP;
@@ -226,8 +247,13 @@ namespace { // (anonymous)
     using Teuchos::REDUCE_MIN;
     using Teuchos::reduceAll;
     using std::endl;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::Map<LO, GO, Node> map_type;
     typedef Tpetra::CrsMatrix<Scalar, LO, GO, Node> crs_matrix_type;
+#else
+    typedef Tpetra::Map<Node> map_type;
+    typedef Tpetra::CrsMatrix<Scalar, Node> crs_matrix_type;
+#endif
     const Scalar ONE = static_cast<Scalar> (1.0);
     const Scalar TWO = static_cast<Scalar> (2.0);
     const Scalar FOUR = static_cast<Scalar> (4.0);
@@ -395,9 +421,15 @@ namespace { // (anonymous)
   // INSTANTIATIONS
   //
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define UNIT_TEST_GROUP( SCALAR, LO, GO, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( CrsMatrix, TransformLocalValues, SCALAR, LO, GO, NODE ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( CrsMatrix, TransformGlobalValues, SCALAR, LO, GO, NODE )
+#else
+#define UNIT_TEST_GROUP( SCALAR, NODE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( CrsMatrix, TransformLocalValues, SCALAR, NODE ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( CrsMatrix, TransformGlobalValues, SCALAR, NODE )
+#endif
 
   TPETRA_ETI_MANGLING_TYPEDEFS()
 

@@ -549,7 +549,11 @@ protected:
    std::map<int,std::string> fieldNumToStr_;
 
    //! field number ==> field block
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
    std::map<int,int> fieldNumToFieldBlk_;
+#else
+   std::map<> fieldNumToFieldBlk_;
+#endif
 
    //! (block ID x field string) ==> pattern
    std::map<std::pair<std::string,std::string>,Teuchos::RCP<const FieldPattern> > fieldStringToPattern_;

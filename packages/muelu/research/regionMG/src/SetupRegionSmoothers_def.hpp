@@ -92,11 +92,21 @@ std::map<std::string, int> getListOfValidSmootherTypes()
  *
  * Computes the inverse of the diagonal in region format and with interface scaling
  */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 void computeInverseDiagonal(RCP<Teuchos::ParameterList> params,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                  const std::vector<RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > > revisedRowMapPerGrp,
                  const std::vector<RCP<Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > > regionGrpMats,
                  const std::vector<RCP<Xpetra::Import<LocalOrdinal, GlobalOrdinal, Node> > > rowImportPerGrp) ///< row importer in region layout [in]
+#else
+                 const std::vector<RCP<Xpetra::Map<Node> > > revisedRowMapPerGrp,
+                 const std::vector<RCP<Xpetra::Matrix<Scalar, Node> > > regionGrpMats,
+                 const std::vector<RCP<Xpetra::Import<Node> > > rowImportPerGrp) ///< row importer in region layout [in]
+#endif
 {
 #include "Xpetra_UseShortNames.hpp"
   using Teuchos::TimeMonitor;
@@ -130,13 +140,25 @@ void computeInverseDiagonal(RCP<Teuchos::ParameterList> params,
  *  Perform Jacobi smoothing in the region layout using the true diagonal value
  *  recovered from the splitted matrix.
  */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 void jacobiIterate(RCP<Teuchos::ParameterList> smootherParams,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                    Array<RCP<Xpetra::Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node> > >& regX, // left-hand side (or solution)
                    const Array<RCP<Xpetra::Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node> > > regB, // right-hand side (or residual)
                    const std::vector<RCP<Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > > regionGrpMats, // matrices in true region layout
                    const std::vector<RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > > revisedRowMapPerGrp, ///< revised row maps in region layout [in] (actually extracted from regionGrpMats)
                    const std::vector<RCP<Xpetra::Import<LocalOrdinal, GlobalOrdinal, Node> > > rowImportPerGrp,///< row importer in region layout [in]
+#else
+                   Array<RCP<Xpetra::Vector<Scalar, Node> > >& regX, // left-hand side (or solution)
+                   const Array<RCP<Xpetra::Vector<Scalar, Node> > > regB, // right-hand side (or residual)
+                   const std::vector<RCP<Xpetra::Matrix<Scalar, Node> > > regionGrpMats, // matrices in true region layout
+                   const std::vector<RCP<Xpetra::Map<Node> > > revisedRowMapPerGrp, ///< revised row maps in region layout [in] (actually extracted from regionGrpMats)
+                   const std::vector<RCP<Xpetra::Import<Node> > > rowImportPerGrp,///< row importer in region layout [in]
+#endif
 		   bool& zeroInitGuess
     )
 {
@@ -186,13 +208,25 @@ void jacobiIterate(RCP<Teuchos::ParameterList> smootherParams,
  *  recovered from the splitted matrix. Off-diagonal values are just taken as they are
  *  in region format.
  */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 void GSIterate(RCP<Teuchos::ParameterList> smootherParams,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                Array<RCP<Xpetra::Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node> > >& regX, // left-hand side (or solution)
                const Array<RCP<Xpetra::Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node> > > regB, // right-hand side (or residual)
                const std::vector<RCP<Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > > regionGrpMats, // matrices in true region layout
                const std::vector<RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > > revisedRowMapPerGrp, ///< revised row maps in region layout [in] (actually extracted from regionGrpMats)
                const std::vector<RCP<Xpetra::Import<LocalOrdinal, GlobalOrdinal, Node> > > rowImportPerGrp,///< row importer in region layout [in]
+#else
+               Array<RCP<Xpetra::Vector<Scalar, Node> > >& regX, // left-hand side (or solution)
+               const Array<RCP<Xpetra::Vector<Scalar, Node> > > regB, // right-hand side (or residual)
+               const std::vector<RCP<Xpetra::Matrix<Scalar, Node> > > regionGrpMats, // matrices in true region layout
+               const std::vector<RCP<Xpetra::Map<Node> > > revisedRowMapPerGrp, ///< revised row maps in region layout [in] (actually extracted from regionGrpMats)
+               const std::vector<RCP<Xpetra::Import<Node> > > rowImportPerGrp,///< row importer in region layout [in]
+#endif
                bool& zeroInitGuess,
                bool sgs = false
                )
@@ -279,10 +313,19 @@ void GSIterate(RCP<Teuchos::ParameterList> smootherParams,
 } // GS
 
 //! Transfer region vector to composite format and compute its 2-norm
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 typename Teuchos::ScalarTraits<Scalar>::magnitudeType
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 calcNorm2(Array<RCP<Xpetra::Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node> > >& regVec,
           const std::vector<RCP<Xpetra::Import<LocalOrdinal, GlobalOrdinal, Node> > > rowImportPerGrp)
+#else
+calcNorm2(Array<RCP<Xpetra::Vector<Scalar, Node> > >& regVec,
+          const std::vector<RCP<Xpetra::Import<Node> > > rowImportPerGrp)
+#endif
 {
 #include "Xpetra_UseShortNames.hpp"
   const RCP<const Map> mapComp = rowImportPerGrp[0]->getSourceMap();
@@ -304,11 +347,21 @@ calcNorm2(Array<RCP<Xpetra::Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node> > 
  *
  * @return Inner product of regX and regY
  */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 Scalar
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 dotProd(Array<RCP<Xpetra::Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node> > >& regX,
         Array<RCP<Xpetra::Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node> > >& regY,
         const std::vector<RCP<Xpetra::Import<LocalOrdinal, GlobalOrdinal, Node> > > rowImportPerGrp)
+#else
+dotProd(Array<RCP<Xpetra::Vector<Scalar, Node> > >& regX,
+        Array<RCP<Xpetra::Vector<Scalar, Node> > >& regY,
+        const std::vector<RCP<Xpetra::Import<Node> > > rowImportPerGrp)
+#endif
 {
 #include "Xpetra_UseShortNames.hpp"
   const RCP<const Map> mapComp = rowImportPerGrp[0]->getSourceMap();
@@ -321,12 +374,22 @@ dotProd(Array<RCP<Xpetra::Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node> > >&
   return dotVal;
 } // dotProd
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 Scalar
 powerMethod(RCP<Teuchos::ParameterList> params,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
             const std::vector<RCP<Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > > regionGrpMats,
             const std::vector<RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > > revisedRowMapPerGrp,
             const std::vector<RCP<Xpetra::Import<LocalOrdinal, GlobalOrdinal, Node> > > rowImportPerGrp,
+#else
+            const std::vector<RCP<Xpetra::Matrix<Scalar, Node> > > regionGrpMats,
+            const std::vector<RCP<Xpetra::Map<Node> > > revisedRowMapPerGrp,
+            const std::vector<RCP<Xpetra::Import<Node> > > rowImportPerGrp,
+#endif
             const int numIters)
 {
 #include "Xpetra_UseShortNames.hpp"
@@ -387,12 +450,23 @@ powerMethod(RCP<Teuchos::ParameterList> params,
  *
  * Use power method to estimate lambdaMx
  */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 void chebyshevSetup(RCP<Teuchos::ParameterList> params,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                    const std::vector<RCP<Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > > regionGrpMats,
                    const Array<RCP<Xpetra::Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node> > > regionInterfaceScaling,
                    const std::vector<RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > > revisedRowMapPerGrp,
                    const std::vector<RCP<Xpetra::Import<LocalOrdinal, GlobalOrdinal, Node> > > rowImportPerGrp) {
+#else
+                   const std::vector<RCP<Xpetra::Matrix<Scalar, Node> > > regionGrpMats,
+                   const Array<RCP<Xpetra::Vector<Scalar, Node> > > regionInterfaceScaling,
+                   const std::vector<RCP<Xpetra::Map<Node> > > revisedRowMapPerGrp,
+                   const std::vector<RCP<Xpetra::Import<Node> > > rowImportPerGrp) {
+#endif
 #include "Xpetra_UseShortNames.hpp"
   using Teuchos::TimeMonitor;
   RCP<TimeMonitor> tm = rcp(new TimeMonitor(*TimeMonitor::getNewTimer("Region Chebyshev Setup")));
@@ -410,13 +484,25 @@ void chebyshevSetup(RCP<Teuchos::ParameterList> params,
 
 /*! \brief The textbook Chebyshev algorithm from Ifpack2 translated into the region format
  */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 void chebyshevIterate(RCP<Teuchos::ParameterList> smootherParams,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                       Array<RCP<Xpetra::Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node> > >& regX, ///< left-hand side (or solution)
                       const Array<RCP<Xpetra::Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node> > > regB, ///< right-hand side (or residual)
                       const std::vector<RCP<Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > > regionGrpMats, ///< matrices in true region layout
                       const std::vector<RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > > revisedRowMapPerGrp, ///< revised row maps in region layout [in] (actually extracted from regionGrpMats)
                       const std::vector<RCP<Xpetra::Import<LocalOrdinal, GlobalOrdinal, Node> > > rowImportPerGrp,///< row importer in region layout [in]
+#else
+                      Array<RCP<Xpetra::Vector<Scalar, Node> > >& regX, ///< left-hand side (or solution)
+                      const Array<RCP<Xpetra::Vector<Scalar, Node> > > regB, ///< right-hand side (or residual)
+                      const std::vector<RCP<Xpetra::Matrix<Scalar, Node> > > regionGrpMats, ///< matrices in true region layout
+                      const std::vector<RCP<Xpetra::Map<Node> > > revisedRowMapPerGrp, ///< revised row maps in region layout [in] (actually extracted from regionGrpMats)
+                      const std::vector<RCP<Xpetra::Import<Node> > > rowImportPerGrp,///< row importer in region layout [in]
+#endif
                       bool& zeroInitGuess ///< Use a zero vector as initial guess?
                       )
 {
@@ -509,12 +595,23 @@ void chebyshevIterate(RCP<Teuchos::ParameterList> smootherParams,
 } // chebyshevIterate
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 void smootherSetup(RCP<Teuchos::ParameterList> params,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                    const std::vector<RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > > revisedRowMapPerGrp,
                    const std::vector<RCP<Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > > regionGrpMats,
                    const Array<RCP<Xpetra::Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node> > > regionInterfaceScaling,
                    const std::vector<RCP<Xpetra::Import<LocalOrdinal, GlobalOrdinal, Node> > > rowImportPerGrp) ///< row importer in region layout [in]
+#else
+                   const std::vector<RCP<Xpetra::Map<Node> > > revisedRowMapPerGrp,
+                   const std::vector<RCP<Xpetra::Matrix<Scalar, Node> > > regionGrpMats,
+                   const Array<RCP<Xpetra::Vector<Scalar, Node> > > regionInterfaceScaling,
+                   const std::vector<RCP<Xpetra::Import<Node> > > rowImportPerGrp) ///< row importer in region layout [in]
+#endif
 {
   using Teuchos::TimeMonitor;
   RCP<TimeMonitor> tm = rcp(new TimeMonitor(*TimeMonitor::getNewTimer("Region Smoother: 1 - Setup")));
@@ -549,13 +646,25 @@ void smootherSetup(RCP<Teuchos::ParameterList> params,
   }
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+template<class Scalar, class Node>
+#endif
 void smootherApply(RCP<Teuchos::ParameterList> params,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                    Array<RCP<Xpetra::Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node> > >& regX,
                    const Array<RCP<Xpetra::Vector<Scalar, LocalOrdinal, GlobalOrdinal, Node> > > regB,
                    const std::vector<RCP<Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> > > regionGrpMats,
                    const std::vector<RCP<Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > > revisedRowMapPerGrp,
                    const std::vector<RCP<Xpetra::Import<LocalOrdinal, GlobalOrdinal, Node> > > rowImportPerGrp,
+#else
+                   Array<RCP<Xpetra::Vector<Scalar, Node> > >& regX,
+                   const Array<RCP<Xpetra::Vector<Scalar, Node> > > regB,
+                   const std::vector<RCP<Xpetra::Matrix<Scalar, Node> > > regionGrpMats,
+                   const std::vector<RCP<Xpetra::Map<Node> > > revisedRowMapPerGrp,
+                   const std::vector<RCP<Xpetra::Import<Node> > > rowImportPerGrp,
+#endif
                    bool& zeroInitGuess)
 {
   using Teuchos::TimeMonitor;

@@ -546,7 +546,11 @@ namespace percept {
       std::vector<int> comp_merge = local_components_vec;
       pmerge(p_rank, p_size, pg, comp_merge);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       std::map<int, int> comp_map;
+#else
+      std::map<> comp_map;
+#endif
       for (unsigned ii=0; ii < comp_merge.size(); ++ii)
         {
           comp_map[comp_merge[ii]] = ii;

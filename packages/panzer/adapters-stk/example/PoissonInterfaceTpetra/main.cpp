@@ -100,11 +100,19 @@ using ST = double;
 using LO = panzer::LocalOrdinal;
 using GO = panzer::GlobalOrdinal;
 using NT = panzer::TpetraNodeType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 using TpetraVector = Tpetra::Vector<ST,LO,GO,NT>;
 using TpetraCrsMatrix = Tpetra::CrsMatrix<ST,LO,GO,NT>;
 using TpetraRowMatrix = Tpetra::RowMatrix<ST,LO,GO,NT>;
 using TpetraLOC = panzer::TpetraLinearObjContainer<ST,LO,GO,NT>;
 using Ifpack2Prec = Ifpack2::Preconditioner<double,LO,GO,NT>;
+#else
+using TpetraVector = Tpetra::Vector<ST,NT>;
+using TpetraCrsMatrix = Tpetra::CrsMatrix<ST,NT>;
+using TpetraRowMatrix = Tpetra::RowMatrix<ST,NT>;
+using TpetraLOC = panzer::TpetraLinearObjContainer<ST,NT>;
+using Ifpack2Prec = Ifpack2::Preconditioner<double,NT>;
+#endif
 
 struct ProblemOptions {
   std::string mesh_filename;
@@ -150,8 +158,13 @@ std::string strint (const std::string& str, const int i) {
 
 bool solve_Ax_eq_b (TpetraCrsMatrix& A, TpetraVector& b, TpetraVector& x, const double rtol)
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using MV = Tpetra::MultiVector<ST,LO,GO,NT>;
   using OP = Tpetra::Operator<ST,LO,GO,NT>;
+#else
+  using MV = Tpetra::MultiVector<ST,NT>;
+  using OP = Tpetra::Operator<ST,NT>;
+#endif
   Belos::LinearProblem<ST,MV,OP> problem(Teuchos::rcpFromRef(A),
                                          Teuchos::rcpFromRef(x),
                                          Teuchos::rcpFromRef(b));
@@ -680,7 +693,11 @@ int main (int argc, char* argv[])
     // Teuchos::RCP<panzer::LinearObjFactory<panzer::Traits> > linObjFactory
     //   = Teuchos::rcp(new panzer::BlockedTpetraLinearObjFactory<panzer::Traits,ST,LO,GO>(tComm.getConst(),dofManagerVec));
     Teuchos::RCP<panzer::LinearObjFactory<panzer::Traits> > linObjFactory
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       = Teuchos::rcp(new panzer::TpetraLinearObjFactory<panzer::Traits,ST,LO,GO>(tComm.getConst(),dofManager));
+#else
+      = Teuchos::rcp(new panzer::TpetraLinearObjFactory<panzer::Traits,ST>(tComm.getConst(),dofManager));
+#endif
 
     std::vector<std::string> names;
     std::vector<std::vector<std::string> > eblocks;

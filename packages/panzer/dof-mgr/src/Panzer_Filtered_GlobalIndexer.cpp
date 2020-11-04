@@ -66,9 +66,15 @@ initialize(const Teuchos::RCP<const GlobalIndexer> & ugi,
   using GO = panzer::GlobalOrdinal;
   using LO = panzer::LocalOrdinal;
   using Node = panzer::TpetraNodeType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using Map = Tpetra::Map<LO, GO, Node>;
   using Vector = Tpetra::Vector<GO,LO,GO,Node>;
   using Export = Tpetra::Export<LO,GO,Node>;
+#else
+  using Map = Tpetra::Map<Node>;
+  using Vector = Tpetra::Vector<GO,Node>;
+  using Export = Tpetra::Export<Node>;
+#endif
 
   using std::size_t;
   using std::vector;
@@ -85,9 +91,17 @@ initialize(const Teuchos::RCP<const GlobalIndexer> & ugi,
   base_->getGhostedIndices(baseGhosted);
 
   RCP<const Map> ownedMap 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       = Tpetra::createNonContigMap<LO,GO>(baseOwned,getComm());
+#else
+      = Tpetra::createNonContigMap<>(baseOwned,getComm());
+#endif
   RCP<const Map> ghostedMap 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       = Tpetra::createNonContigMap<LO,GO>(baseGhosted,getComm());
+#else
+      = Tpetra::createNonContigMap<>(baseGhosted,getComm());
+#endif
 
   Vector ownedFiltered(ownedMap);
   Vector ghostedFiltered(ghostedMap);
@@ -154,9 +168,15 @@ getOwnedAndGhostedNotFilteredIndicator(std::vector<int> & indicator) const
   using GO = panzer::GlobalOrdinal;
   using LO = panzer::LocalOrdinal;
   using Node = panzer::TpetraNodeType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using Map = Tpetra::Map<LO, GO, Node>;
   using Vector = Tpetra::Vector<GO,LO,GO,Node>;
   using Import = Tpetra::Import<LO,GO,Node>;
+#else
+  using Map = Tpetra::Map<Node>;
+  using Vector = Tpetra::Vector<GO,Node>;
+  using Import = Tpetra::Import<Node>;
+#endif
 
   std::vector<panzer::GlobalOrdinal> ownedIndices;
   std::vector<panzer::GlobalOrdinal> ghostedIndices;
@@ -166,9 +186,17 @@ getOwnedAndGhostedNotFilteredIndicator(std::vector<int> & indicator) const
   getOwnedAndGhostedIndices(ghostedIndices);
 
   RCP<const Map> ownedMap 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       = Tpetra::createNonContigMap<LO,GO>(ownedIndices,getComm());
+#else
+      = Tpetra::createNonContigMap<>(ownedIndices,getComm());
+#endif
   RCP<const Map> ghostedMap 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       = Tpetra::createNonContigMap<LO,GO>(ghostedIndices,getComm());
+#else
+      = Tpetra::createNonContigMap<>(ghostedIndices,getComm());
+#endif
 
   // allocate the owned vector, mark those GIDs as unfiltered
   // (they are by definition)

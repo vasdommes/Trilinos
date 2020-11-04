@@ -62,11 +62,17 @@ const double CONSTRAINT_MATRIX_ZERO = 1.0e-11;
   |  make mortar integration of this interface (2D/3D problem)           |
  *----------------------------------------------------------------------*/
 template <class ST,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           class LO,
           class GO,
+#endif
           class N >
 bool 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 MoertelT::InterfaceT<ST, LO, GO, N>::Mortar_Integrate(
+#else
+MoertelT::InterfaceT<ST, N>::Mortar_Integrate(
+#endif
     Teuchos::RCP<Teuchos::ParameterList> intparams) {
   bool ok = false;
   intparams_ = intparams;
@@ -163,10 +169,16 @@ MoertelT::InterfaceT<ST, LO, GO, N>::Mortar_Integrate(
   |  make mortar integration of master/slave side in 3D (2D interface)   |
  *----------------------------------------------------------------------*/
 template <class ST,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           class LO,
           class GO,
+#endif
           class N >
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 bool MoertelT::InterfaceT<ST, LO, GO, N>::Integrate_3D() {
+#else
+bool MoertelT::InterfaceT<ST, N>::Integrate_3D() {
+#endif
 
   if(!IsComplete()) {
     if (gcomm_->getRank()==0)
@@ -243,11 +255,17 @@ bool MoertelT::InterfaceT<ST, LO, GO, N>::Integrate_3D() {
   | of 2 segments (3D version) IF there is an overlap                    |
  *----------------------------------------------------------------------*/
 template <class ST,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           class LO,
           class GO,
+#endif
           class N >
 bool 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 MoertelT::InterfaceT<ST, LO, GO, N>::Integrate_3D_Section(MOERTEL::Segment& sseg,
+#else
+MoertelT::InterfaceT<ST, N>::Integrate_3D_Section(MOERTEL::Segment& sseg,
+#endif
     MOERTEL::Segment& mseg){
 
   if ( (sseg.Type()!=MOERTEL::Segment::seg_BiLinearTri &&
@@ -267,7 +285,11 @@ MoertelT::InterfaceT<ST, LO, GO, N>::Integrate_3D_Section(MOERTEL::Segment& sseg
   // first determine whether there is an overlap between sseg and mseg
   // for this purpose, the 'overlapper' class is used
   // It also builds a triangulation of the overlap polygon if there is any
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   MOERTEL::Overlap<MoertelT::InterfaceT<ST, LO, GO, N> > overlap(sseg, mseg, *this, exactvalues, OutLevel());
+#else
+  MOERTEL::Overlap<MoertelT::InterfaceT<ST, N> > overlap(sseg, mseg, *this, exactvalues, OutLevel());
+#endif
 
   // determine the overlap triangulation if any
   bool ok = overlap.ComputeOverlap();
@@ -282,7 +304,11 @@ MoertelT::InterfaceT<ST, LO, GO, N>::Integrate_3D_Section(MOERTEL::Segment& sseg
 
   // integrator object
   int ngp = intparams_->get("number gaussian points 2D",12);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   MoertelT::IntegratorT<ST, LO, GO, N> integrator(ngp,IsOneDimensional(),OutLevel());
+#else
+  MoertelT::IntegratorT<ST, N> integrator(ngp,IsOneDimensional(),OutLevel());
+#endif
 
   // loop segments and integrate them
   for(int s = 0; s < nseg; ++s) {
@@ -316,11 +342,17 @@ MoertelT::InterfaceT<ST, LO, GO, N>::Integrate_3D_Section(MOERTEL::Segment& sseg
   |  assemble integration of master/slave side in 3D (2D interface)      |
  *----------------------------------------------------------------------*/
 template <class ST,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           class LO,
           class GO,
+#endif
           class N >
 bool 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 MoertelT::InterfaceT<ST, LO, GO, N>::Assemble_3D(Tpetra::CrsMatrix<ST, LO, GO, N>& D, Tpetra::CrsMatrix<ST, LO, GO, N>& M) {
+#else
+MoertelT::InterfaceT<ST, N>::Assemble_3D(Tpetra::CrsMatrix<ST, N>& D, Tpetra::CrsMatrix<ST, N>& M) {
+#endif
 
   if(!IsComplete()) {
     std::cout << "***ERR*** MoertelT::InterfaceT::Assemble_3D:\n"
@@ -612,8 +644,13 @@ MoertelT::InterfaceT<ST, LO, GO, N>::Assemble_3D(Tpetra::CrsMatrix<ST, LO, GO, N
       // send sizes
       int countDr = countD;
       int countMr = countM;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Teuchos::broadcast<LO, int>(*lcomm_, proc, 1, &countDr);
       Teuchos::broadcast<LO, int>(*lcomm_, proc, 1, &countMr);
+#else
+      Teuchos::broadcast<>(*lcomm_, proc, 1, &countDr);
+      Teuchos::broadcast<>(*lcomm_, proc, 1, &countMr);
+#endif
       // allocate receive buffers
       std::vector<int>    colD_r(countDr);
       std::vector<double> valD_r(countDr);
@@ -634,13 +671,21 @@ MoertelT::InterfaceT<ST, LO, GO, N>::Assemble_3D(Tpetra::CrsMatrix<ST, LO, GO, N
       }
       if(countDr > 0){
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         Teuchos::broadcast<LO, int>(*lcomm_, proc, countDr, &colD_r[0]);
+#else
+        Teuchos::broadcast<>(*lcomm_, proc, countDr, &colD_r[0]);
+#endif
         Teuchos::broadcast<LO, double>(*lcomm_, proc, countDr, &valD_r[0]);
       }
 
       if(countMr > 0){
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         Teuchos::broadcast<LO, int>(*lcomm_, proc, countMr, &colM_r[0]);
+#else
+        Teuchos::broadcast<>(*lcomm_, proc, countMr, &colM_r[0]);
+#endif
         Teuchos::broadcast<LO, double>(*lcomm_, proc, countMr, &valM_r[0]);
       }
 
@@ -844,11 +889,17 @@ MoertelT::InterfaceT<ST, LO, GO, N>::Assemble_3D(Tpetra::CrsMatrix<ST, LO, GO, N
  *----------------------------------------------------------------------*/
 //#define PDANDM
 template <class ST,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           class LO,
           class GO,
+#endif
           class N >
 bool 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 MoertelT::InterfaceT<ST, LO, GO, N>::AssembleJFNKVec(MOERTEL::Lmselector *sel) {
+#else
+MoertelT::InterfaceT<ST, N>::AssembleJFNKVec(MOERTEL::Lmselector *sel) {
+#endif
 
   if(!IsComplete()) {
     std::cout << "***ERR*** MoertelT::InterfaceT::AssembleJFNKVec:\n"
@@ -876,9 +927,15 @@ MoertelT::InterfaceT<ST, LO, GO, N>::AssembleJFNKVec(MOERTEL::Lmselector *sel) {
 
     dtable[cnt++] = curr->second->Id();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Tpetra::Map<LO, GO, N> Dmap(Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid(), &dtable[0], size, 0, lcomm_);
   Tpetra::CrsMatrix<ST, LO, GO, N> Dmat(Dmap, 4);
   Tpetra::CrsMatrix<ST, LO, GO, N> Mmat(Dmap, 4);
+#else
+  Tpetra::Map<N> Dmap(Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid(), &dtable[0], size, 0, lcomm_);
+  Tpetra::CrsMatrix<ST, N> Dmat(Dmap, 4);
+  Tpetra::CrsMatrix<ST, N> Mmat(Dmap, 4);
+#endif
 
 #endif
 
@@ -1182,8 +1239,13 @@ MoertelT::InterfaceT<ST, LO, GO, N>::AssembleJFNKVec(MOERTEL::Lmselector *sel) {
       // send sizes
       int countDr = countD;
       int countMr = countM;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Teuchos::broadcast<LO, int>(*lcomm_, proc, 1, &countDr);
       Teuchos::broadcast<LO, int>(*lcomm_, proc, 1, &countMr);
+#else
+      Teuchos::broadcast<>(*lcomm_, proc, 1, &countDr);
+      Teuchos::broadcast<>(*lcomm_, proc, 1, &countMr);
+#endif
       // allocate receive buffers
       std::vector<int>    colD_r(countDr);
       std::vector<double> valD_r(countDr);
@@ -1203,9 +1265,17 @@ MoertelT::InterfaceT<ST, LO, GO, N>::AssembleJFNKVec(MOERTEL::Lmselector *sel) {
         }
       }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Teuchos::broadcast<LO, int>(*lcomm_, proc, countDr, &colD_r[0]);
+#else
+      Teuchos::broadcast<>(*lcomm_, proc, countDr, &colD_r[0]);
+#endif
       Teuchos::broadcast<LO, double>(*lcomm_, proc, countDr, &valD_r[0]);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Teuchos::broadcast<LO, int>(*lcomm_, proc, countDr, &colM_r[0]);
+#else
+      Teuchos::broadcast<>(*lcomm_, proc, countDr, &colM_r[0]);
+#endif
       Teuchos::broadcast<LO, double>(*lcomm_, proc, countDr, &valM_r[0]);
 
       // Assemble (remote procs only)

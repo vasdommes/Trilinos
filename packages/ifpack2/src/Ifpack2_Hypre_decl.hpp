@@ -115,12 +115,16 @@ Class Ifpack2::Hypre: A class for using methods of Hypre with Tpetra objects.
 template<class MatrixType>
 class Hypre: 
     virtual public Ifpack2::Preconditioner<typename MatrixType::scalar_type,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                            typename MatrixType::local_ordinal_type,
                                            typename MatrixType::global_ordinal_type,
+#endif
                                            typename MatrixType::node_type>,
     virtual public Ifpack2::Details::CanChangeMatrix<Tpetra::RowMatrix<typename MatrixType::scalar_type,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                                                        typename MatrixType::local_ordinal_type,
                                                                        typename MatrixType::global_ordinal_type,
+#endif
                                                                        typename MatrixType::node_type> >
 {
 public:
@@ -594,7 +598,11 @@ private:
   int Hypre_ParCSRBiCGSTABCreate(MPI_Comm comm, HYPRE_Solver *solver);
   
   //! Map generation function
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::RCP<const Tpetra::Map<typename MatrixType::local_ordinal_type, typename MatrixType::global_ordinal_type, typename MatrixType::node_type> > 
+#else
+  Teuchos::RCP<const Tpetra::Map<typename MatrixType::node_type> > 
+#endif
   MakeContiguousColumnMap(Teuchos::RCP<const crs_matrix_type> &Matrix) const;
 
   //! Destroy

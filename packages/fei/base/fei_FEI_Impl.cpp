@@ -350,7 +350,11 @@ int fei::FEI_Impl::initElem(GlobalID elemBlockID,
   bool elemdof = false;
 
   if (any_blocks_have_elem_dof_) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::map<int,int>::const_iterator
+#else
+    std::map<>::const_iterator
+#endif
       b_iter = block_dof_per_elem_.find(elemBlockID);
     if (b_iter != block_dof_per_elem_.end()) {
       int numIDs = matGraph_->getNumIDsPerConnectivityList(elemBlockID);
@@ -1158,7 +1162,11 @@ int fei::FEI_Impl::getBlockElemSolution(GlobalID elemBlockID,
 					 int& numElemDOFPerElement,
 					 double *results)
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::const_iterator b_iter = block_dof_per_elem_.find(elemBlockID);
+#else
+  std::map<>::const_iterator b_iter = block_dof_per_elem_.find(elemBlockID);
+#endif
   if (b_iter == block_dof_per_elem_.end()) return(-1);
   numElemDOFPerElement = (*b_iter).second;
 
@@ -1334,7 +1342,11 @@ int fei::FEI_Impl::getBlockElemIDList(GlobalID elemBlockID,
     throw std::runtime_error(osstr.str());
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>& elemIDSet = block->getConnectivityIDs();
+#else
+  std::map<>& elemIDSet = block->getConnectivityIDs();
+#endif
 
   fei::copyKeysToArray(elemIDSet, numElems, elemIDs);
 
@@ -1396,7 +1408,11 @@ int fei::FEI_Impl::getNumBlockElements(GlobalID blockID, int& numElems) const
 
 int fei::FEI_Impl::getNumBlockElemDOF(GlobalID blockID, int& DOFPerElem) const
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::const_iterator b_iter = block_dof_per_elem_.find(blockID);
+#else
+  std::map<>::const_iterator b_iter = block_dof_per_elem_.find(blockID);
+#endif
   if (b_iter == block_dof_per_elem_.end()) DOFPerElem = 0;
   else DOFPerElem = (*b_iter).second;
 

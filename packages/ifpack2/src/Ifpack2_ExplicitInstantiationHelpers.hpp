@@ -47,11 +47,20 @@
 #include <Tpetra_CrsMatrix.hpp>
 #include <Tpetra_CrsGraph.hpp>
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define IFPACK2_INST(CLASSNAME,S,LO,GO,NO)                       \
   template class CLASSNAME<Tpetra::CrsMatrix<S, LO, GO, NO> >;
+#else
+#define IFPACK2_INST(CLASSNAME,S,NO)                       \
+  template class CLASSNAME<Tpetra::CrsMatrix<S, NO> >;
+#endif
 
 #define IFPACK2_INST_GRAPH(CLASSNAME,LO,GO) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template class CLASSNAME<Tpetra::CrsGraph<LO, GO> >;
+#else
+  template class CLASSNAME<Tpetra::CrsGraph<> >;
+#endif
 
 #define IFPACK2_CLASS_CrsMatrix_float_int_int_defaultNode_defaultOps(CLASSNAME) \
   IFPACK2_INST(CLASSNAME,float,int,int)

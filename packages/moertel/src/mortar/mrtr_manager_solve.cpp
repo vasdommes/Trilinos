@@ -320,7 +320,11 @@ Epetra_CrsMatrix* MOERTEL::Manager::MakeSPDProblem()
 
   // we need a map from lagrange multiplier dofs to primal dofs on the same node
   std::vector<MOERTEL::Node*> nodes(0);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int> lm_to_dof;
+#else
+  std::map<> lm_to_dof;
+#endif
   for (curr=interface_.begin(); curr!=interface_.end(); ++curr)
   {
 	Teuchos::RCP<MOERTEL::Interface> inter = curr->second;
@@ -338,7 +342,11 @@ Epetra_CrsMatrix* MOERTEL::Manager::MakeSPDProblem()
       }
     }
   }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   lm_to_dof_ = Teuchos::rcp(new std::map<int,int>(lm_to_dof)); // this is a very useful map for the moertel_ml_preconditioner
+#else
+  lm_to_dof_ = Teuchos::rcp(new std::map<>(lm_to_dof)); // this is a very useful map for the moertel_ml_preconditioner
+#endif
   /*
                _              _
               |               |
@@ -400,7 +408,11 @@ Epetra_CrsMatrix* MOERTEL::Manager::MakeSPDProblem()
   // 1) create the rangemap of Ann
   std::vector<int> myanngids(problemmap_->NumMyElements());
   int count=0;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::iterator intintcurr;
+#else
+  std::map<>::iterator intintcurr;
+#endif
   for (intintcurr=lm_to_dof.begin(); intintcurr!=lm_to_dof.end(); ++intintcurr)
   {
     if (problemmap_->MyGID(intintcurr->second)==false)
@@ -739,7 +751,11 @@ Epetra_CrsMatrix* MOERTEL::Manager::MakeSPDProblem()
 
   // we need a map from lagrange multiplier dofs to primal dofs on the same node
   std::vector<MOERTEL::Node*> nodes(0);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int> lm_to_dof;
+#else
+  std::map<> lm_to_dof;
+#endif
   for (curr=interface_.begin(); curr!=interface_.end(); ++curr)
   {
 	Teuchos::RCP<MOERTEL::Interface> inter = curr->second;
@@ -757,7 +773,11 @@ Epetra_CrsMatrix* MOERTEL::Manager::MakeSPDProblem()
       }
     }
   }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   lm_to_dof_ = Teuchos::rcp(new std::map<int,int>(lm_to_dof)); // this is a very useful map for the moertel_ml_preconditioner
+#else
+  lm_to_dof_ = Teuchos::rcp(new std::map<>(lm_to_dof)); // this is a very useful map for the moertel_ml_preconditioner
+#endif
   /*
                _              _
               |               |
@@ -800,7 +820,11 @@ Epetra_CrsMatrix* MOERTEL::Manager::MakeSPDProblem()
   // 1) create the rangemap of Ann
   std::vector<int> myanngids(problemmap_->NumMyElements());
   int count=0;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::iterator intintcurr;
+#else
+  std::map<>::iterator intintcurr;
+#endif
   for (intintcurr=lm_to_dof.begin(); intintcurr!=lm_to_dof.end(); ++intintcurr)
   {
     if (problemmap_->MyGID(intintcurr->second)==false)

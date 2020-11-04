@@ -110,8 +110,13 @@ namespace MueLu {
   }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   RCP<const ParameterList> CoalesceDropFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::GetValidParameterList() const {
+#else
+  template <class Scalar, class Node>
+  RCP<const ParameterList> CoalesceDropFactory<Scalar, Node>::GetValidParameterList() const {
+#endif
     RCP<ParameterList> validParamList = rcp(new ParameterList());
 
 #define SET_VALID_ENTRY(name) validParamList->setEntry(name, MasterList::getEntry(name))
@@ -135,11 +140,21 @@ namespace MueLu {
     return validParamList;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   CoalesceDropFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::CoalesceDropFactory() : predrop_(Teuchos::null) { }
+#else
+  template <class Scalar, class Node>
+  CoalesceDropFactory<Scalar, Node>::CoalesceDropFactory() : predrop_(Teuchos::null) { }
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void CoalesceDropFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level &currentLevel) const {
+#else
+  template <class Scalar, class Node>
+  void CoalesceDropFactory<Scalar, Node>::DeclareInput(Level &currentLevel) const {
+#endif
     Input(currentLevel, "A");
     Input(currentLevel, "UnAmalgamationInfo");
 
@@ -151,14 +166,23 @@ namespace MueLu {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void CoalesceDropFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(Level &currentLevel) const {
+#else
+  template <class Scalar, class Node>
+  void CoalesceDropFactory<Scalar, Node>::Build(Level &currentLevel) const {
+#endif
 
     FactoryMonitor m(*this, "Build", currentLevel);
 
     typedef Teuchos::ScalarTraits<SC> STS;
     typedef typename STS::magnitudeType real_type;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Xpetra::MultiVector<real_type,LO,GO,NO> RealValuedMultiVector;
+#else
+    typedef Xpetra::MultiVector<real_type,NO> RealValuedMultiVector;
+#endif
 
     if (predrop_ != Teuchos::null)
       GetOStream(Parameters0) << predrop_->description();
@@ -275,7 +299,11 @@ namespace MueLu {
           RCP<GraphBase> graph = rcp(new Graph(A->getCrsGraph(), "graph of A"));
           // Detect and record rows that correspond to Dirichlet boundary conditions
           ArrayRCP<const bool > boundaryNodes;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           boundaryNodes = MueLu::Utilities<SC,LO,GO,NO>::DetectDirichletRows(*A, dirichletThreshold);
+#else
+          boundaryNodes = MueLu::Utilities<SC,NO>::DetectDirichletRows(*A, dirichletThreshold);
+#endif
           graph->SetBoundaryNodeMap(boundaryNodes);
           numTotal = A->getNodeNumEntries();
 
@@ -303,9 +331,17 @@ namespace MueLu {
           ArrayRCP<LO> rows   (A->getNodeNumRows()+1);
           ArrayRCP<LO> columns(A->getNodeNumEntries());
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           RCP<Vector> ghostedDiag = MueLu::Utilities<SC,LO,GO,NO>::GetMatrixOverlappedDiagonal(*A);
+#else
+          RCP<Vector> ghostedDiag = MueLu::Utilities<SC,NO>::GetMatrixOverlappedDiagonal(*A);
+#endif
           const ArrayRCP<const SC> ghostedDiagVals = ghostedDiag->getData(0);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           ArrayRCP<const bool> boundaryNodes = MueLu::Utilities<SC,LO,GO,NO>::DetectDirichletRows(*A, dirichletThreshold);
+#else
+          ArrayRCP<const bool> boundaryNodes = MueLu::Utilities<SC,NO>::DetectDirichletRows(*A, dirichletThreshold);
+#endif
 
           LO realnnz = 0;
           rows[0] = 0;
@@ -493,7 +529,11 @@ namespace MueLu {
           // TODO the array one bigger than the number of local rows, and the last entry can
           // TODO hold the actual number of boundary nodes.  Clever, huh?
           ArrayRCP<const bool > pointBoundaryNodes;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           pointBoundaryNodes = MueLu::Utilities<SC,LO,GO,NO>::DetectDirichletRows(*A, dirichletThreshold);
+#else
+          pointBoundaryNodes = MueLu::Utilities<SC,NO>::DetectDirichletRows(*A, dirichletThreshold);
+#endif
 
           // extract striding information
           LO blkSize = A->GetFixedBlockSize();     //< the full block size (number of dofs per node in strided map)
@@ -613,7 +653,11 @@ namespace MueLu {
           // TODO the array one bigger than the number of local rows, and the last entry can
           // TODO hold the actual number of boundary nodes.  Clever, huh?
           ArrayRCP<const bool > pointBoundaryNodes;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           pointBoundaryNodes = MueLu::Utilities<SC,LO,GO,NO>::DetectDirichletRows(*A, dirichletThreshold);
+#else
+          pointBoundaryNodes = MueLu::Utilities<SC,NO>::DetectDirichletRows(*A, dirichletThreshold);
+#endif
 
           // extract striding information
           LO blkSize = A->GetFixedBlockSize();     //< the full block size (number of dofs per node in strided map)
@@ -630,7 +674,11 @@ namespace MueLu {
           }
 
           // extract diagonal data for dropping strategy
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           RCP<Vector> ghostedDiag = MueLu::Utilities<SC,LO,GO,NO>::GetMatrixOverlappedDiagonal(*A);
+#else
+          RCP<Vector> ghostedDiag = MueLu::Utilities<SC,NO>::GetMatrixOverlappedDiagonal(*A);
+#endif
           const ArrayRCP<const SC> ghostedDiagVals = ghostedDiag->getData(0);
 
           // loop over all local nodes
@@ -723,7 +771,11 @@ namespace MueLu {
         // TODO the array one bigger than the number of local rows, and the last entry can
         // TODO hold the actual number of boundary nodes.  Clever, huh?
         ArrayRCP<const bool > pointBoundaryNodes;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         pointBoundaryNodes = MueLu::Utilities<SC,LO,GO,NO>::DetectDirichletRows(*A, dirichletThreshold);
+#else
+        pointBoundaryNodes = MueLu::Utilities<SC,NO>::DetectDirichletRows(*A, dirichletThreshold);
+#endif
 
         if ( (blkSize == 1) && (threshold == STS::zero()) ) {
           // Trivial case: scalar problem, no dropping. Can return original graph
@@ -797,7 +849,11 @@ namespace MueLu {
                 importer = ImportFactory::Build(uniqueMap, nonUniqueMap);
               }
             } //subtimer
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
             ghostedCoords = Xpetra::MultiVectorFactory<real_type,LO,GO,NO>::Build(nonUniqueMap, Coords->getNumVectors());
+#else
+            ghostedCoords = Xpetra::MultiVectorFactory<real_type,NO>::Build(nonUniqueMap, Coords->getNumVectors());
+#endif
             {
             SubFactoryMonitor m1(*this, "Coordinate import", currentLevel);
             ghostedCoords->doImport(*Coords, *importer, Xpetra::INSERT);
@@ -837,7 +893,11 @@ namespace MueLu {
                 const LO col = indices[colID];
 
                 if (row != col) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                   localLaplDiagData[row] += STS::one() / MueLu::Utilities<real_type,LO,GO,NO>::Distance2(coordData, row, col);
+#else
+                  localLaplDiagData[row] += STS::one() / MueLu::Utilities<real_type,NO>::Distance2(coordData, row, col);
+#endif
                 }
               }
             }
@@ -939,7 +999,11 @@ namespace MueLu {
 		  if(isBoundary) continue;
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                   SC laplVal = STS::one() / MueLu::Utilities<real_type,LO,GO,NO>::Distance2(coordData, row, col);
+#else
+                  SC laplVal = STS::one() / MueLu::Utilities<real_type,NO>::Distance2(coordData, row, col);
+#endif
                   real_type aiiajj = STS::magnitude(realThreshold*realThreshold * ghostedLaplDiagData[row]*ghostedLaplDiagData[col]);
                   real_type aij    = STS::magnitude(laplVal*laplVal);
 
@@ -970,7 +1034,11 @@ namespace MueLu {
 		  // We do not want the distance Laplacian aggregating boundary nodes
 		  if(isBoundary) continue;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                   SC laplVal = STS::one() / MueLu::Utilities<real_type,LO,GO,NO>::Distance2(coordData, row, col);
+#else
+                  SC laplVal = STS::one() / MueLu::Utilities<real_type,NO>::Distance2(coordData, row, col);
+#endif
                   real_type aiiajj = STS::magnitude(ghostedLaplDiagData[row]*ghostedLaplDiagData[col]);
                   real_type aij    = STS::magnitude(laplVal*laplVal);
 
@@ -1282,8 +1350,13 @@ namespace MueLu {
 
   } //Build
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void CoalesceDropFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::MergeRows(const Matrix& A, const LO row, Array<LO>& cols, const Array<LO>& translation) const {
+#else
+  template <class Scalar, class Node>
+  void CoalesceDropFactory<Scalar, Node>::MergeRows(const Matrix& A, const LO row, Array<LO>& cols, const Array<LO>& translation) const {
+#endif
     typedef typename ArrayView<const LO>::size_type size_type;
 
     // extract striding information
@@ -1341,8 +1414,13 @@ namespace MueLu {
     cols.resize(pos+1);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void CoalesceDropFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::MergeRowsWithDropping(const Matrix& A, const LO row, const ArrayRCP<const SC>& ghostedDiagVals, SC threshold, Array<LO>& cols, const Array<LO>& translation) const {
+#else
+  template <class Scalar, class Node>
+  void CoalesceDropFactory<Scalar, Node>::MergeRowsWithDropping(const Matrix& A, const LO row, const ArrayRCP<const SC>& ghostedDiagVals, SC threshold, Array<LO>& cols, const Array<LO>& translation) const {
+#endif
     typedef typename ArrayView<const LO>::size_type size_type;
     typedef Teuchos::ScalarTraits<SC> STS;
 

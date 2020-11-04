@@ -94,8 +94,13 @@ namespace Galeri {
 
 #ifdef HAVE_GALERI_XPETRA
     //! Map creation function (for Xpetra::Map with an UnderlyingLib parameter)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class LocalOrdinal, class GlobalOrdinal, class Node>
     RCP< ::Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > CreateMap(::Xpetra::UnderlyingLib lib, const std::string & mapType, const Teuchos::RCP<const Teuchos::Comm<int> >& comm, Teuchos::ParameterList & list);
+#else
+    template <class Node>
+    RCP< ::Xpetra::Map<Node> > CreateMap(::Xpetra::UnderlyingLib lib, const std::string & mapType, const Teuchos::RCP<const Teuchos::Comm<int> >& comm, Teuchos::ParameterList & list);
+#endif
 #endif
 
   } // namespace Xpetra
@@ -111,16 +116,26 @@ namespace Galeri {
 
     using Teuchos::RCP;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #ifdef HAVE_XPETRA_EPETRA
 
     template <class LocalOrdinal, class GlobalOrdinal> struct privateCreateMapEpetra {
+#else
+#ifdef HAVE_XPETRA_EPETRA struct privateCreateMapEpetra {
+      using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+      using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
       static RCP< ::Xpetra::Map<LocalOrdinal, GlobalOrdinal, KokkosClassic::DefaultNode::DefaultNodeType> > CreateMap(const std::string & mapType, const Teuchos::RCP<const Teuchos::Comm<int> > & comm, Teuchos::ParameterList & list) {
          throw "Galeri::Xpetra::privateCreateMapEpetra: no default implementation";
       }
     };
 
 #ifndef XPETRA_EPETRA_NO_32BIT_GLOBAL_INDICES
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <> struct privateCreateMapEpetra<int, int> {
+#else
+    template <> struct privateCreateMapEpetra<> {
+#endif
       static RCP< ::Xpetra::Map<int, int, KokkosClassic::DefaultNode::DefaultNodeType> > CreateMap(const std::string & mapType, const Teuchos::RCP<const Teuchos::Comm<int> > & comm, Teuchos::ParameterList & list) {
         return Galeri::Xpetra::CreateMap<int, int, ::Xpetra::EpetraMapT<int, KokkosClassic::DefaultNode::DefaultNodeType> >(mapType, comm, list);
       }
@@ -128,7 +143,11 @@ namespace Galeri {
 #endif
 
 #ifndef XPETRA_EPETRA_NO_64BIT_GLOBAL_INDICES
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <> struct privateCreateMapEpetra<int, long long> {
+#else
+    template <> struct privateCreateMapEpetra<> {
+#endif
       static RCP< ::Xpetra::Map<int, long long, KokkosClassic::DefaultNode::DefaultNodeType> > CreateMap(const std::string & mapType, const Teuchos::RCP<const Teuchos::Comm<int> > & comm, Teuchos::ParameterList & list) {
         return Galeri::Xpetra::CreateMap<int, long long, ::Xpetra::EpetraMapT<long long, KokkosClassic::DefaultNode::DefaultNodeType> >(mapType, comm, list);
       }
@@ -139,11 +158,20 @@ namespace Galeri {
 
 #ifdef HAVE_GALERI_XPETRA
     //! Map creation function (for Xpetra::Map with UnderlyingLib parameter)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     template <class LocalOrdinal, class GlobalOrdinal, class Node>
     RCP< ::Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node> > CreateMap(::Xpetra::UnderlyingLib lib, const std::string & mapType, const Teuchos::RCP<const Teuchos::Comm<int> > & comm, Teuchos::ParameterList & list) {
+#else
+    template <class Node>
+    RCP< ::Xpetra::Map<Node> > CreateMap(::Xpetra::UnderlyingLib lib, const std::string & mapType, const Teuchos::RCP<const Teuchos::Comm<int> > & comm, Teuchos::ParameterList & list) {
+#endif
 #ifdef HAVE_XPETRA_TPETRA
       if (lib == ::Xpetra::UseTpetra)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         return CreateMap<LocalOrdinal, GlobalOrdinal, ::Xpetra::TpetraMap<LocalOrdinal, GlobalOrdinal, Node> >(mapType, comm, list);
+#else
+        return CreateMap<LocalOrdinal, GlobalOrdinal, ::Xpetra::TpetraMap<Node> >(mapType, comm, list);
+#endif
 #endif
 #ifdef HAVE_XPETRA_EPETRA
       if (lib == ::Xpetra::UseEpetra) {
@@ -163,7 +191,11 @@ namespace Galeri {
 
 #ifdef HAVE_XPETRA_TPETRA
       if (lib == ::Xpetra::UseTpetra)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         return CreateMap<int, GlobalOrdinal, ::Xpetra::TpetraMap<LocalOrdinal, GlobalOrdinal, Node> >(mapType, comm, list);
+#else
+        return CreateMap<int, GlobalOrdinal, ::Xpetra::TpetraMap<Node> >(mapType, comm, list);
+#endif
 #endif
 #ifdef HAVE_XPETRA_EPETRA
       if (lib == ::Xpetra::UseEpetra)
@@ -183,7 +215,11 @@ namespace Galeri {
 
 #ifdef HAVE_XPETRA_TPETRA
       if (lib == ::Xpetra::UseTpetra)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         return CreateMap<int, GlobalOrdinal, ::Xpetra::TpetraMap<LocalOrdinal, GlobalOrdinal, Node> >(mapType, comm, list);
+#else
+        return CreateMap<int, GlobalOrdinal, ::Xpetra::TpetraMap<Node> >(mapType, comm, list);
+#endif
 #endif
 #ifdef HAVE_XPETRA_EPETRA
       if (lib == ::Xpetra::UseEpetra)

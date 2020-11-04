@@ -97,7 +97,11 @@ int main(int narg, char *arg[])
   int intIdx;
   try {
     int zgno = 123;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Zoltan2::TPL_Traits<int,int>::ASSIGN(intIdx, zgno);
+#else
+    Zoltan2::TPL_Traits<>::ASSIGN(intIdx, zgno);
+#endif
   }
   catch (std::exception &e) {
     PRINTMSG("FAIL: int to int");
@@ -106,7 +110,11 @@ int main(int narg, char *arg[])
 
   try {
     unsigned int zgno = 123;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Zoltan2::TPL_Traits<int,unsigned int>::ASSIGN(intIdx, zgno);
+#else
+    Zoltan2::TPL_Traits<>::ASSIGN(intIdx, zgno);
+#endif
   }
   catch (std::exception &e) {
     PRINTMSG("FAIL: unsigned int to int");
@@ -115,7 +123,11 @@ int main(int narg, char *arg[])
 
   try {
     long zgno = 123;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Zoltan2::TPL_Traits<int,long>::ASSIGN(intIdx, zgno);
+#else
+    Zoltan2::TPL_Traits<>::ASSIGN(intIdx, zgno);
+#endif
   }
   catch (std::exception &e) {
     PRINTMSG("FAIL: long to int");
@@ -134,7 +146,11 @@ int main(int narg, char *arg[])
   // Assignments that should not work
   try {
     long long zgno = (long long)1 << 40;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Zoltan2::TPL_Traits<int,long long>::ASSIGN(intIdx, zgno);
+#else
+    Zoltan2::TPL_Traits<>::ASSIGN(intIdx, zgno);
+#endif
   }
   catch (std::exception &e) {
     PRINTMSG("GOOD: big long long to int throws exception");

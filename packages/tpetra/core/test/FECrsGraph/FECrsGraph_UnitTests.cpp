@@ -79,8 +79,13 @@ void print_graph(int rank, const char *prefix, RP rowptr, CI colind) {
   }
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LO, class GO, class Node>
 bool compare_final_graph_structure(Teuchos::FancyOStream &out,Tpetra::CrsGraph<LO,GO,Node> & g1, Tpetra::CrsGraph<LO,GO,Node> & g2) {
+#else
+template<class Node>
+bool compare_final_graph_structure(Teuchos::FancyOStream &out,Tpetra::CrsGraph<Node> & g1, Tpetra::CrsGraph<Node> & g2) {
+#endif
   using std::endl;
   if (!g1.isFillComplete() || !g2.isFillComplete()) {out<<"Compare: FillComplete failed"<<endl;return false;}
   if (!g1.getRangeMap()->isSameAs(*g2.getRangeMap())) {out<<"Compare: RangeMap failed"<<endl;return false;}
@@ -117,10 +122,19 @@ bool compare_final_graph_structure(Teuchos::FancyOStream &out,Tpetra::CrsGraph<L
 // This means that the two graphs must have the same row/range/domain maps, the same number
 // of rows, and the same GLOBAL indices in each row. The order in which the indices appear
 // in the row, as well as the local index they are given in the column map is irrelevant.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LO, class GO, class Node>
+#else
+template<class Node>
+#endif
 bool compare_final_graph_structure_relaxed(Teuchos::FancyOStream &out,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                                         const Tpetra::CrsGraph<LO,GO,Node> & g1,
                                         const Tpetra::CrsGraph<LO,GO,Node> & g2) {
+#else
+                                        const Tpetra::CrsGraph<Node> & g1,
+                                        const Tpetra::CrsGraph<Node> & g2) {
+#endif
   // Make sure we finished filling the two graphs
   if (!g1.isFillComplete() || !g2.isFillComplete()) {
     out << "Compare: FillComplete failed.\n";
@@ -200,8 +214,13 @@ bool compare_final_graph_structure_relaxed(Teuchos::FancyOStream &out,
 template<int NumElemNodes, class LO, class GO, class Node>
 class GraphPack {
 public:
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<const Tpetra::Map<LO,GO,Node> > uniqueMap;
   RCP<const Tpetra::Map<LO,GO,Node> > overlapMap;
+#else
+  RCP<const Tpetra::Map<Node> > uniqueMap;
+  RCP<const Tpetra::Map<Node> > overlapMap;
+#endif
   std::vector<std::vector<GO> > element2node;
 
   typedef Kokkos::View<LO*[NumElemNodes], Kokkos::LayoutLeft, typename Node::device_type > k_element2node_type;
@@ -231,8 +250,13 @@ public:
 };
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LO, class GO, class Node>
 void generate_fem1d_graph(size_t numLocalNodes, RCP<const Comm<int> > comm , GraphPack<2,LO,GO,Node> & pack) {
+#else
+template<class Node>
+void generate_fem1d_graph(size_t numLocalNodes, RCP<const Comm<int> > comm , GraphPack<2,Node> & pack) {
+#endif
   const GST INVALID = Teuchos::OrdinalTraits<GST>::invalid();
   int rank    = comm->getRank();
   int numProc = comm->getSize();
@@ -240,7 +264,11 @@ void generate_fem1d_graph(size_t numLocalNodes, RCP<const Comm<int> > comm , Gra
   size_t numLocalElements = (rank == numProc-1) ? numLocalNodes -1 : numLocalNodes;
   //  printf("CMS numOverlapNodes = %d numLocalElements = %d\n",numOverlapNodes,numLocalElements);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   pack.uniqueMap = createContigMapWithNode<LO,GO,Node>(INVALID,numLocalNodes,comm);
+#else
+  pack.uniqueMap = createContigMapWithNode<Node>(INVALID,numLocalNodes,comm);
+#endif
 
   Teuchos::Array<GO> overlapIndices(numOverlapNodes);
   for(size_t i=0; i<numLocalNodes; i++) {
@@ -250,7 +278,11 @@ void generate_fem1d_graph(size_t numLocalNodes, RCP<const Comm<int> > comm , Gra
   if(rank != 0)           {overlapIndices[last] = overlapIndices[0] - 1; last++;}
   if(rank != numProc -1)  {overlapIndices[last] = overlapIndices[numLocalNodes-1] + 1; last++;}
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   pack.overlapMap = rcp(new Tpetra::Map<LO,GO,Node>(INVALID,overlapIndices,0,comm));
+#else
+  pack.overlapMap = rcp(new Tpetra::Map<Node>(INVALID,overlapIndices,0,comm));
+#endif
 
   pack.element2node.resize(numLocalElements);
   for(size_t i=0; i<numLocalElements; i++) {
@@ -271,8 +303,13 @@ void generate_fem1d_graph(size_t numLocalNodes, RCP<const Comm<int> > comm , Gra
   Kokkos::fence();
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LO, class GO, class Node>
 void generate_fem2d_q1_graph(size_t numCells1D, RCP<const Comm<int> > comm , GraphPack<4,LO,GO,Node> & pack) {
+#else
+template<class Node>
+void generate_fem2d_q1_graph(size_t numCells1D, RCP<const Comm<int> > comm , GraphPack<4,Node> & pack) {
+#endif
 
   // We assume a NxN Q1 fem grid. Cells are partitioned among ranks.
   // Cell/Nodes ids are as follows (assuming N=2):
@@ -347,7 +384,11 @@ void generate_fem2d_q1_graph(size_t numCells1D, RCP<const Comm<int> > comm , Gra
   ovNodes.resize(new_size);
 
   // Create overlap map, and use Tpetra utility to create the unique one
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   pack.overlapMap = createNonContigMapWithNode<LO,GO,Node>(ovNodes(),comm);
+#else
+  pack.overlapMap = createNonContigMapWithNode<Node>(ovNodes(),comm);
+#endif
   pack.uniqueMap  = createOneToOne(pack.overlapMap);
 
   // Kokkos version of the element2node array
@@ -380,10 +421,21 @@ void generate_fem2d_q1_graph(size_t numCells1D, RCP<const Comm<int> > comm , Gra
 
 
 ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FECrsGraph, Diagonal, LO, GO, Node )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( FECrsGraph, Diagonal, Node )
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::FECrsGraph<LO,GO,Node> FEG;
     typedef Tpetra::CrsGraph<LO,GO,Node> CG;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef Tpetra::FECrsGraph<Node> FEG;
+    typedef Tpetra::CrsGraph<Node> CG;
+#endif
     const GST INVALID = Teuchos::OrdinalTraits<GST>::invalid();
 
     // get a comm
@@ -391,7 +443,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FECrsGraph, Diagonal, LO, GO, Node )
 
     // create a Map
     const size_t numLocal = 10;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Tpetra::Map<LO,GO,Node> > map = createContigMapWithNode<LO,GO,Node>(INVALID,numLocal,comm);
+#else
+    RCP<const Tpetra::Map<Node> > map = createContigMapWithNode<Node>(INVALID,numLocal,comm);
+#endif
 
 
     // Trivial test that makes sure a diagonal graph can be built
@@ -412,10 +468,21 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FECrsGraph, Diagonal, LO, GO, Node )
 }
 
 ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FECrsGraph, Diagonal_LocalIndex, LO, GO, Node )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( FECrsGraph, Diagonal_LocalIndex, Node )
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::FECrsGraph<LO,GO,Node> FEG;
     typedef Tpetra::CrsGraph<LO,GO,Node> CG;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef Tpetra::FECrsGraph<Node> FEG;
+    typedef Tpetra::CrsGraph<Node> CG;
+#endif
     const GST INVALID = Teuchos::OrdinalTraits<GST>::invalid();
 
     // get a comm
@@ -423,7 +490,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FECrsGraph, Diagonal_LocalIndex, LO, GO, Node
 
     // create a Map
     const size_t numLocal = 10;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Tpetra::Map<LO,GO,Node> > map = createContigMapWithNode<LO,GO,Node>(INVALID,numLocal,comm);
+#else
+    RCP<const Tpetra::Map<Node> > map = createContigMapWithNode<Node>(INVALID,numLocal,comm);
+#endif
 
 
     // Trivial test that makes sure a diagonal graph can be built
@@ -446,10 +517,21 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FECrsGraph, Diagonal_LocalIndex, LO, GO, Node
 
 
 ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FECrsGraph, Assemble1D, LO, GO, Node )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( FECrsGraph, Assemble1D, Node )
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::FECrsGraph<LO,GO,Node> FEG;
   typedef Tpetra::CrsGraph<LO,GO,Node> CG;
+#else
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+  typedef Tpetra::FECrsGraph<Node> FEG;
+  typedef Tpetra::CrsGraph<Node> CG;
+#endif
   
   // get a comm
   RCP<const Comm<int> > comm = getDefaultComm();
@@ -458,7 +540,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FECrsGraph, Assemble1D, LO, GO, Node )
   const size_t numLocal = 10;
 
   // Generate a mesh
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   GraphPack<2,LO,GO,Node> pack;
+#else
+  GraphPack<2,Node> pack;
+#endif
   generate_fem1d_graph(numLocal,comm,pack);
   //pack.print(comm->getRank(),std::cout);
 
@@ -489,10 +575,21 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FECrsGraph, Assemble1D, LO, GO, Node )
 
 
 ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FECrsGraph, Assemble1D_LocalIndex, LO, GO, Node )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( FECrsGraph, Assemble1D_LocalIndex, Node )
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::FECrsGraph<LO,GO,Node> FEG;
   typedef Tpetra::CrsGraph<LO,GO,Node> CG;
+#else
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+  typedef Tpetra::FECrsGraph<Node> FEG;
+  typedef Tpetra::CrsGraph<Node> CG;
+#endif
 
   // get a comm
   RCP<const Comm<int> > comm = getDefaultComm();
@@ -501,7 +598,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FECrsGraph, Assemble1D_LocalIndex, LO, GO, No
   const size_t numLocal = 10;
 
   // Generate a mesh
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   GraphPack<2,LO,GO,Node> pack;
+#else
+  GraphPack<2,Node> pack;
+#endif
   generate_fem1d_graph(numLocal,comm,pack);
   //  pack.print(comm->getRank(),std::cout);fflush(stdout);
 
@@ -533,10 +634,21 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FECrsGraph, Assemble1D_LocalIndex, LO, GO, No
   TPETRA_GLOBAL_SUCCESS_CHECK(out,comm,success)
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FECrsGraph, Assemble2D_OPSDomain, LO, GO, Node )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( FECrsGraph, Assemble2D_OPSDomain, Node )
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::FECrsGraph<LO,GO,Node> FEG;
   typedef Tpetra::CrsGraph<LO,GO,Node> CG;
+#else
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+  typedef Tpetra::FECrsGraph<Node> FEG;
+  typedef Tpetra::CrsGraph<Node> CG;
+#endif
 
   // get a comm
   RCP<const Comm<int> > comm = getDefaultComm();
@@ -544,7 +656,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FECrsGraph, Assemble2D_OPSDomain, LO, GO, Nod
   const int numCells1D = 4;
 
   // Generate a mesh
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   GraphPack<4,LO,GO,Node> pack;
+#else
+  GraphPack<4,Node> pack;
+#endif
   generate_fem2d_q1_graph(numCells1D,comm,pack);
 
   // Comparative assembly
@@ -570,7 +686,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FECrsGraph, Assemble2D_OPSDomain, LO, GO, Nod
   g1.fillComplete();
   g2.endFill();
   g3.endFill();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Tpetra::Import<LO,GO,Node> import(pack.uniqueMap,pack.overlapMap);
+#else
+  Tpetra::Import<Node> import(pack.uniqueMap,pack.overlapMap);
+#endif
   
   Teuchos::FancyOStream myout(Teuchos::rcpFromRef(std::cout));
   CG  g11(pack.uniqueMap,9,StaticProfile);
@@ -606,12 +726,21 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( FECrsGraph, Assemble2D_OPSDomain, LO, GO, Nod
 // INSTANTIATIONS
 //
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define UNIT_TEST_GROUP( LO, GO, NODE ) \
       TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( FECrsGraph, Diagonal, LO, GO, NODE ) \
       TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( FECrsGraph, Diagonal_LocalIndex, LO, GO, NODE ) \
       TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( FECrsGraph, Assemble1D, LO, GO, NODE ) \
       TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( FECrsGraph, Assemble1D_LocalIndex, LO, GO, NODE ) \
       TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( FECrsGraph, Assemble2D_OPSDomain, LO, GO, NODE )
+#else
+#define UNIT_TEST_GROUP(NODE ) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( FECrsGraph, Diagonal, NODE ) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( FECrsGraph, Diagonal_LocalIndex, NODE ) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( FECrsGraph, Assemble1D, NODE ) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( FECrsGraph, Assemble1D_LocalIndex, NODE ) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( FECrsGraph, Assemble2D_OPSDomain, NODE )
+#endif
 
   TPETRA_ETI_MANGLING_TYPEDEFS()
 

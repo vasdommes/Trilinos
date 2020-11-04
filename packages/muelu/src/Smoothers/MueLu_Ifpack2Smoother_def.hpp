@@ -86,11 +86,20 @@
 
 namespace MueLu {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Ifpack2Smoother(const std::string& type, const Teuchos::ParameterList& paramList, const LO& overlap)
+#else
+  template <class Scalar, class Node>
+  Ifpack2Smoother<Scalar, Node>::Ifpack2Smoother(const std::string& type, const Teuchos::ParameterList& paramList, const LO& overlap)
+#endif
     : type_(type), overlap_(overlap)
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::RowMatrix<SC,LO,GO,NO> tRowMatrix;
+#else
+    typedef Tpetra::RowMatrix<SC,NO> tRowMatrix;
+#endif
     bool isSupported = Ifpack2::Factory::isSupported<tRowMatrix>(type_) || (type_ == "LINESMOOTHING_TRIDI_RELAXATION"        ||
                                                                             type_ == "LINESMOOTHING_TRIDI RELAXATION"        ||
                                                                             type_ == "LINESMOOTHING_TRIDIRELAXATION"         ||
@@ -109,8 +118,13 @@ namespace MueLu {
       SetParameterList(paramList);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::SetParameterList(const Teuchos::ParameterList& paramList) {
+#else
+  template <class Scalar, class Node>
+  void Ifpack2Smoother<Scalar, Node>::SetParameterList(const Teuchos::ParameterList& paramList) {
+#endif
     Factory::SetParameterList(paramList);
 
     if (SmootherPrototype::IsSetup()) {
@@ -120,8 +134,13 @@ namespace MueLu {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::SetPrecParameters(const Teuchos::ParameterList& list) const {
+#else
+  template <class Scalar, class Node>
+  void Ifpack2Smoother<Scalar, Node>::SetPrecParameters(const Teuchos::ParameterList& list) const {
+#endif
     ParameterList& paramList = const_cast<ParameterList&>(this->GetParameterList());
     paramList.setParameters(list);
 
@@ -137,8 +156,13 @@ namespace MueLu {
     paramList.setParameters(*precList); // what about that??
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level& currentLevel) const {
+#else
+  template <class Scalar, class Node>
+  void Ifpack2Smoother<Scalar, Node>::DeclareInput(Level& currentLevel) const {
+#endif
     this->Input(currentLevel, "A");
 
     if (type_ == "LINESMOOTHING_TRIDI_RELAXATION"        ||
@@ -185,8 +209,13 @@ namespace MueLu {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Setup(Level& currentLevel) {
+#else
+  template <class Scalar, class Node>
+  void Ifpack2Smoother<Scalar, Node>::Setup(Level& currentLevel) {
+#endif
     FactoryMonitor m(*this, "Setup Smoother", currentLevel);
     A_ = Factory::Get< RCP<Matrix> >(currentLevel, "A");
 
@@ -244,9 +273,15 @@ namespace MueLu {
     this->GetOStream(Statistics1) << description() << std::endl;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::SetupSchwarz(Level& /* currentLevel */) {
     typedef Tpetra::RowMatrix<SC,LO,GO,NO> tRowMatrix;
+#else
+  template <class Scalar, class Node>
+  void Ifpack2Smoother<Scalar, Node>::SetupSchwarz(Level& /* currentLevel */) {
+    typedef Tpetra::RowMatrix<SC,NO> tRowMatrix;
+#endif
 
     bool reusePreconditioner = false;
     if (this->IsSetup() == true) {
@@ -358,8 +393,13 @@ namespace MueLu {
   }
 
 #ifdef HAVE_MUELU_INTREPID2
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::SetupTopological(Level& currentLevel) {
+#else
+  template <class Scalar, class Node>
+  void Ifpack2Smoother<Scalar, Node>::SetupTopological(Level& currentLevel) {
+#endif
     /*
      
      basic notion:
@@ -426,7 +466,11 @@ namespace MueLu {
     paramList.set("partitioner: overlap", 1);
     paramList.set("partitioner: local parts", int(seeds[dimension].size()));
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Tpetra::RowMatrix<SC, LO, GO, NO> > tA = Utilities::Op2NonConstTpetraRow(A_);
+#else
+    RCP<const Tpetra::RowMatrix<SC, NO> > tA = Utilities::Op2NonConstTpetraRow(A_);
+#endif
     
     type_ = "BLOCKRELAXATION";
     prec_ = Ifpack2::Factory::create(type_, tA, overlap_);
@@ -436,8 +480,13 @@ namespace MueLu {
   }
 #endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::SetupLineSmoothing(Level& currentLevel) {
+#else
+  template <class Scalar, class Node>
+  void Ifpack2Smoother<Scalar, Node>::SetupLineSmoothing(Level& currentLevel) {
+#endif
     if (this->IsSetup() == true) {
       this->GetOStream(Warnings0) << "MueLu::Ifpack2Smoother::SetupLineSmoothing(): Setup() has already been called" << std::endl;
       this->GetOStream(Warnings0) << "MueLu::Ifpack2Smoother::SetupLineSmoothing(): reuse of this type is not available, reverting to full construction" << std::endl;
@@ -515,7 +564,11 @@ namespace MueLu {
       type_ = "RELAXATION";
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Tpetra::RowMatrix<SC, LO, GO, NO> > tA = Utilities::Op2NonConstTpetraRow(A_);
+#else
+    RCP<const Tpetra::RowMatrix<SC, NO> > tA = Utilities::Op2NonConstTpetraRow(A_);
+#endif
 
     prec_ = Ifpack2::Factory::create(type_, tA, overlap_);
     SetPrecParameters();
@@ -523,9 +576,15 @@ namespace MueLu {
     prec_->compute();
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::SetupBlockRelaxation(Level& currentLevel) {
     typedef Tpetra::RowMatrix<SC,LO,GO,NO> tRowMatrix;
+#else
+  template <class Scalar, class Node>
+  void Ifpack2Smoother<Scalar, Node>::SetupBlockRelaxation(Level& currentLevel) {
+    typedef Tpetra::RowMatrix<SC,NO> tRowMatrix;
+#endif
 
     RCP<BlockedCrsMatrix> bA = rcp_dynamic_cast<BlockedCrsMatrix>(A_);
     if (!bA.is_null())
@@ -558,9 +617,15 @@ namespace MueLu {
       myparamList.print();
       if(myparamList.isParameter("partitioner: type") &&
          myparamList.get<std::string>("partitioner: type") == "line") {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         Teuchos::RCP<Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,LO,GO,NO> > xCoordinates =
           Factory::Get<Teuchos::RCP<Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,LO,GO,NO> > >(currentLevel, "Coordinates");
         Teuchos::RCP<Tpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,LO,GO,NO> > coordinates = Teuchos::rcpFromRef(Xpetra::toTpetra<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,LO,GO,NO>(*xCoordinates));
+#else
+        Teuchos::RCP<Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,NO> > xCoordinates =
+          Factory::Get<Teuchos::RCP<Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,NO> > >(currentLevel, "Coordinates");
+        Teuchos::RCP<Tpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,NO> > coordinates = Teuchos::rcpFromRef(Xpetra::toTpetra<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,NO>(*xCoordinates));
+#endif
 
         size_t numDofsPerNode = A_->getNodeNumRows() / xCoordinates->getMap()->getNodeNumElements();
         myparamList.set("partitioner: coordinates", coordinates);
@@ -575,8 +640,13 @@ namespace MueLu {
     prec_->compute();
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::SetupChebyshev(Level& currentLevel) {
+#else
+  template <class Scalar, class Node>
+  void Ifpack2Smoother<Scalar, Node>::SetupChebyshev(Level& currentLevel) {
+#endif
     if (this->IsSetup() == true) {
       this->GetOStream(Warnings0) << "MueLu::Ifpack2Smoother::SetupChebyshev(): SetupChebyshev() has already been called" << std::endl;
       this->GetOStream(Warnings0) << "MueLu::Ifpack2Smoother::SetupChebyshev(): reuse of this type is not available, reverting to full construction" << std::endl;
@@ -642,13 +712,21 @@ namespace MueLu {
         paramList.remove("chebyshev: use rowsumabs diagonal scaling");
         if (doScale) {
           RCP<Vector> lumpedDiagonal = Utilities::GetLumpedMatrixDiagonal(currentLevel.Get<RCP<Matrix> >("A"),true);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           const Xpetra::TpetraVector<Scalar,LocalOrdinal,GlobalOrdinal,Node>& tmpVec = dynamic_cast<const Xpetra::TpetraVector<Scalar,LocalOrdinal,GlobalOrdinal,Node>&>(*lumpedDiagonal);
+#else
+          const Xpetra::TpetraVector<Scalar,Node>& tmpVec = dynamic_cast<const Xpetra::TpetraVector<Scalar,Node>&>(*lumpedDiagonal);
+#endif
           paramList.set("chebyshev: operator inv diagonal",tmpVec.getTpetra_Vector());
         }
       }
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Tpetra::RowMatrix<SC, LO, GO, NO> > tA = Utilities::Op2NonConstTpetraRow(A_);
+#else
+    RCP<const Tpetra::RowMatrix<SC, NO> > tA = Utilities::Op2NonConstTpetraRow(A_);
+#endif
 
     prec_ = Ifpack2::Factory::create(type_, tA, overlap_);
     SetPrecParameters();
@@ -662,7 +740,11 @@ namespace MueLu {
     }
 
     if (lambdaMax == negone) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       typedef Tpetra::RowMatrix<SC, LO, GO, NO> MatrixType;
+#else
+      typedef Tpetra::RowMatrix<SC, NO> MatrixType;
+#endif
 
       Teuchos::RCP<Ifpack2::Chebyshev<MatrixType> > chebyPrec = rcp_dynamic_cast<Ifpack2::Chebyshev<MatrixType> >(prec_);
       if (chebyPrec != Teuchos::null) {
@@ -674,9 +756,15 @@ namespace MueLu {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::SetupGeneric(Level& /* currentLevel */) {
     typedef Tpetra::RowMatrix<SC,LO,GO,NO> tRowMatrix;
+#else
+  template <class Scalar, class Node>
+  void Ifpack2Smoother<Scalar, Node>::SetupGeneric(Level& /* currentLevel */) {
+    typedef Tpetra::RowMatrix<SC,NO> tRowMatrix;
+#endif
     RCP<BlockedCrsMatrix> bA = rcp_dynamic_cast<BlockedCrsMatrix>(A_);
     if (!bA.is_null())
       A_ = bA->Merge();
@@ -712,8 +800,13 @@ namespace MueLu {
     prec_->compute();
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Apply(MultiVector& X, const MultiVector& B, bool InitialGuessIsZero) const {
+#else
+  template <class Scalar, class Node>
+  void Ifpack2Smoother<Scalar, Node>::Apply(MultiVector& X, const MultiVector& B, bool InitialGuessIsZero) const {
+#endif
     TEUCHOS_TEST_FOR_EXCEPTION(SmootherPrototype::IsSetup() == false, Exceptions::RuntimeError, "MueLu::Ifpack2Smoother::Apply(): Setup() has not been called");
 
     // Forward the InitialGuessIsZero option to Ifpack2
@@ -760,16 +853,26 @@ namespace MueLu {
 
     // Apply
     if (InitialGuessIsZero || supportInitialGuess) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Tpetra::MultiVector<SC,LO,GO,NO>&       tpX = Utilities::MV2NonConstTpetraMV(X);
       const Tpetra::MultiVector<SC,LO,GO,NO>& tpB = Utilities::MV2TpetraMV(B);
+#else
+      Tpetra::MultiVector<SC,NO>&       tpX = Utilities::MV2NonConstTpetraMV(X);
+      const Tpetra::MultiVector<SC,NO>& tpB = Utilities::MV2TpetraMV(B);
+#endif
       prec_->apply(tpB, tpX);
     } else {
       typedef Teuchos::ScalarTraits<Scalar> TST;
       RCP<MultiVector> Residual   = Utilities::Residual(*A_, X, B);
       RCP<MultiVector> Correction = MultiVectorFactory::Build(A_->getDomainMap(), X.getNumVectors());
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Tpetra::MultiVector<SC,LO,GO,NO>&       tpX = Utilities::MV2NonConstTpetraMV(*Correction);
       const Tpetra::MultiVector<SC,LO,GO,NO>& tpB = Utilities::MV2TpetraMV(*Residual);
+#else
+      Tpetra::MultiVector<SC,NO>&       tpX = Utilities::MV2NonConstTpetraMV(*Correction);
+      const Tpetra::MultiVector<SC,NO>& tpB = Utilities::MV2TpetraMV(*Residual);
+#endif
 
       prec_->apply(tpB, tpX);
 
@@ -777,15 +880,25 @@ namespace MueLu {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   RCP<MueLu::SmootherPrototype<Scalar, LocalOrdinal, GlobalOrdinal, Node> > Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Copy() const {
+#else
+  template <class Scalar, class Node>
+  RCP<MueLu::SmootherPrototype<Scalar, Node> > Ifpack2Smoother<Scalar, Node>::Copy() const {
+#endif
     RCP<Ifpack2Smoother> smoother = rcp(new Ifpack2Smoother(*this) );
     smoother->SetParameterList(this->GetParameterList());
     return smoother;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   std::string Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::description() const {
+#else
+  template <class Scalar, class Node>
+  std::string Ifpack2Smoother<Scalar, Node>::description() const {
+#endif
     std::ostringstream out;
     if (SmootherPrototype::IsSetup()) {
       out << prec_->description();
@@ -796,8 +909,13 @@ namespace MueLu {
     return out.str();
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::print(Teuchos::FancyOStream &out, const VerbLevel verbLevel) const {
+#else
+  template <class Scalar, class Node>
+  void Ifpack2Smoother<Scalar, Node>::print(Teuchos::FancyOStream &out, const VerbLevel verbLevel) const {
+#endif
     MUELU_DESCRIBE;
 
     if (verbLevel & Parameters0)
@@ -823,9 +941,15 @@ namespace MueLu {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   size_t Ifpack2Smoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::getNodeSmootherComplexity() const {
     typedef Tpetra::RowMatrix<SC,LO,GO,NO> MatrixType;
+#else
+  template <class Scalar, class Node>
+  size_t Ifpack2Smoother<Scalar, Node>::getNodeSmootherComplexity() const {
+    typedef Tpetra::RowMatrix<SC,NO> MatrixType;
+#endif
     // NOTE: Only works for a subset of Ifpack2's smoothers
     RCP<Ifpack2::Relaxation<MatrixType> > pr     = rcp_dynamic_cast<Ifpack2::Relaxation<MatrixType> >(prec_);
     if(!pr.is_null()) return pr->getNodeSmootherComplexity();

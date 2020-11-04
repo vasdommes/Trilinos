@@ -93,7 +93,11 @@ void snl_fei::RecordCollection::initRecords(int numIDs, const int* IDs,
     if (m_maxID < IDs[i]) m_maxID = IDs[i];
 
     int local_id = -1;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::map<int,int>::iterator iter = m_global_to_local.lower_bound(IDs[i]);
+#else
+    std::map<>::iterator iter = m_global_to_local.lower_bound(IDs[i]);
+#endif
     if (iter == m_global_to_local.end() || iter->first != IDs[i]) {
       //record doesn't exist, so we'll add a new one.
       local_id = m_records.size();
@@ -139,7 +143,11 @@ void snl_fei::RecordCollection::initRecords(int fieldID, int fieldSize,
     if (m_minID > IDs[i]) m_minID = IDs[i];
     if (m_maxID < IDs[i]) m_maxID = IDs[i];
     int local_id;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::map<int,int>::iterator iter = m_global_to_local.lower_bound(IDs[i]);
+#else
+    std::map<>::iterator iter = m_global_to_local.lower_bound(IDs[i]);
+#endif
     if (iter == m_global_to_local.end() || iter->first != IDs[i]) {
       //record doesn't exist, so we'll add a new one.
       local_id = m_records.size();
@@ -253,7 +261,11 @@ void snl_fei::RecordCollection::setOwners_lowestSharing(fei::SharedIDs<int>& sha
 
 fei::Record<int>* snl_fei::RecordCollection::getRecordWithID(int ID)
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::iterator iter = m_global_to_local.find(ID);
+#else
+  std::map<>::iterator iter = m_global_to_local.find(ID);
+#endif
 
   if (iter == m_global_to_local.end()) {
     return( NULL );
@@ -264,7 +276,11 @@ fei::Record<int>* snl_fei::RecordCollection::getRecordWithID(int ID)
 
 const fei::Record<int>* snl_fei::RecordCollection::getRecordWithID(int ID) const
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::const_iterator iter = m_global_to_local.find(ID);
+#else
+  std::map<>::const_iterator iter = m_global_to_local.find(ID);
+#endif
 
   if (iter == m_global_to_local.end()) {
     return( NULL );

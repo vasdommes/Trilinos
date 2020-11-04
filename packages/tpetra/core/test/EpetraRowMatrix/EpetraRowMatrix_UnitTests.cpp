@@ -96,8 +96,16 @@ namespace {
   //
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( EpetraRowMatrix, BasicFunctionality, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST( EpetraRowMatrix, BasicFunctionality )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     using Teuchos::RCP;
     using Teuchos::tuple;
     //using std::endl;
@@ -107,8 +115,13 @@ namespace {
 
     // generate a tridiagonal matrix
     typedef Teuchos::ScalarTraits<Scalar> ST;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::CrsMatrix<Scalar,LO,GO> MAT;
     typedef Tpetra::MultiVector<Scalar,LO,GO> MV;
+#else
+    typedef Tpetra::CrsMatrix<Scalar> MAT;
+    typedef Tpetra::MultiVector<Scalar> MV;
+#endif
     typedef typename ST::magnitudeType Mag;
     typedef Teuchos::ScalarTraits<Mag> MT;
     const GST INVALID = Teuchos::OrdinalTraits<GST>::invalid();
@@ -118,7 +131,11 @@ namespace {
     // create a Map
     const size_t numLocal = 10;
     const size_t numVecs = 5;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Tpetra::Map<LO,GO> > map = Tpetra::createContigMap<LO,GO>(INVALID,numLocal,comm);
+#else
+    RCP<const Tpetra::Map<> > map = Tpetra::createContigMap<>(INVALID,numLocal,comm);
+#endif
     // create a matrix, modeled closely on Chris' CrsMatrix unit-tests.
     RCP<MAT> matrix(new MAT(map, 3));
     for (GO r=map->getMinGlobalIndex(); r <= map->getMaxGlobalIndex(); ++r) {
@@ -191,7 +208,10 @@ namespace {
 TPETRA_ETI_MANGLING_TYPEDEFS()
 
 #define UNIT_TEST_GROUP( LO, GO ) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( EpetraRowMatrix, BasicFunctionality, LO, GO )
+#else
+#endif
 
 TPETRA_INSTANTIATE_LG( UNIT_TEST_GROUP )
 

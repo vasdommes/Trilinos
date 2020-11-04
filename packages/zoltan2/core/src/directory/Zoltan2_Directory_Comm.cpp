@@ -396,7 +396,11 @@ int Zoltan2_Directory_Comm::invert_map(
 
   int nrecvs = 0;		/* number of messages I'll receive */
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::scatter<int, int>(&(counts[0]), 1, &nrecvs, 1, 0, *comm);
+#else
+  Teuchos::scatter<>(&(counts[0]), 1, &nrecvs, 1, 0, *comm);
+#endif
 
   int max_nrecvs = 0;
   if (my_proc == 0) {

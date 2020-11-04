@@ -10,7 +10,11 @@ namespace stk {
 namespace balance {
 namespace internal {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 std::tuple<int,int> get_included_and_num_target_procs(stk::mesh::BulkData &bulk, stk::ParallelMachine comm);
+#else
+std::tuple<> get_included_and_num_target_procs(stk::mesh::BulkData &bulk, stk::ParallelMachine comm);
+#endif
 
 int get_subdomain_index(int includeMe, stk::ParallelMachine comm);
 

@@ -64,9 +64,17 @@ namespace Details {
   /// (PID, LID) pair from that set.  Furthermore, this choice must be
   /// a <i>global</i> choice, that is, the same on all participating
   /// processes.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <typename LocalOrdinal, typename GlobalOrdinal>
+#else
+
+#endif
   class TieBreak {
   public:
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     /// \brief Representation of a global index on a process.
     ///
     /// This struct holds a global index (GID), a process that owns it

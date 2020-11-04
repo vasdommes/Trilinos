@@ -131,13 +131,21 @@ bool Automatic_Test_ETI(int argc, char *argv[]) {
 #  ifdef HAVE_MUELU_TPETRA
 #    if defined(HAVE_MUELU_INST_DOUBLE_INT_INT) || defined(HAVE_TPETRA_INST_DOUBLE) && defined(HAVE_TPETRA_INST_INT_INT)
       // Both Epetra and Tpetra (with double, int, int) enabled
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       return MUELU_AUTOMATIC_TEST_ETI_NAME<double,int,int,Xpetra::EpetraNode>(clp, lib, argc, argv);
+#else
+      return MUELU_AUTOMATIC_TEST_ETI_NAME<double,Xpetra::EpetraNode>(clp, lib, argc, argv);
+#endif
 #    else
       std::cout << "Skip running with Epetra since both Epetra and Tpetra are enabled but Tpetra is not instantiated on double, int, int." << std::endl;
 #    endif // end Tpetra instantiated on double, int, int
 #  else
       // only Epetra enabled. No Tpetra instantiation possible
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       return MUELU_AUTOMATIC_TEST_ETI_NAME<double,int,int,Xpetra::EpetraNode>(clp, lib, argc, argv);
+#else
+      return MUELU_AUTOMATIC_TEST_ETI_NAME<double,Xpetra::EpetraNode>(clp, lib, argc, argv);
+#endif
 #  endif // HAVE_MUELU_TPETRA
 #else
       throw RuntimeError("Epetra is not available");
@@ -151,19 +159,35 @@ bool Automatic_Test_ETI(int argc, char *argv[]) {
         typedef KokkosClassic::DefaultNode::DefaultNodeType Node;
 
 #ifndef HAVE_MUELU_EXPLICIT_INSTANTIATION
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         return MUELU_AUTOMATIC_TEST_ETI_NAME<double,int,long,Node>(clp, lib, argc, argv);
+#else
+        return MUELU_AUTOMATIC_TEST_ETI_NAME<double,Node>(clp, lib, argc, argv);
+#endif
 #else
 #  if defined(HAVE_MUELU_INST_DOUBLE_INT_INT) || defined(HAVE_TPETRA_INST_DOUBLE) && defined(HAVE_TPETRA_INST_INT_INT)
         if (inst == Xpetra::DOUBLE_INT_INT)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           return MUELU_AUTOMATIC_TEST_ETI_NAME<double,int,int,Node> (clp,  lib, argc, argv);
+#else
+          return MUELU_AUTOMATIC_TEST_ETI_NAME<double,Node> (clp,  lib, argc, argv);
+#endif
 #  endif
 #  if defined(HAVE_MUELU_INST_DOUBLE_INT_LONGINT) || defined(HAVE_TPETRA_INST_DOUBLE) && defined(HAVE_TPETRA_INST_INT_LONG)
         if (inst == Xpetra::DOUBLE_INT_LONGINT)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           return MUELU_AUTOMATIC_TEST_ETI_NAME<double,int,long,Node>(clp,  lib, argc, argv);
+#else
+          return MUELU_AUTOMATIC_TEST_ETI_NAME<double,Node>(clp,  lib, argc, argv);
+#endif
 #  endif
 #  if defined(HAVE_MUELU_INST_DOUBLE_INT_LONGLONGINT) || defined(HAVE_TPETRA_INST_DOUBLE) && defined(HAVE_TPETRA_INST_INT_LONG_LONG)
         if (inst == Xpetra::DOUBLE_INT_LONGLONGINT)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           return MUELU_AUTOMATIC_TEST_ETI_NAME<double,int,long long,Node>(clp,  lib, argc, argv);
+#else
+          return MUELU_AUTOMATIC_TEST_ETI_NAME<double,Node>(clp,  lib, argc, argv);
+#endif
 #  endif
 #  if defined(HAVE_MUELU_INST_COMPLEX_INT_INT) || defined(HAVE_TPETRA_INST_COMPLEX_DOUBLE) && defined(HAVE_TPETRA_INST_INT_INT)
         if (inst == Xpetra::COMPLEX_INT_INT)
@@ -171,7 +195,11 @@ bool Automatic_Test_ETI(int argc, char *argv[]) {
 #  endif
 #  if defined(HAVE_MUELU_INST_FLOAT_INT_INT) || defined(HAVE_TPETRA_INST_FLOAT) && defined(HAVE_TPETRA_INST_INT_INT)
         if (inst == Xpetra::FLOAT_INT_INT)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           return MUELU_AUTOMATIC_TEST_ETI_NAME<float,int,int,Node>(clp,  lib, argc, argv);
+#else
+          return MUELU_AUTOMATIC_TEST_ETI_NAME<float,Node>(clp,  lib, argc, argv);
+#endif
 #  endif
         throw RuntimeError("Found no suitable Default instantiation");
 #endif
@@ -183,19 +211,35 @@ bool Automatic_Test_ETI(int argc, char *argv[]) {
           Kokkos::Serial::print_configuration(std::cout, true/*details*/);
 
 #  ifndef HAVE_MUELU_EXPLICIT_INSTANTIATION
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         return MUELU_AUTOMATIC_TEST_ETI_NAME<double,int,long,Node>(clp,  lib, argc, argv);
+#else
+        return MUELU_AUTOMATIC_TEST_ETI_NAME<double,Node>(clp,  lib, argc, argv);
+#endif
 #  else
 #    if defined(HAVE_TPETRA_INST_SERIAL) && defined(HAVE_MUELU_INST_DOUBLE_INT_INT)
         if (inst == Xpetra::DOUBLE_INT_INT)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           return MUELU_AUTOMATIC_TEST_ETI_NAME<double,int,int,Node> (clp,  lib, argc, argv);
+#else
+          return MUELU_AUTOMATIC_TEST_ETI_NAME<double,Node> (clp,  lib, argc, argv);
+#endif
 #    endif
 #    if defined(HAVE_TPETRA_INST_SERIAL) && defined(HAVE_MUELU_INST_DOUBLE_INT_LONGINT)
         if (inst == Xpetra::DOUBLE_INT_LONGINT)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           return MUELU_AUTOMATIC_TEST_ETI_NAME<double,int,long,Node>(clp,  lib, argc, argv);
+#else
+          return MUELU_AUTOMATIC_TEST_ETI_NAME<double,Node>(clp,  lib, argc, argv);
+#endif
 #    endif
 #    if defined(HAVE_TPETRA_INST_SERIAL) && defined(HAVE_MUELU_INST_DOUBLE_INT_LONGLONGINT)
         if (inst == Xpetra::DOUBLE_INT_LONGLONGINT)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           return MUELU_AUTOMATIC_TEST_ETI_NAME<double,int,long long,Node>(clp,  lib, argc, argv);
+#else
+          return MUELU_AUTOMATIC_TEST_ETI_NAME<double,Node>(clp,  lib, argc, argv);
+#endif
 #    endif
 #    if defined(HAVE_TPETRA_INST_SERIAL) && defined(HAVE_MUELU_INST_COMPLEX_INT_INT)
         if (inst == Xpetra::COMPLEX_INT_INT)
@@ -203,7 +247,11 @@ bool Automatic_Test_ETI(int argc, char *argv[]) {
 #    endif
 #    if defined(HAVE_TPETRA_INST_SERIAL) && defined(HAVE_MUELU_INST_FLOAT_INT_INT)
         if (inst == Xpetra::FLOAT_INT_INT)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           return MUELU_AUTOMATIC_TEST_ETI_NAME<float,int,int,Node>(clp,  lib, argc, argv);
+#else
+          return MUELU_AUTOMATIC_TEST_ETI_NAME<float,Node>(clp,  lib, argc, argv);
+#endif
 #    endif
         throw RuntimeError("Found no suitable Serial instantiation");
 #  endif
@@ -220,19 +268,35 @@ bool Automatic_Test_ETI(int argc, char *argv[]) {
         }
 
 #  ifndef HAVE_MUELU_EXPLICIT_INSTANTIATION
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         return MUELU_AUTOMATIC_TEST_ETI_NAME<double,int,long,Node>(clp,  lib, argc, argv);
+#else
+        return MUELU_AUTOMATIC_TEST_ETI_NAME<double,Node>(clp,  lib, argc, argv);
+#endif
 #  else
 #    if defined(HAVE_TPETRA_INST_OPENMP) && defined(HAVE_MUELU_INST_DOUBLE_INT_INT)
         if (inst == Xpetra::DOUBLE_INT_INT)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           return MUELU_AUTOMATIC_TEST_ETI_NAME<double,int,int,Node> (clp, lib,  argc, argv);
+#else
+          return MUELU_AUTOMATIC_TEST_ETI_NAME<double,Node> (clp, lib,  argc, argv);
+#endif
 #    endif
 #    if defined(HAVE_TPETRA_INST_OPENMP) && defined(HAVE_MUELU_INST_DOUBLE_INT_LONGINT)
         if (inst == Xpetra::DOUBLE_INT_LONGINT)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           return MUELU_AUTOMATIC_TEST_ETI_NAME<double,int,long,Node>(clp,  lib, argc, argv);
+#else
+          return MUELU_AUTOMATIC_TEST_ETI_NAME<double,Node>(clp,  lib, argc, argv);
+#endif
 #    endif
 #    if defined(HAVE_TPETRA_INST_OPENMP) && defined(HAVE_MUELU_INST_DOUBLE_INT_LONGLONGINT)
         if (inst == Xpetra::DOUBLE_INT_LONGLONGINT)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           return MUELU_AUTOMATIC_TEST_ETI_NAME<double,int,long long,Node>(clp,  lib, argc, argv);
+#else
+          return MUELU_AUTOMATIC_TEST_ETI_NAME<double,Node>(clp,  lib, argc, argv);
+#endif
 #    endif
 #    if defined(HAVE_TPETRA_INST_OPENMP) && defined(HAVE_MUELU_INST_COMPLEX_INT_INT)
         if (inst == Xpetra::COMPLEX_INT_INT)
@@ -240,7 +304,11 @@ bool Automatic_Test_ETI(int argc, char *argv[]) {
 #    endif
 #    if defined(HAVE_TPETRA_INST_OPENMP) && defined(HAVE_MUELU_INST_FLOAT_INT_INT)
         if (inst == Xpetra::FLOAT_INT_INT)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           return MUELU_AUTOMATIC_TEST_ETI_NAME<float,int,int,Node>(clp,  lib, argc, argv);
+#else
+          return MUELU_AUTOMATIC_TEST_ETI_NAME<float,Node>(clp,  lib, argc, argv);
+#endif
 #    endif
         throw RuntimeError("Found no suitable OpenMP instantiation");
 #  endif
@@ -255,19 +323,35 @@ bool Automatic_Test_ETI(int argc, char *argv[]) {
           Kokkos::Cuda::print_configuration(std::cout, true/*details*/);
 
 #  ifndef HAVE_MUELU_EXPLICIT_INSTANTIATION
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         return MUELU_AUTOMATIC_TEST_ETI_NAME<double,int,long,Node>(clp, lib, argc, argv);
+#else
+        return MUELU_AUTOMATIC_TEST_ETI_NAME<double,Node>(clp, lib, argc, argv);
+#endif
 #  else
 #    if defined(HAVE_TPETRA_INST_CUDA) && defined(HAVE_MUELU_INST_DOUBLE_INT_INT)
         if (inst == Xpetra::DOUBLE_INT_INT)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           return MUELU_AUTOMATIC_TEST_ETI_NAME<double,int,int,Node> (clp, lib, argc, argv);
+#else
+          return MUELU_AUTOMATIC_TEST_ETI_NAME<double,Node> (clp, lib, argc, argv);
+#endif
 #    endif
 #    if defined(HAVE_TPETRA_INST_CUDA) && defined(HAVE_MUELU_INST_DOUBLE_INT_LONGINT)
         if (inst == Xpetra::DOUBLE_INT_LONGINT)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           return MUELU_AUTOMATIC_TEST_ETI_NAME<double,int,long,Node>(clp, lib, argc, argv);
+#else
+          return MUELU_AUTOMATIC_TEST_ETI_NAME<double,Node>(clp, lib, argc, argv);
+#endif
 #    endif
 #    if defined(HAVE_TPETRA_INST_CUDA) && defined(HAVE_MUELU_INST_DOUBLE_INT_LONGLONGINT)
         if (inst == Xpetra::DOUBLE_INT_LONGLONGINT)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           return MUELU_AUTOMATIC_TEST_ETI_NAME<double,int,long long,Node>(clp, lib, argc, argv);
+#else
+          return MUELU_AUTOMATIC_TEST_ETI_NAME<double,Node>(clp, lib, argc, argv);
+#endif
 #    endif
 #    if defined(HAVE_TPETRA_INST_CUDA) && defined(HAVE_MUELU_INST_COMPLEX_INT_INT)
         if (inst == Xpetra::COMPLEX_INT_INT)
@@ -275,7 +359,11 @@ bool Automatic_Test_ETI(int argc, char *argv[]) {
 #    endif
 #    if defined(HAVE_TPETRA_INST_CUDA) && defined(HAVE_MUELU_INST_FLOAT_INT_INT)
         if (inst == Xpetra::FLOAT_INT_INT)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           return MUELU_AUTOMATIC_TEST_ETI_NAME<float,int,int,Node>(clp,  lib, argc, argv);
+#else
+          return MUELU_AUTOMATIC_TEST_ETI_NAME<float,Node>(clp,  lib, argc, argv);
+#endif
 #    endif
         throw RuntimeError("Found no suitable Cuda instantiation");
 #  endif

@@ -71,8 +71,13 @@
 
 namespace MueLu {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   RCP<const ParameterList> BrickAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::GetValidParameterList() const {
+#else
+  template <class Scalar, class Node>
+  RCP<const ParameterList> BrickAggregationFactory<Scalar, Node>::GetValidParameterList() const {
+#endif
     RCP<ParameterList> validParamList = rcp(new ParameterList());
 
 #define SET_VALID_ENTRY(name) validParamList->setEntry(name, MasterList::getEntry(name))
@@ -92,8 +97,13 @@ namespace MueLu {
     return validParamList;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void BrickAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level& currentLevel) const {
+#else
+  template <class Scalar, class Node>
+  void BrickAggregationFactory<Scalar, Node>::DeclareInput(Level& currentLevel) const {
+#endif
     Input(currentLevel, "A");
     Input(currentLevel, "Coordinates");
   }
@@ -142,11 +152,20 @@ namespace MueLu {
   //   - Break the link between maps in TentativePFactory, allowing any maps in Aggregates
   //   - Allow Aggregates to construct their own maps, if necessary, OR
   //   - construct aggregates based on row map
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void BrickAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(Level& currentLevel) const {
+#else
+  template <class Scalar, class Node>
+  void BrickAggregationFactory<Scalar, Node>::Build(Level& currentLevel) const {
+#endif
     FactoryMonitor m(*this, "Build", currentLevel);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,LO,GO,NO> MultiVector_d;
+#else
+    typedef Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,NO> MultiVector_d;
+#endif
 
     const ParameterList& pL = GetParameterList();
     RCP<MultiVector_d> coords = Get<RCP<MultiVector_d> >(currentLevel, "Coordinates");
@@ -180,7 +199,11 @@ namespace MueLu {
     RCP<MultiVector_d> overlappedCoords = coords;
     RCP<const Import> importer = ImportFactory::Build(coords->getMap(), colMap);
     if (!importer.is_null()) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       overlappedCoords = Xpetra::MultiVectorFactory<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,LO,GO,NO>::Build(colMap, coords->getNumVectors());
+#else
+      overlappedCoords = Xpetra::MultiVectorFactory<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,NO>::Build(colMap, coords->getNumVectors());
+#endif
       overlappedCoords->doImport(*coords, *importer, Xpetra::INSERT);
     }
 
@@ -283,9 +306,15 @@ namespace MueLu {
     GetOStream(Statistics1) << aggregates->description() << std::endl;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void BrickAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
   Setup(const RCP<const Teuchos::Comm<int> >& comm, const RCP<Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,LO,GO,NO> >& coords, const RCP<const Map>& /* map */) const {
+#else
+  template <class Scalar, class Node>
+  void BrickAggregationFactory<Scalar, Node>::
+  Setup(const RCP<const Teuchos::Comm<int> >& comm, const RCP<Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,NO> >& coords, const RCP<const Map>& /* map */) const {
+#endif
     nDim_ = coords->getNumVectors();
 
     x_    = coords->getData(0);
@@ -335,9 +364,15 @@ namespace MueLu {
 
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   RCP<typename BrickAggregationFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::container>
   BrickAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  template <class Scalar, class Node>
+  RCP<typename BrickAggregationFactory<Scalar,Node>::container>
+  BrickAggregationFactory<Scalar, Node>::
+#endif
   Construct1DMap (const RCP<const Teuchos::Comm<int> >& comm,
                   const ArrayRCP<const typename Teuchos::ScalarTraits<Scalar>::magnitudeType>& x) const
   {
@@ -386,16 +421,26 @@ namespace MueLu {
     return gMap;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   bool BrickAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::isRoot(LocalOrdinal LID) const {
+#else
+  template <class Scalar, class Node>
+  bool BrickAggregationFactory<Scalar, Node>::isRoot(LocalOrdinal LID) const {
+#endif
     int i,j,k;
     getIJK(LID,i,j,k);
 
     return (k*ny_*nx_ + j*nx_ + i) == getRoot(LID);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   bool BrickAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::isDirichlet(LocalOrdinal LID) const {
+#else
+  template <class Scalar, class Node>
+  bool BrickAggregationFactory<Scalar, Node>::isDirichlet(LocalOrdinal LID) const {
+#endif
     bool boundary = false;
     int i,j,k;
     getIJK(LID,i,j,k);
@@ -410,8 +455,13 @@ namespace MueLu {
   }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   GlobalOrdinal BrickAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::getRoot(LocalOrdinal LID) const {
+#else
+  template <class Scalar, class Node>
+  GlobalOrdinal BrickAggregationFactory<Scalar, Node>::getRoot(LocalOrdinal LID) const {
+#endif
     if(isDirichlet(LID))
       return Teuchos::OrdinalTraits<GlobalOrdinal>::invalid();
 
@@ -428,16 +478,26 @@ namespace MueLu {
     return k*ny_*nx_ + j*nx_ + i;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void  BrickAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::getIJK(LocalOrdinal LID, int &i, int &j, int &k) const {
+#else
+ template <class Scalar, class Node>
+  void  BrickAggregationFactory<Scalar, Node>::getIJK(LocalOrdinal LID, int &i, int &j, int &k) const {
+#endif
    i = (*xMap_)[x_[LID]]; 
    j = (nDim_>1) ? (*yMap_)[y_[LID]] : 0;
    k =  (nDim_>2) ? (*zMap_)[z_[LID]] : 0;
   }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void  BrickAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::getAggIJK(LocalOrdinal LID, int &i, int &j, int &k) const {
+#else
+  template <class Scalar, class Node>
+  void  BrickAggregationFactory<Scalar, Node>::getAggIJK(LocalOrdinal LID, int &i, int &j, int &k) const {
+#endif
     int xboost = dirichletX_ ? 1 : 0;
     int yboost = dirichletY_ ? 1 : 0;
     int zboost = dirichletZ_ ? 1 : 0;
@@ -452,8 +512,13 @@ namespace MueLu {
     else k = 0;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   GlobalOrdinal BrickAggregationFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::getAggGID(LocalOrdinal LID) const {
+#else
+  template <class Scalar, class Node>
+  GlobalOrdinal BrickAggregationFactory<Scalar, Node>::getAggGID(LocalOrdinal LID) const {
+#endif
     bool boundary = false;
 
     int i, j, k;

@@ -58,7 +58,11 @@
 namespace panzer {
 
 template <typename EvalT,typename LO,typename GO>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 Teuchos::RCP<ResponseBase> ResponseEvaluatorFactory_Functional<EvalT,LO,GO>::
+#else
+Teuchos::RCP<ResponseBase> ResponseEvaluatorFactory_Functional<EvalT>::
+#endif
 buildResponseObject(const std::string & responseName) const
 { 
   Teuchos::RCP<ResponseBase> response = Teuchos::rcp(new Response_Functional<EvalT>(responseName,comm_,linearObjFactory_)); 
@@ -68,7 +72,11 @@ buildResponseObject(const std::string & responseName) const
 }
 
 template <typename EvalT,typename LO,typename GO>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 void ResponseEvaluatorFactory_Functional<EvalT,LO,GO>::
+#else
+void ResponseEvaluatorFactory_Functional<EvalT>::
+#endif
 buildAndRegisterEvaluators(const std::string & responseName,
                            PHX::FieldManager<panzer::Traits> & fm,
                            const panzer::PhysicsBlock & physicsBlock,
@@ -111,10 +119,18 @@ buildAndRegisterEvaluators(const std::string & responseName,
           std::vector<Teuchos::RCP<const GlobalIndexer> > ugis; 
           ugis.push_back(ugi);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           scatterObj = Teuchos::rcp(new FunctionalScatter<LO,GO>(ugis));
+#else
+          scatterObj = Teuchos::rcp(new FunctionalScatter<>(ugis));
+#endif
         }
         else if(bugi!=Teuchos::null) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           scatterObj = Teuchos::rcp(new FunctionalScatter<LO,GO>(nc2c_vector(bugi->getFieldDOFManagers())));
+#else
+          scatterObj = Teuchos::rcp(new FunctionalScatter<>(nc2c_vector(bugi->getFieldDOFManagers())));
+#endif
         }
         else {
           TEUCHOS_ASSERT(false); // no real global indexer to use
@@ -135,7 +151,11 @@ buildAndRegisterEvaluators(const std::string & responseName,
 }
 
 template <typename EvalT,typename LO,typename GO>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 bool ResponseEvaluatorFactory_Functional<EvalT,LO,GO>::
+#else
+bool ResponseEvaluatorFactory_Functional<EvalT>::
+#endif
 typeSupported() const
 {
   if(   PHX::print<EvalT>()==PHX::print<panzer::Traits::Residual>() ||

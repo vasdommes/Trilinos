@@ -1259,7 +1259,11 @@ int Hypre<MatrixType>::Hypre_ParCSRBiCGSTABCreate(MPI_Comm comm, HYPRE_Solver *s
 
 //==============================================================================
 template<class MatrixType>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::RCP<const Tpetra::Map<typename MatrixType::local_ordinal_type, typename MatrixType::global_ordinal_type, typename MatrixType::node_type> > 
+#else
+  Teuchos::RCP<const Tpetra::Map<typename MatrixType::node_type> > 
+#endif
 Hypre<MatrixType>::MakeContiguousColumnMap(Teuchos::RCP<const crs_matrix_type> &Matrix) const{
   using import_type     = Tpetra::Import<local_ordinal_type,global_ordinal_type,node_type>;
   using go_vector_type  = Tpetra::Vector<global_ordinal_type,local_ordinal_type,global_ordinal_type,node_type>;
@@ -1392,8 +1396,13 @@ bool Hypre<MatrixType>::hasTransposeApply() const {
 }// Ifpack2 namespace
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define IFPACK2_HYPRE_INSTANT(S,LO,GO,N)                            \
   template class Ifpack2::Hypre< Tpetra::RowMatrix<S, LO, GO, N> >;
+#else
+#define IFPACK2_HYPRE_INSTANT(S,N)                            \
+  template class Ifpack2::Hypre< Tpetra::RowMatrix<S, N> >;
+#endif
 
 
 #endif // HAVE_HYPRE && HAVE_MPI

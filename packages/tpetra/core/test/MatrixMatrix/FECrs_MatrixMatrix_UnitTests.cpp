@@ -60,8 +60,13 @@ using Tpetra::createNonContigMapWithNode;
 template<int NumElemNodes, class LO, class GO, class NT>
 class MeshInfo {
 public:
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<const Tpetra::Map<LO,GO,NT> > uniqueMap;
   RCP<const Tpetra::Map<LO,GO,NT> > overlapMap;
+#else
+  RCP<const Tpetra::Map<NT> > uniqueMap;
+  RCP<const Tpetra::Map<NT> > overlapMap;
+#endif
   std::vector<std::vector<GO> > element2node;
 
   int num_elem_shared (const GO idof, const GO jdof) const {
@@ -80,8 +85,13 @@ private:
   }
 };
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LO, class GO, class NT>
 void generate_fem2d_q1_graph(size_t numCells1D, RCP<const Comm<int> > comm , MeshInfo<4,LO,GO,NT> & mesh) {
+#else
+template<class NT>
+void generate_fem2d_q1_graph(size_t numCells1D, RCP<const Comm<int> > comm , MeshInfo<4,NT> & mesh) {
+#endif
 
   // We assume a NxN Q1 fem grid. Cells are partitioned among ranks.
   // Cell/Nodes ids are as follows (assuming N=2):
@@ -156,15 +166,29 @@ void generate_fem2d_q1_graph(size_t numCells1D, RCP<const Comm<int> > comm , Mes
   ovNodes.resize(new_size);
 
   // Create overlap map, and use Tpetra utility to create the unique one
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   mesh.overlapMap = createNonContigMapWithNode<LO,GO,NT>(ovNodes(),comm);
+#else
+  mesh.overlapMap = createNonContigMapWithNode<NT>(ovNodes(),comm);
+#endif
   mesh.uniqueMap  = createOneToOne(mesh.overlapMap);
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<typename LO, typename GO, typename NT>
 Teuchos::RCP<Tpetra::CrsGraph<LO,GO,NT>>
 generate_crs_graph (const MeshInfo<4,LO,GO,NT>& mesh)
+#else
+template<typename NT>
+Teuchos::RCP<Tpetra::CrsGraph<NT>>
+generate_crs_graph (const MeshInfo<4,NT>& mesh)
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using CG = Tpetra::CrsGraph<LO,GO,NT>;
+#else
+  using CG = Tpetra::CrsGraph<NT>;
+#endif
 
   Teuchos::RCP<CG> g(new CG(mesh.uniqueMap,9,Tpetra::StaticProfile));
   for (const auto& elem_dofs : mesh.element2node) {
@@ -179,11 +203,21 @@ generate_crs_graph (const MeshInfo<4,LO,GO,NT>& mesh)
   return g;
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<typename LO, typename GO, typename NT>
 Teuchos::RCP<Tpetra::FECrsGraph<LO,GO,NT>>
 generate_fecrs_graph (const MeshInfo<4,LO,GO,NT>& mesh)
+#else
+template<typename NT>
+Teuchos::RCP<Tpetra::FECrsGraph<NT>>
+generate_fecrs_graph (const MeshInfo<4,NT>& mesh)
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using FEG = Tpetra::FECrsGraph<LO,GO,NT>;
+#else
+  using FEG = Tpetra::FECrsGraph<NT>;
+#endif
 
   Teuchos::RCP<FEG> feg(new FEG(mesh.uniqueMap,mesh.overlapMap,9,mesh.overlapMap));
   feg->beginFill();
@@ -203,11 +237,21 @@ generate_fecrs_graph (const MeshInfo<4,LO,GO,NT>& mesh)
 // Loops on cells to fill the matrix. On each cell, add -1 to off-diagonal
 // entries, and N to diag entries, where N is the number of local nodes.
 // Note that such matrix is strictly diagonally dominant.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<typename ST, typename LO, typename GO, typename NT>
+#else
+template<typename ST, typename NT>
+#endif
 void
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 fill_matrices (Tpetra::FECrsMatrix<ST,LO,GO,NT>& fe_mat,  
                Tpetra::CrsMatrix<ST,LO,GO,NT>& mat,  
                const MeshInfo<4,LO,GO,NT>& mesh)
+#else
+fill_matrices (Tpetra::FECrsMatrix<ST,NT>& fe_mat,  
+               Tpetra::CrsMatrix<ST,NT>& mat,  
+               const MeshInfo<4,NT>& mesh)
+#endif
 {
   const ST zero = Teuchos::ScalarTraits<ST>::zero();
 
@@ -234,9 +278,15 @@ fill_matrices (Tpetra::FECrsMatrix<ST,LO,GO,NT>& fe_mat,
   mat.fillComplete();
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<typename ST, typename LO, typename GO, typename NT>
 bool compare_matrices (const Tpetra::CrsMatrix<ST,LO,GO,NT>& A,
                        const Tpetra::CrsMatrix<ST,LO,GO,NT>& B, 
+#else
+template<typename ST, typename NT>
+bool compare_matrices (const Tpetra::CrsMatrix<ST,NT>& A,
+                       const Tpetra::CrsMatrix<ST,NT>& B, 
+#endif
                        Teuchos::FancyOStream &out)
 {
   // They should have the same row/range/domain maps
@@ -324,17 +374,32 @@ bool compare_matrices (const Tpetra::CrsMatrix<ST,LO,GO,NT>& A,
   return true;
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL (Tpetra_MatMat, FECrsMatrix, SC, LO, GO, NT)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL (Tpetra_MatMat, FECrsMatrix, SC, NT)
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using FEMAT = typename Tpetra::FECrsMatrix<SC,LO,GO,NT>;
   using   MAT = typename Tpetra::CrsMatrix<SC,LO,GO,NT>;
+#else
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+  using FEMAT = typename Tpetra::FECrsMatrix<SC,NT>;
+  using   MAT = typename Tpetra::CrsMatrix<SC,NT>;
+#endif
 
   // get a comm
   RCP<const Comm<int> > comm = Tpetra::getDefaultComm();
   
   // Generate a mesh
   const int numCells1D = 4;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   MeshInfo<4,LO,GO,NT> mesh;
+#else
+  MeshInfo<4,NT> mesh;
+#endif
   generate_fem2d_q1_graph(numCells1D,comm,mesh);
 
   auto fe_graph = generate_fecrs_graph(mesh);
@@ -376,8 +441,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL (Tpetra_MatMat, FECrsMatrix, SC, LO, GO, NT)
   }
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define UNIT_TEST_GROUP_SC_LO_GO_NO( SC, LO, GO, NT )			\
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Tpetra_MatMat, FECrsMatrix, SC, LO, GO, NT)
+#else
+#define UNIT_TEST_GROUP_SC_LO_GO_NO( SC, NT )			\
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Tpetra_MatMat, FECrsMatrix, SC, NT)
+#endif
 
   TPETRA_ETI_MANGLING_TYPEDEFS()
 

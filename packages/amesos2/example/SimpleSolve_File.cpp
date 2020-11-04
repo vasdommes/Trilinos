@@ -67,8 +67,13 @@ int main(int argc, char *argv[]) {
   typedef Tpetra::Map<>::local_ordinal_type LO;
   typedef Tpetra::Map<>::global_ordinal_type GO;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::CrsMatrix<Scalar,LO,GO> MAT;
   typedef Tpetra::MultiVector<Scalar,LO,GO> MV;
+#else
+  typedef Tpetra::CrsMatrix<Scalar> MAT;
+  typedef Tpetra::MultiVector<Scalar> MV;
+#endif
 
   using Tpetra::global_size_t;
   using Tpetra::Map;
@@ -119,14 +124,28 @@ int main(int argc, char *argv[]) {
   }
 
   // get the maps
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<const Map<LO,GO> > dmnmap = A->getDomainMap();
   RCP<const Map<LO,GO> > rngmap = A->getRangeMap();
+#else
+  RCP<const Map<> > dmnmap = A->getDomainMap();
+  RCP<const Map<> > rngmap = A->getRangeMap();
+#endif
 
   GO nrows = dmnmap->getGlobalNumElements();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Map<LO,GO> > root_map
     = rcp( new Map<LO,GO>(nrows,myRank == 0 ? nrows : 0,0,comm) );
+#else
+  RCP<Map<> > root_map
+    = rcp( new Map<>(nrows,myRank == 0 ? nrows : 0,0,comm) );
+#endif
   RCP<MV> Xhat = rcp( new MV(root_map,numVectors) );
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Import<LO,GO> > importer = rcp( new Import<LO,GO>(dmnmap,root_map) );
+#else
+  RCP<Import<> > importer = rcp( new Import<>(dmnmap,root_map) );
+#endif
 
   // Create random X
   RCP<MV> X = rcp(new MV(dmnmap,numVectors));

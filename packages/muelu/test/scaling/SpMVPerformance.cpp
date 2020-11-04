@@ -148,10 +148,21 @@ std::string systemName(const Xpetra::UnderlyingLib& lib) {
   return "Unknown";
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<typename Scalar, typename LocalOrdinal, typename GlobalOrdinal, typename Node>
+#else
+template<typename Scalar, typename Node>
+#endif
 class LinearSystem : public System {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using MultiVector = Xpetra::MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node>;
   using Matrix = Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>;
+#else
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+  using MultiVector = Xpetra::MultiVector<Scalar, Node>;
+  using Matrix = Xpetra::Matrix<Scalar, Node>;
+#endif
 
 public:
   LinearSystem(Xpetra::UnderlyingLib l, int n)
@@ -175,12 +186,27 @@ public:
   Teuchos::RCP<MultiVector> B;
 };
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<typename Scalar, typename LocalOrdinal, typename GlobalOrdinal, typename Node>
+#else
+template<typename Scalar, typename Node>
+#endif
 class SystemLoader {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using Map = Xpetra::Map<LocalOrdinal, GlobalOrdinal, Node>;
   using MultiVector = Xpetra::MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node>;
+#else
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+  using Map = Xpetra::Map<Node>;
+  using MultiVector = Xpetra::MultiVector<Scalar, Node>;
+#endif
   using CoordScalar = typename Teuchos::ScalarTraits<Scalar>::coordinateType;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using RealValuedMultiVector = Xpetra::MultiVector<CoordScalar, LocalOrdinal, GlobalOrdinal, Node>;
+#else
+  using RealValuedMultiVector = Xpetra::MultiVector<CoordScalar, Node>;
+#endif
 
 public:
   SystemLoader(Teuchos::CommandLineProcessor& c)
@@ -190,8 +216,13 @@ public:
       xpetraParameters(clp)
   { }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   void fill(LinearSystem<Scalar, LocalOrdinal, GlobalOrdinal, Node>& system) {
     MatrixLoad<Scalar, LocalOrdinal, GlobalOrdinal, Node>(
+#else
+  void fill(LinearSystem<Scalar, Node>& system) {
+    MatrixLoad<Scalar, Node>(
+#endif
         comm, system.lib,
         binaryFormat, matrixFile, rhsFile, rowMapFile, colMapFile,
         domainMapFile, rangeMapFile, coordFile, nullFile, materialFile,
@@ -227,10 +258,18 @@ private:
 };
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<typename Scalar, typename LocalOrdinal, typename GlobalOrdinal, typename Node>
+#else
+template<typename Scalar, typename Node>
+#endif
 int main_ETI(Teuchos::CommandLineProcessor& clp, Xpetra::UnderlyingLib& lib, int argc, char* argv[]) {
   Reporter reporter("SpMV Performance " + systemName(lib));
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   SystemLoader<Scalar, LocalOrdinal, GlobalOrdinal, Node> systemLoader(clp);
+#else
+  SystemLoader<Scalar, Node> systemLoader(clp);
+#endif
 
   int numRuns = 1;
   clp.setOption("num-runs", &numRuns, "number of times to run operation");
@@ -246,7 +285,11 @@ int main_ETI(Teuchos::CommandLineProcessor& clp, Xpetra::UnderlyingLib& lib, int
     case Teuchos::CommandLineProcessor::PARSE_SUCCESSFUL:          break;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   LinearSystem<Scalar, LocalOrdinal, GlobalOrdinal, Node> system(lib, numVectors);
+#else
+  LinearSystem<Scalar, Node> system(lib, numVectors);
+#endif
   systemLoader.fill(system);
 
   SpMVMeasurement SpMV(system, numRuns);

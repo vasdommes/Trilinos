@@ -101,10 +101,21 @@ using Teuchos::OrdinalTraits;
 using Tpetra::Map;
 using Tpetra::CrsMatrix;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CrsMatrix, Bug5978, SC, LO, GO, NT)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(CrsMatrix, Bug5978, SC, NT)
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Map<LO,GO,NT> MapType;
   typedef CrsMatrix<SC, LO, GO, NT> MatrixType;
+#else
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+  typedef Map<NT> MapType;
+  typedef CrsMatrix<SC, NT> MatrixType;
+#endif
 
   RCP<const Comm<int> > comm = Tpetra::getDefaultComm();
   const int numProc = comm->getSize ();
@@ -169,8 +180,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CrsMatrix, Bug5978, SC, LO, GO, NT)
   out << "Proc " << myRank << ": Done with test" << endl;
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define UNIT_TEST_GROUP_SC_LO_GO_NO( SC, LO, GO, NT ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(CrsMatrix, Bug5978, SC, LO, GO, NT)
+#else
+#define UNIT_TEST_GROUP_SC_LO_GO_NO( SC, NT ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(CrsMatrix, Bug5978, SC, NT)
+#endif
 
 TPETRA_ETI_MANGLING_TYPEDEFS()
 

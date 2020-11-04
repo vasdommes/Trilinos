@@ -84,8 +84,16 @@ namespace MueLuTests {
   
 
 template
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+<class Scalar, class Node>
+#endif
 class AggregateGenerator {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   //typedef MueLu::AmalgamationInfo<LocalOrdinal,GlobalOrdinal,Node> amalgamation_info_type;
   //typedef MueLu::Aggregates<LocalOrdinal,GlobalOrdinal,Node> aggregates_type;
   //typedef Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> xpetra_matrix_type;
@@ -99,7 +107,11 @@ public:
   //  RCP<MueLu::Aggregates> gimmeUncoupledAggregates(const RCP<xpetra_matrix_type> & A, RCP<AmalgamationInfo> & amalgInfo, bool bPhase1 = true, bool bPhase2a = true, bool bPhase2b = true, bool bPhase3 = true)
     {
       Level level;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       TestHelpers::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(level);
+#else
+      TestHelpers::TestFactory<SC,NO>::createSingleLevelHierarchy(level);
+#endif
       level.Set("A", A);
 
       RCP<AmalgamationFactory> amalgFact = rcp(new AmalgamationFactory());
@@ -137,7 +149,11 @@ public:
     //  RCP<Aggregates> gimmeCoupledAggregates(const RCP<xpetra_matrix_type> & A, RCP<AmalgamationInfo> & amalgInfo)
     {
       Level level;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       TestHelpers::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(level);
+#else
+      TestHelpers::TestFactory<SC,NO>::createSingleLevelHierarchy(level);
+#endif
       level.Set("A", A);
 
       RCP<AmalgamationFactory> amalgFact = rcp(new AmalgamationFactory());
@@ -173,7 +189,11 @@ public:
                               const Array<GO> meshData)
     {
       Level level;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       TestHelpers::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(level);
+#else
+      TestHelpers::TestFactory<SC,NO>::createSingleLevelHierarchy(level);
+#endif
 
       const std::string coupling = (coupled ? "coupled" : "uncoupled");
 
@@ -213,7 +233,11 @@ public:
     gimmeInterfaceAggregates(const RCP<Matrix>&A, RCP<AmalgamationInfo> & amalgInfo, Teuchos::Array<LO>& nodeOnInterface)
     {
       Level level;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       TestHelpers::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(level);
+#else
+      TestHelpers::TestFactory<SC,NO>::createSingleLevelHierarchy(level);
+#endif
       level.Set("A", A);
 
       RCP<AmalgamationFactory> amalgFact = rcp(new AmalgamationFactory());
@@ -256,7 +280,11 @@ public:
                           const LO numDimensions)
     {
       Level level;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       TestHelpers::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(level);
+#else
+      TestHelpers::TestFactory<SC,NO>::createSingleLevelHierarchy(level);
+#endif
       level.Set("A", A);
       level.Set("numDimensions", numDimensions);
       level.Set("lNodesPerDim", lNodesPerDir);
@@ -301,33 +329,65 @@ public:
     }  // gimmeHybridAggregates
 };
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Aggregates, JustAggregation, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Aggregates, JustAggregation, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
 
     out << "version: " << MueLu::Version() << std::endl;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers::TestFactory<SC, LO, GO, NO>::Build1DPoisson(15);
+#else
+    RCP<Matrix> A = TestHelpers::TestFactory<SC, NO>::Build1DPoisson(15);
+#endif
     RCP<AmalgamationInfo> amalgInfo;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Aggregates> aggregates = AggregateGenerator<SC,LO,GO,NO>::gimmeCoupledAggregates(A, amalgInfo);
+#else
+    RCP<Aggregates> aggregates = AggregateGenerator<SC,NO>::gimmeCoupledAggregates(A, amalgInfo);
+#endif
     TEST_EQUALITY(aggregates != Teuchos::null, true);
     TEST_EQUALITY(aggregates->AggregatesCrossProcessors(),true);
   }
 
   ///////////////////////////////////////////////////////////////////////////
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Aggregates, GetNumAggregates, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Aggregates, GetNumAggregates, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers::TestFactory<SC, LO, GO, NO>::Build1DPoisson(36);
+#else
+    RCP<Matrix> A = TestHelpers::TestFactory<SC, NO>::Build1DPoisson(36);
+#endif
     RCP<const Map> rowmap = A->getRowMap();
     RCP<AmalgamationInfo> amalgInfo;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Aggregates> aggregates = AggregateGenerator<SC,LO,GO,NO>::gimmeCoupledAggregates(A, amalgInfo);
+#else
+    RCP<Aggregates> aggregates = AggregateGenerator<SC,NO>::gimmeCoupledAggregates(A, amalgInfo);
+#endif
     GO numAggs = aggregates->GetNumAggregates();
     RCP<const Teuchos::Comm<int> > comm = TestHelpers::Parameters::getDefaultComm();
 
@@ -396,32 +456,64 @@ public:
 
   } //GetNumAggregates
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Aggregates, JustUncoupledAggregation, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Aggregates, JustUncoupledAggregation, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers::TestFactory<SC, LO, GO, NO>::Build1DPoisson(15);
+#else
+    RCP<Matrix> A = TestHelpers::TestFactory<SC, NO>::Build1DPoisson(15);
+#endif
     RCP<AmalgamationInfo> amalgInfo;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Aggregates> aggregates = AggregateGenerator<SC,LO,GO,NO>::gimmeUncoupledAggregates(A, amalgInfo);
+#else
+    RCP<Aggregates> aggregates = AggregateGenerator<SC,NO>::gimmeUncoupledAggregates(A, amalgInfo);
+#endif
     TEST_EQUALITY(aggregates != Teuchos::null, true);
     TEST_EQUALITY(aggregates->AggregatesCrossProcessors(),false);
   }
 
   ///////////////////////////////////////////////////////////////////////////
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Aggregates, GetNumUncoupledAggregates, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Aggregates, GetNumUncoupledAggregates, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers::TestFactory<SC, LO, GO, NO>::Build1DPoisson(36);
+#else
+    RCP<Matrix> A = TestHelpers::TestFactory<SC, NO>::Build1DPoisson(36);
+#endif
     RCP<const Map> rowmap = A->getRowMap();
     RCP<AmalgamationInfo> amalgInfo;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Aggregates> aggregates = AggregateGenerator<SC,LO,GO,NO>::gimmeUncoupledAggregates(A, amalgInfo);
+#else
+    RCP<Aggregates> aggregates = AggregateGenerator<SC,NO>::gimmeUncoupledAggregates(A, amalgInfo);
+#endif
     GO numAggs = aggregates->GetNumAggregates();
     RCP<const Teuchos::Comm<int> > comm = TestHelpers::Parameters::getDefaultComm();
 
@@ -490,17 +582,33 @@ public:
 
   } //GetNumAggregates
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Aggregates, UncoupledPhase1, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Aggregates, UncoupledPhase1, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers::TestFactory<SC, LO, GO, NO>::Build1DPoisson(36);
+#else
+    RCP<Matrix> A = TestHelpers::TestFactory<SC, NO>::Build1DPoisson(36);
+#endif
     RCP<const Map> rowmap = A->getRowMap();
     RCP<AmalgamationInfo> amalgInfo;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Aggregates> aggregates = AggregateGenerator<SC,LO,GO,NO>::gimmeUncoupledAggregates(A, amalgInfo,true,false,false,false);
+#else
+    RCP<Aggregates> aggregates = AggregateGenerator<SC,NO>::gimmeUncoupledAggregates(A, amalgInfo,true,false,false,false);
+#endif
     GO numAggs = aggregates->GetNumAggregates();
     RCP<const Teuchos::Comm<int> > comm = TestHelpers::Parameters::getDefaultComm();
 
@@ -569,33 +677,65 @@ public:
 
   } //UncoupledPhase1
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Aggregates, UncoupledPhase2, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Aggregates, UncoupledPhase2, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers::TestFactory<SC, LO, GO, NO>::Build1DPoisson(36);
+#else
+    RCP<Matrix> A = TestHelpers::TestFactory<SC, NO>::Build1DPoisson(36);
+#endif
     RCP<const Map> rowmap = A->getRowMap();
     RCP<AmalgamationInfo> amalgInfo;
     bool bSuccess = true;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TEUCHOS_TEST_THROW((AggregateGenerator<SC,LO,GO,NO>::gimmeUncoupledAggregates(A, amalgInfo,false,true,true,false)),
+#else
+    TEUCHOS_TEST_THROW((AggregateGenerator<SC,NO>::gimmeUncoupledAggregates(A, amalgInfo,false,true,true,false)),
+#endif
                         MueLu::Exceptions::RuntimeError, out, bSuccess);
     TEST_EQUALITY(bSuccess, true);
   } //UncoupledPhase2
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Aggregates, UncoupledPhase3, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Aggregates, UncoupledPhase3, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers::TestFactory<SC, LO, GO, NO>::Build1DPoisson(36);
+#else
+    RCP<Matrix> A = TestHelpers::TestFactory<SC, NO>::Build1DPoisson(36);
+#endif
     RCP<const Map> rowmap = A->getRowMap();
     RCP<AmalgamationInfo> amalgInfo;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Aggregates> aggregates = AggregateGenerator<SC,LO,GO,NO>::gimmeUncoupledAggregates(A, amalgInfo,false,false,false,true); GO numAggs = aggregates->GetNumAggregates();
+#else
+    RCP<Aggregates> aggregates = AggregateGenerator<SC,NO>::gimmeUncoupledAggregates(A, amalgInfo,false,false,false,true); GO numAggs = aggregates->GetNumAggregates();
+#endif
     RCP<const Teuchos::Comm<int> > comm = TestHelpers::Parameters::getDefaultComm();
 
     TEST_EQUALITY(aggregates->AggregatesCrossProcessors(),false);
@@ -668,9 +808,17 @@ public:
 
   } //UncoupledPhase3
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Aggregates, UncoupledInterface, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Aggregates, UncoupledInterface, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
@@ -678,7 +826,11 @@ public:
     // Get MPI parameters
     RCP<const Teuchos::Comm<int> > comm = TestHelpers::Parameters::getDefaultComm();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers::TestFactory<SC, LO, GO, NO>::Build1DPoisson(36);
+#else
+    RCP<Matrix> A = TestHelpers::TestFactory<SC, NO>::Build1DPoisson(36);
+#endif
 
 
     RCP<const Map> rowmap = A->getRowMap();
@@ -693,7 +845,11 @@ public:
       nodeOnInterface[rowmap->getNodeNumElements()-1] = 1;
 
     RCP<AmalgamationInfo> amalgInfo;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Aggregates> aggregates = AggregateGenerator<SC,LO,GO,NO>::gimmeInterfaceAggregates(A, amalgInfo,nodeOnInterface);
+#else
+    RCP<Aggregates> aggregates = AggregateGenerator<SC,NO>::gimmeInterfaceAggregates(A, amalgInfo,nodeOnInterface);
+#endif
 
 
     // Check to see if specified nodes are root nodes
@@ -704,14 +860,26 @@ public:
 
   } //UncoupledInterface
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Aggregates, JustStructuredAggregationGlobal, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Aggregates, JustStructuredAggregationGlobal, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef typename Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::magnitudeType, LO, GO, NO> xdMV;
+#else
+    typedef typename Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,NO> xdMV;
+#endif
 
     // Get MPI parameters
     RCP<const Teuchos::Comm<int> > comm = TestHelpers::Parameters::getDefaultComm();
@@ -735,8 +903,13 @@ public:
 
     if(myRank == 0) std::cout << "About to build the coordinates" << std::endl;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,LO,GO,NO> > Coordinates =
       TestHelpers::TestFactory<SC,LO,GO,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#else
+    RCP<const Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,NO> > Coordinates =
+      TestHelpers::TestFactory<SC,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#endif
                                                                  lNodesPerDir, meshData);
 
     Teuchos::ParameterList matrixList;
@@ -749,21 +922,37 @@ public:
 
     if(myRank == 0) std::cout << "About to build the aggregates" << std::endl;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Aggregates> aggregates = AggregateGenerator<SC,LO,GO,NO>::
+#else
+    RCP<Aggregates> aggregates = AggregateGenerator<SC,NO>::
+#endif
       gimmeStructuredAggregates(A, gNodesPerDir, lNodesPerDir, coupled, numDimensions, meshLayout,
                                 meshData);
 
     TEST_EQUALITY(aggregates != Teuchos::null, true);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Aggregates, JustStructuredAggregationLocal, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Aggregates, JustStructuredAggregationLocal, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef typename Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::magnitudeType, LO, GO, NO> xdMV;
+#else
+    typedef typename Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,NO> xdMV;
+#endif
 
     // Get MPI parameter
     RCP<const Teuchos::Comm<int> > comm = TestHelpers::Parameters::getDefaultComm();
@@ -785,8 +974,13 @@ public:
       }
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,LO,GO,NO> > Coordinates =
       TestHelpers::TestFactory<SC,LO,GO,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#else
+    RCP<const Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,NO> > Coordinates =
+      TestHelpers::TestFactory<SC,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#endif
                                                                  lNodesPerDir, meshData,
                                                                  meshLayout);
 
@@ -798,16 +992,28 @@ public:
                                                            matrixList);
     RCP<Matrix> A = Pr->BuildMatrix();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Aggregates> aggregates = AggregateGenerator<SC,LO,GO,NO>::
+#else
+    RCP<Aggregates> aggregates = AggregateGenerator<SC,NO>::
+#endif
       gimmeStructuredAggregates(A, gNodesPerDir, lNodesPerDir, coupled, numDimensions, meshLayout,
                                 meshData);
 
     TEST_EQUALITY(aggregates != Teuchos::null, true);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Aggregates, HybridAggregation, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Aggregates, HybridAggregation, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
@@ -840,8 +1046,13 @@ public:
       }
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,LO,GO,NO> > Coordinates =
       TestHelpers::TestFactory<SC,LO,GO,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#else
+    RCP<const Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::magnitudeType,NO> > Coordinates =
+      TestHelpers::TestFactory<SC,NO>::BuildGeoCoordinates(numDimensions, gNodesPerDir,
+#endif
                                                                  lNodesPerDir, meshData,
                                                                  meshLayout);
     // Build Problem
@@ -855,7 +1066,11 @@ public:
 
     //aggregates
     RCP<AmalgamationInfo> amalgInfo;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Aggregates> aggregates = AggregateGenerator<SC,LO,GO,NO>::
+#else
+    RCP<Aggregates> aggregates = AggregateGenerator<SC,NO>::
+#endif
       gimmeHybridAggregates(A, amalgInfo, regionType,
                             gNodesPerDir, lNodesPerDir,
                             numDimensions);
@@ -866,9 +1081,17 @@ public:
   }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(FilteredA, RootStencil, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(FilteredA, RootStencil, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
@@ -881,11 +1104,19 @@ public:
     matrixParams.set("stretchy",factor);
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers::TestFactory<SC, LO, GO, NO>::BuildMatrix(matrixParams,TestHelpers::Parameters::getLib());
+#else
+    RCP<Matrix> A = TestHelpers::TestFactory<SC, NO>::BuildMatrix(matrixParams,TestHelpers::Parameters::getLib());
+#endif
 									 
     RCP<AmalgamationInfo> amalgInfo;
     Level level;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(level);
+#else
+    TestHelpers::TestFactory<SC,NO>::createSingleLevelHierarchy(level);
+#endif
     level.Set("A", A);   
 
     RCP<CoalesceDropFactory> dropFact;
@@ -925,9 +1156,17 @@ public:
     TEST_EQUALITY(A->getNodeNumRows()==Afiltered->getNodeNumRows(), true);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(FilteredA, SpreadLumping, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(FilteredA, SpreadLumping, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
@@ -941,11 +1180,19 @@ public:
     matrixParams.set("stretchy",factor);
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers::TestFactory<SC, LO, GO, NO>::BuildMatrix(matrixParams,TestHelpers::Parameters::getLib());
+#else
+    RCP<Matrix> A = TestHelpers::TestFactory<SC, NO>::BuildMatrix(matrixParams,TestHelpers::Parameters::getLib());
+#endif
 									 
     RCP<AmalgamationInfo> amalgInfo;
     Level level;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(level);
+#else
+    TestHelpers::TestFactory<SC,NO>::createSingleLevelHierarchy(level);
+#endif
     level.Set("A", A);   
 
     RCP<CoalesceDropFactory> dropFact;
@@ -989,6 +1236,7 @@ public:
   }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define MUELU_ETI_GROUP(Scalar,LO,GO,Node) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Aggregates,JustAggregation,Scalar,LO,GO,Node) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Aggregates,GetNumAggregates,Scalar,LO,GO,Node) \
@@ -1002,6 +1250,21 @@ public:
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Aggregates,JustStructuredAggregationLocal,Scalar,LO,GO,Node) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(FilteredA ,RootStencil,Scalar,LO,GO,Node) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(FilteredA ,SpreadLumping,Scalar,LO,GO,Node)
+#else
+#define MUELU_ETI_GROUP(Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Aggregates,JustAggregation,Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Aggregates,GetNumAggregates,Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Aggregates,JustUncoupledAggregation,Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Aggregates,GetNumUncoupledAggregates,Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Aggregates,UncoupledPhase1,Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Aggregates,UncoupledPhase2,Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Aggregates,UncoupledPhase3,Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Aggregates,UncoupledInterface,Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Aggregates,JustStructuredAggregationGlobal,Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Aggregates,JustStructuredAggregationLocal,Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(FilteredA ,RootStencil,Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(FilteredA ,SpreadLumping,Scalar,Node)
+#endif
   //  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Aggregates,HybridAggregation,Scalar,LO,GO,Node)
 
 #include <MueLu_ETI_4arg.hpp>

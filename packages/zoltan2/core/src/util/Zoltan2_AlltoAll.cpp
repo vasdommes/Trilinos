@@ -90,7 +90,11 @@ void AlltoAllCount(
     for (int cnt = 0, i = 0; i < nprocs; i++) {
       if (i != rank) {
         try {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           requests[cnt++] = Teuchos::ireceive<int,int>(comm,
+#else
+          requests[cnt++] = Teuchos::ireceive<>(comm,
+#endif
                                                      rcp(&(recvCount[i]),false),
                                                      i);
         }
@@ -104,7 +108,11 @@ void AlltoAllCount(
     for (int i = 0; i < nprocs; i++) {
       if (i != rank) {
         try {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           Teuchos::readySend<int,int>(comm, sendCount[i], i);
+#else
+          Teuchos::readySend<>(comm, sendCount[i], i);
+#endif
         }
         Z2_THROW_OUTSIDE_ERROR(env);
       }

@@ -97,10 +97,21 @@ namespace {
   //
 
   // test with a uniform, contiguous map of constant size
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Directory, BadSize, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST( Directory, BadSize )
+#endif
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Map<LO,GO> M;
     typedef Directory<LO,GO> D;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef Map<> M;
+    typedef Directory<> D;
+#endif
     // create a comm
     RCP<const Comm<int> > comm = getDefaultComm();
     // create a uniform map
@@ -122,10 +133,21 @@ namespace {
   }
 
   // test with a uniform, contiguous map of constant size
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Directory, SmallUniformContig, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST( Directory, SmallUniformContig )
+#endif
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Map<LO,GO> M;
     typedef Directory<LO,GO> D;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef Map<> M;
+    typedef Directory<> D;
+#endif
     const LO LINV = OrdinalTraits<LO>::invalid();
     // create a comm
     RCP<const Comm<int> > comm = getDefaultComm();
@@ -165,11 +187,24 @@ namespace {
   }
 
   // test with a uniform, contiguous map
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Directory, UniformContig, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST( Directory, UniformContig )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     const LO LINV = OrdinalTraits<LO>::invalid();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Map<LO,GO> M;
     typedef Directory<LO,GO> D;
+#else
+    typedef Map<> M;
+    typedef Directory<> D;
+#endif
     // create a comm
     RCP<const Comm<int> > comm = getDefaultComm();
     const int numImages = comm->getSize();
@@ -233,11 +268,24 @@ namespace {
 
 
   // test with a small contiguous map
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Directory, SmallContig, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST( Directory, SmallContig )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     const LO LINV = OrdinalTraits<LO>::invalid();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Map<LO,GO> M;
     typedef Directory<LO,GO> D;
+#else
+    typedef Map<> M;
+    typedef Directory<> D;
+#endif
     // create a comm
     RCP<const Comm<int> > comm = getDefaultComm();
     const int numImages = comm->getSize();
@@ -300,11 +348,24 @@ namespace {
 
 
   // test with a contiguous map
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Directory, Contig, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST( Directory, Contig )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     const LO LINV = OrdinalTraits<LO>::invalid();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Map<LO,GO> M;
     typedef Directory<LO,GO> D;
+#else
+    typedef Map<> M;
+    typedef Directory<> D;
+#endif
     // create a comm
     RCP<const Comm<int> > comm = getDefaultComm();
     const int numImages = comm->getSize();
@@ -364,11 +425,24 @@ namespace {
 
 
   // test with a non-contiguous map
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Directory, NonContig, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST( Directory, NonContig )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     using std::endl;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Map<LO,GO> M;
     typedef Directory<LO,GO> D;
+#else
+    typedef Map<> M;
+    typedef Directory<> D;
+#endif
 
     const LO LINV = OrdinalTraits<LO>::invalid();
     // create a comm
@@ -438,12 +512,15 @@ namespace {
   //
 
 #define UNIT_TEST_GROUP( LO, GO ) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Directory, SmallUniformContig, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Directory, UniformContig, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Directory, SmallContig, LO, GO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Directory, Contig, LO, GO )     \
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Directory, NonContig, LO, GO )  \
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Directory, BadSize, LO, GO )
+#else
+#endif
 
   TPETRA_ETI_MANGLING_TYPEDEFS()
 

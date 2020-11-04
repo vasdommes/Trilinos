@@ -22,6 +22,7 @@ namespace NOX {
   using DeviceSpace = Kokkos::DefaultExecutionSpace;
   using NodeType = Kokkos::Compat::KokkosDeviceWrapperNode<DeviceSpace>;
   
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using TMap = Tpetra::Map<LocalOrdinal, GlobalOrdinal, NodeType>;
   using ConstTMap = const Tpetra::Map<LocalOrdinal, GlobalOrdinal, NodeType>;
   using TImport = Tpetra::Import<LocalOrdinal,GlobalOrdinal,NodeType>;
@@ -33,6 +34,19 @@ namespace NOX {
   using TCrsGraph = Tpetra::CrsGraph< LocalOrdinal, GlobalOrdinal, NodeType>;
   using TCrsMatrix = Tpetra::CrsMatrix< Scalar, LocalOrdinal, GlobalOrdinal, NodeType>;
   using TOperator =  Tpetra::Operator<Scalar, LocalOrdinal, GlobalOrdinal, NodeType>;
+#else
+  using TMap = Tpetra::Map<NodeType>;
+  using ConstTMap = const Tpetra::Map<NodeType>;
+  using TImport = Tpetra::Import<NodeType>;
+  using TExport = Tpetra::Export<NodeType>;
+  using TVector = Tpetra::Vector<Scalar,NodeType>;
+  using TMultiVector = Tpetra::MultiVector<Scalar,NodeType>;
+  using TRowGraph = Tpetra::RowGraph<NodeType>;
+  using TRowMatrix = Tpetra::RowMatrix< Scalar, NodeType>;
+  using TCrsGraph = Tpetra::CrsGraph<NodeType>;
+  using TCrsMatrix = Tpetra::CrsMatrix< Scalar, NodeType>;
+  using TOperator =  Tpetra::Operator<Scalar, NodeType>;
+#endif
 
 }
 

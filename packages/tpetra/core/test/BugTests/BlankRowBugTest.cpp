@@ -59,7 +59,11 @@ namespace {
     typedef map_type::global_ordinal_type     GO;
     typedef Tpetra::CrsMatrix<>::scalar_type  SC;
     typedef Tpetra::CrsMatrix<>               crs_matrix_type;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::Import<LO, GO>            import_type;
+#else
+    typedef Tpetra::Import<>            import_type;
+#endif
 
     RCP<const Comm<int> > comm = Tpetra::getDefaultComm ();
     // We run this test explicitly in MPI mode with 2 processors as described in
@@ -69,12 +73,24 @@ namespace {
     const int rank = comm->getRank();
     RCP<const map_type> destRowMap, sourceRowMap;
     if (rank == 0) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       sourceRowMap = Tpetra::createNonContigMap<LO, GO> (tuple<GO> (0), comm);
+#else
+      sourceRowMap = Tpetra::createNonContigMap<> (tuple<GO> (0), comm);
+#endif
     }
     else {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       sourceRowMap = Tpetra::createNonContigMap<LO, GO> (tuple<GO> (1), comm);
+#else
+      sourceRowMap = Tpetra::createNonContigMap<> (tuple<GO> (1), comm);
+#endif
     }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     destRowMap = Tpetra::createNonContigMap<LO, GO> (tuple<GO> (0, 1), comm);
+#else
+    destRowMap = Tpetra::createNonContigMap<> (tuple<GO> (0, 1), comm);
+#endif
 
     RCP<crs_matrix_type> srcMat = Tpetra::createCrsMatrix<SC>(sourceRowMap, 1);
     if (rank == 0) {

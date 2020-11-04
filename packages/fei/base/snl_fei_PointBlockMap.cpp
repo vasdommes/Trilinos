@@ -21,7 +21,11 @@ snl_fei::PointBlockMap::PointBlockMap()
     maxSize_(0),
     ptEqualBlk_(false)
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   ptEqns_ = new std::map<int,int>;
+#else
+  ptEqns_ = new std::map<>;
+#endif
   blkEqns_ = new std::map<int,std::pair<int,int> >;
 }
 
@@ -123,7 +127,11 @@ int snl_fei::PointBlockMap::eqnToBlkEqn(int eqn) const
   if (ptEqualBlk_ == true) return(eqn);
 
   int blkEqn = -1;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::iterator p_iter = ptEqns_->find(eqn);
+#else
+  std::map<>::iterator p_iter = ptEqns_->find(eqn);
+#endif
   if (p_iter != ptEqns_->end()) blkEqn = (*p_iter).second;
 
   return(blkEqn);
@@ -176,7 +184,11 @@ int snl_fei::PointBlockMap::getPtEqnInfo(int ptEqn,
     return(0);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::iterator
+#else
+  std::map<>::iterator
+#endif
     p_iter = ptEqns_->find(ptEqn);
   if (p_iter == ptEqns_->end()) {
     return(-1);
@@ -211,7 +223,11 @@ bool snl_fei::PointBlockMap::isExactlyBlkEqn(int ptEqn)
 {
   if (ptEqualBlk_==true) return(true);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::iterator
+#else
+  std::map<>::iterator
+#endif
     p_iter = ptEqns_->find(ptEqn);
   if (p_iter == ptEqns_->end()) {
     return(false);

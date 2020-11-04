@@ -86,8 +86,13 @@ TEUCHOS_UNIT_TEST(NOX_Tpetra_1DFEM, AnalyticJacobian_NoPrec)
   Scalar x00 = 0.0;
   Scalar x01 = 1.0;
   const Tpetra::global_size_t numGlobalElements = 100;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::RCP<EvaluatorTpetra1DFEM<Scalar,LO,GO,Node> > model =
     evaluatorTpetra1DFEM<Scalar,LO,GO,Node>(comm, numGlobalElements, x00, x01);
+#else
+  Teuchos::RCP<EvaluatorTpetra1DFEM<Scalar,Node> > model =
+    evaluatorTpetra1DFEM<Scalar,Node>(comm, numGlobalElements, x00, x01);
+#endif
 
   Stratimikos::DefaultLinearSolverBuilder builder;
 
@@ -181,12 +186,21 @@ TEUCHOS_UNIT_TEST(NOX_Tpetra_1DFEM, AnalyticJacobian_Ifpack2Prec)
   Scalar x00 = 0.0;
   Scalar x01 = 1.0;
   const Tpetra::global_size_t numGlobalElements = 100;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::RCP<EvaluatorTpetra1DFEM<Scalar,LO,GO,Node> > model =
     evaluatorTpetra1DFEM<Scalar,LO,GO,Node>(comm, numGlobalElements, x00, x01);
+#else
+  Teuchos::RCP<EvaluatorTpetra1DFEM<Scalar,Node> > model =
+    evaluatorTpetra1DFEM<Scalar,Node>(comm, numGlobalElements, x00, x01);
+#endif
 
   Stratimikos::DefaultLinearSolverBuilder builder;
   typedef Thyra::PreconditionerFactoryBase<Scalar> Base;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<Scalar, LO, GO, Node> > Impl;
+#else
+  typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<Scalar, Node> > Impl;
+#endif
   builder.setPreconditioningStrategyFactory(Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
 
   Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::parameterList();
@@ -282,8 +296,13 @@ TEUCHOS_UNIT_TEST(NOX_Tpetra_1DFEM, JFNK_NoPrec)
   Scalar x00 = 0.0;
   Scalar x01 = 1.0;
   const Tpetra::global_size_t numGlobalElements = 100;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::RCP<EvaluatorTpetra1DFEM<Scalar,LO,GO,Node> > model =
     evaluatorTpetra1DFEM<Scalar,LO,GO,Node>(comm, numGlobalElements, x00, x01);
+#else
+  Teuchos::RCP<EvaluatorTpetra1DFEM<Scalar,Node> > model =
+    evaluatorTpetra1DFEM<Scalar,Node>(comm, numGlobalElements, x00, x01);
+#endif
 
   Stratimikos::DefaultLinearSolverBuilder builder;
 
@@ -400,8 +419,13 @@ TEUCHOS_UNIT_TEST(NOX_Tpetra_1DFEM, JFNK_UserPrec)
   Scalar x00 = 0.0;
   Scalar x01 = 1.0;
   const Tpetra::global_size_t numGlobalElements = 100;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::RCP<EvaluatorTpetra1DFEM<Scalar,LO,GO,Node> > model =
     evaluatorTpetra1DFEM<Scalar,LO,GO,Node>(comm, numGlobalElements, x00, x01);
+#else
+  Teuchos::RCP<EvaluatorTpetra1DFEM<Scalar,Node> > model =
+    evaluatorTpetra1DFEM<Scalar,Node>(comm, numGlobalElements, x00, x01);
+#endif
 
   Stratimikos::DefaultLinearSolverBuilder builder;
 

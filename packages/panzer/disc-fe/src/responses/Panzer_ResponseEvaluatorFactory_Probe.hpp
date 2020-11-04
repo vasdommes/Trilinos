@@ -136,9 +136,15 @@ private:
   Teuchos::RCP<const panzer::GlobalIndexer> globalIndexer_;
   bool applyDirichletToDerivative_; // do we need this???
 };
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 
 template <typename LO,typename GO>
+#endif
 struct ProbeResponse_Builder : public ResponseMESupportBuilderBase {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   MPI_Comm comm;
   Teuchos::Array<double> point;
   int fieldComponent;
@@ -171,7 +177,11 @@ struct ProbeResponse_Builder : public ResponseMESupportBuilderBase {
 
   template <typename T>
   Teuchos::RCP<panzer::ResponseEvaluatorFactoryBase> build() const
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   { return Teuchos::rcp(new ResponseEvaluatorFactory_Probe<T,LO,GO>(comm,point,fieldComponent,cubatureDegree,fieldName,
+#else
+  { return Teuchos::rcp(new ResponseEvaluatorFactory_Probe<T>(comm,point,fieldComponent,cubatureDegree,fieldName,
+#endif
                                                                     linearObjFactory,globalIndexer,
                                                                     applyDirichletToDerivative)); }
 

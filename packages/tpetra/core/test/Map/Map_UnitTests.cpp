@@ -113,7 +113,11 @@ namespace {
 #else
     using GO = Tpetra::Map<>::global_ordinal_type;
 #endif
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using map_type = Tpetra::Map<LO, GO>;
+#else
+    using map_type = Tpetra::Map<>;
+#endif
     
     auto comm = Tpetra::getDefaultComm();
     const int numImages = comm->getSize();
@@ -137,10 +141,22 @@ namespace {
     TEST_EQUALITY( gblSuccess, 1 );
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Map, compatibilityTests, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST( Map, compatibilityTests )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     using std::endl;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::Map<LO,GO> M;
+#else
+    typedef Tpetra::Map<> M;
+#endif
 
     out << "Test: Map, compatibilityTests" << std::endl;
     Teuchos::OSTab tab0 (out);
@@ -218,9 +234,19 @@ namespace {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Map, sameasTests, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST( Map, sameasTests )
+#endif
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::Map<LO,GO> M;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef Tpetra::Map<> M;
+#endif
 
     out << "Test: Map, sameasTests" << std::endl;
     Teuchos::OSTab tab0 (out);
@@ -255,9 +281,19 @@ namespace {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Map, ContigUniformMap, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST( Map, ContigUniformMap )
+#endif
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::Map<LO,GO> M;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef Tpetra::Map<> M;
+#endif
 
     out << "Test: Map, ContigUniformMap" << std::endl;
     Teuchos::OSTab tab0 (out);
@@ -315,9 +351,19 @@ namespace {
     TEST_EQUALITY( gblSuccess, 1 );
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Map, nonTrivialIndexBase, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST( Map, nonTrivialIndexBase )
+#endif
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::Map<LO,GO> Map;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef Tpetra::Map<> Map;
+#endif
 
     out << "Test: Map, nonTrivialIndexBase" << std::endl;
     Teuchos::OSTab tab0 (out);
@@ -359,9 +405,19 @@ namespace {
     TEST_EQUALITY( gblSuccess, 1 );
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Map, indexBaseAndAllMin, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST( Map, indexBaseAndAllMin )
+#endif
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::Map<LO,GO> Map;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef Tpetra::Map<> Map;
+#endif
 
     out << "Test: Map, indexBaseAndAllMin" << std::endl;
     Teuchos::OSTab tab0 (out);
@@ -404,9 +460,19 @@ namespace {
     TEST_EQUALITY( gblSuccess, 1 );
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Map, ZeroLocalElements, LO, GO )
+#else
+  TEUCHOS_UNIT_TEST( Map, ZeroLocalElements )
+#endif
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::Map<LO,GO> M;
+#else
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+    typedef Tpetra::Map<> M;
+#endif
 
     out << "Test: Map, ZeroLocalElements" << std::endl;
     Teuchos::OSTab tab0 (out);
@@ -471,6 +537,7 @@ namespace {
 #ifdef HAVE_TPETRA_DEBUG
   // all ordinals, default node
 #  define UNIT_TEST_GROUP( LO, GO ) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Map, compatibilityTests, LO, GO ) \
     TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Map, sameasTests, LO, GO ) \
     TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Map, nonTrivialIndexBase, LO, GO ) \
@@ -478,14 +545,19 @@ namespace {
     TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Map, ContigUniformMap, LO, GO ) \
     TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Map, ZeroLocalElements, LO, GO )
 #else
+#endif
+#else
   // all ordinals, default node
 #  define UNIT_TEST_GROUP( LO, GO ) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Map, compatibilityTests, LO, GO ) \
     TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Map, sameasTests, LO, GO ) \
     TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Map, nonTrivialIndexBase, LO, GO ) \
     TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Map, indexBaseAndAllMin, LO, GO ) \
     TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Map, ContigUniformMap, LO, GO ) \
     TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Map, ZeroLocalElements, LO, GO )
+#else
+#endif
 #endif // HAVE_TPETRA_DEBUG
 
   TPETRA_ETI_MANGLING_TYPEDEFS()

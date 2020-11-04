@@ -68,8 +68,13 @@ int main(int argc, char *argv[]) {
   typedef Tpetra::Map<>::local_ordinal_type LO;
   typedef Tpetra::Map<>::global_ordinal_type GO;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::CrsMatrix<Scalar,LO,GO> MAT;
   typedef Tpetra::MultiVector<Scalar,LO,GO> MV;
+#else
+  typedef Tpetra::CrsMatrix<Scalar> MAT;
+  typedef Tpetra::MultiVector<Scalar> MV;
+#endif
 
   using Tpetra::global_size_t;
   using Teuchos::tuple;
@@ -98,8 +103,13 @@ int main(int argc, char *argv[]) {
 
   // create a Map
   const global_size_t nrows = 3;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Tpetra::Map<LO,GO> > map
     = rcp( new Tpetra::Map<LO,GO>(nrows,0,comm) );
+#else
+  RCP<Tpetra::Map<> > map
+    = rcp( new Tpetra::Map<>(nrows,0,comm) );
+#endif
 
   RCP<MAT> A = rcp( new MAT(map,3) ); // max of three entries in a row
 

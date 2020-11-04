@@ -119,8 +119,13 @@ int main(int argc, char *argv[]) {
   typedef Tpetra::Map<>::local_ordinal_type LO;
   typedef Tpetra::Map<>::global_ordinal_type GO;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::CrsMatrix<Scalar,LO,GO> MAT;
   typedef Tpetra::MultiVector<Scalar,LO,GO> MV;
+#else
+  typedef Tpetra::CrsMatrix<Scalar> MAT;
+  typedef Tpetra::MultiVector<Scalar> MV;
+#endif
 
   Tpetra::ScopeGuard tpetraScope(&argc,&argv);
   {
@@ -390,7 +395,11 @@ readCrsMatrixFromFile (const std::string& matrixFilename,
       opened = 0;
     }
   }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::broadcast<int, int> (*comm, 0, Teuchos::outArg (opened));
+#else
+  Teuchos::broadcast<> (*comm, 0, Teuchos::outArg (opened));
+#endif
   TEUCHOS_TEST_FOR_EXCEPTION
     (opened == 0, std::runtime_error, "readCrsMatrixFromFile: "
      "Failed to open file \"" << matrixFilename << "\" on Process 0.");

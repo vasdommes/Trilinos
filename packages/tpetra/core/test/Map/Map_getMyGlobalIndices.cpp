@@ -96,9 +96,19 @@ testGids (bool& success,
 //
 // Test with a uniform contiguous Map.
 //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( getMyGlobalIndices, UniformContig, LO, GO, NT )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( getMyGlobalIndices, UniformContig, NT )
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO, GO, NT> map_type;
+#else
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+  typedef Tpetra::Map<NT> map_type;
+#endif
   int lclSuccess = 1;
   int gblSuccess = 1;
 
@@ -136,9 +146,19 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( getMyGlobalIndices, UniformContig, LO, GO, NT
 //
 // Test with a NONuniform contiguous Map.
 //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( getMyGlobalIndices, NonuniformContig, LO, GO, NT )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( getMyGlobalIndices, NonuniformContig, NT )
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO, GO, NT> map_type;
+#else
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+  typedef Tpetra::Map<NT> map_type;
+#endif
   int lclSuccess = 1;
   int gblSuccess = 1;
 
@@ -179,9 +199,19 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( getMyGlobalIndices, NonuniformContig, LO, GO,
 //
 // Test with a NONcontiguous Map.
 //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( getMyGlobalIndices, Noncontig, LO, GO, NT )
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL( getMyGlobalIndices, Noncontig, NT )
+#endif
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   typedef Tpetra::Map<LO, GO, NT> map_type;
+#else
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+  typedef Tpetra::Map<NT> map_type;
+#endif
   int lclSuccess = 1;
   int gblSuccess = 1;
 
@@ -228,10 +258,17 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( getMyGlobalIndices, Noncontig, LO, GO, NT )
 // INSTANTIATIONS
 //
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define UNIT_TEST_GROUP( LO, GO, NT ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( getMyGlobalIndices, UniformContig, LO, GO, NT ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( getMyGlobalIndices, NonuniformContig, LO, GO, NT ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( getMyGlobalIndices, Noncontig, LO, GO, NT )
+#else
+#define UNIT_TEST_GROUP(NT ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( getMyGlobalIndices, UniformContig, NT ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( getMyGlobalIndices, NonuniformContig, NT ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( getMyGlobalIndices, Noncontig, NT )
+#endif
 
   TPETRA_ETI_MANGLING_TYPEDEFS()
 

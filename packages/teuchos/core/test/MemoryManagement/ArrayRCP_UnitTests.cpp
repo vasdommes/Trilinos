@@ -225,7 +225,11 @@ TEUCHOS_UNIT_TEST( ArrayRCP, arcpWithEmbeddedObj )
 {
   const ArrayRCP<const int> a_arcp =
     Teuchos::arcpWithEmbeddedObj<int>(new int[1], 0, 1, as<int>(1), true);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   const int embeddedObj = Teuchos::getEmbeddedObj<int,int>(a_arcp);
+#else
+  const int embeddedObj = Teuchos::getEmbeddedObj<>(a_arcp);
+#endif
   TEST_EQUALITY_CONST( embeddedObj, as<int>(1) );
 }
 

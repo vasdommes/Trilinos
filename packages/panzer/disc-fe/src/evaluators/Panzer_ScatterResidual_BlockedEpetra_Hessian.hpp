@@ -55,20 +55,34 @@ namespace panzer {
 // Hessian Specialization
 // **************************************************************
 template<typename TRAITS,typename LO,typename GO>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 class ScatterResidual_BlockedEpetra<panzer::Traits::Hessian,TRAITS,LO,GO>
+#else
+class ScatterResidual_BlockedEpetra<panzer::Traits::Hessian,TRAITS>
+#endif
   : public panzer::EvaluatorWithBaseImpl<TRAITS>,
     public PHX::EvaluatorDerived<panzer::Traits::Hessian, TRAITS>,
     public panzer::CloneableEvaluator {
   
 public:
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   ScatterResidual_BlockedEpetra(const std::vector<Teuchos::RCP<const GlobalIndexer<LO,int> > > & rIndexers,
                                 const std::vector<Teuchos::RCP<const GlobalIndexer<LO,int> > > & cIndexers,
+#else
+  ScatterResidual_BlockedEpetra(const std::vector<Teuchos::RCP<const GlobalIndexer<> > > & rIndexers,
+                                const std::vector<Teuchos::RCP<const GlobalIndexer<> > > & cIndexers,
+#endif
                                 bool useDiscreteAdjoint=false)
      : rowIndexers_(rIndexers), colIndexers_(cIndexers), useDiscreteAdjoint_(useDiscreteAdjoint) {}
   
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   ScatterResidual_BlockedEpetra(const std::vector<Teuchos::RCP<const GlobalIndexer<LO,int> > > & rIndexers,
                                 const std::vector<Teuchos::RCP<const GlobalIndexer<LO,int> > > & cIndexers,
+#else
+  ScatterResidual_BlockedEpetra(const std::vector<Teuchos::RCP<const GlobalIndexer<> > > & rIndexers,
+                                const std::vector<Teuchos::RCP<const GlobalIndexer<> > > & cIndexers,
+#endif
                                 const Teuchos::ParameterList& p,
                                 bool useDiscreteAdjoint=false);
   
@@ -80,7 +94,11 @@ public:
   void evaluateFields(typename TRAITS::EvalData workset);
   
   virtual Teuchos::RCP<CloneableEvaluator> clone(const Teuchos::ParameterList & pl) const
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   { return Teuchos::rcp(new ScatterResidual_BlockedEpetra<panzer::Traits::Hessian,TRAITS,LO,GO>(rowIndexers_,colIndexers_,pl,useDiscreteAdjoint_)); }
+#else
+  { return Teuchos::rcp(new ScatterResidual_BlockedEpetra<panzer::Traits::Hessian,TRAITS>(rowIndexers_,colIndexers_,pl,useDiscreteAdjoint_)); }
+#endif
 
 private:
   typedef typename panzer::Traits::Hessian::ScalarT ScalarT;
@@ -91,8 +109,13 @@ private:
   // fields that need to be scattered will be put in this vector
   std::vector< PHX::MDField<const ScalarT,Cell,NODE> > scatterFields_;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::vector<Teuchos::RCP<const GlobalIndexer<LO,int> > > rowIndexers_;
   std::vector<Teuchos::RCP<const GlobalIndexer<LO,int> > > colIndexers_;
+#else
+  std::vector<Teuchos::RCP<const GlobalIndexer<> > > rowIndexers_;
+  std::vector<Teuchos::RCP<const GlobalIndexer<> > > colIndexers_;
+#endif
 
   std::vector<int> indexerIds_;   // block index
   std::vector<int> subFieldIds_; // sub field numbers

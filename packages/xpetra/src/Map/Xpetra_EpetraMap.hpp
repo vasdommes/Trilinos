@@ -63,23 +63,49 @@
 namespace Xpetra {
 
   // TODO: move that elsewhere
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template<class GlobalOrdinal, class Node>
   const Epetra_Map & toEpetra(const Map<int,GlobalOrdinal, Node> &);
+#else
+  template<class Node>
+  const Epetra_Map & toEpetra(const Map<Node> &);
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template<class GlobalOrdinal, class Node>
   const Epetra_Map & toEpetra(const RCP< const Map<int, GlobalOrdinal, Node> > &);
+#else
+  template<class Node>
+  const Epetra_Map & toEpetra(const RCP< const Map<Node> > &);
+#endif
 
   //template<class GlobalOrdinal>
   //const RCP< const Map<int, GlobalOrdinal> > toXpetra(const RCP< const Epetra_Map > &);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template<class GlobalOrdinal, class Node>
   const RCP< const Map<int, GlobalOrdinal, Node> > toXpetra(const Epetra_BlockMap &);
+#else
+  template<class Node>
+  const RCP< const Map<Node> > toXpetra(const Epetra_BlockMap &);
+#endif
 
   // stub implementation for EpetraMapT
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template<class GlobalOrdinal, class Node>
+#else
+  template<class Node>
+#endif
   class EpetraMapT
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     : public virtual Map<int, GlobalOrdinal, Node>
+#else
+    : public virtual Map<Node>
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     typedef int LocalOrdinal;
 
   public:
@@ -178,10 +204,18 @@ namespace Xpetra {
     bool isDistributed() const { return false; }
 
     //! True if and only if map is compatible with this Map.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     bool isCompatible(const Map< LocalOrdinal, GlobalOrdinal, Node > &/* map */) const { return false; }
+#else
+    bool isCompatible(const Map<Node > &/* map */) const { return false; }
+#endif
 
     //! True if and only if map is identical to this Map.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     bool isSameAs(const Map< LocalOrdinal, GlobalOrdinal, Node > &/* map */) const { return false; }
+#else
+    bool isSameAs(const Map<Node > &/* map */) const { return false; }
+#endif
 
     //@}
 
@@ -209,10 +243,18 @@ namespace Xpetra {
     //@{
 
     //! Return a new Map with processes with zero elements removed.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map<int,GlobalOrdinal,Node> > removeEmptyProcesses() const { return Teuchos::null; }
+#else
+    RCP<const Map<Node> > removeEmptyProcesses() const { return Teuchos::null; }
+#endif
 
     //! Replace this Map's communicator with a subset communicator.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map<int,GlobalOrdinal,Node> > replaceCommWithSubset(const Teuchos::RCP< const Teuchos::Comm< int > > &/* newComm */) const { return Teuchos::null; }
+#else
+    RCP<const Map<Node> > replaceCommWithSubset(const Teuchos::RCP< const Teuchos::Comm< int > > &/* newComm */) const { return Teuchos::null; }
+#endif
 
     //@}
 
@@ -242,7 +284,11 @@ namespace Xpetra {
 
 #ifdef HAVE_XPETRA_KOKKOS_REFACTOR
 #ifdef HAVE_XPETRA_TPETRA
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using local_map_type = typename Map<LocalOrdinal, GlobalOrdinal, Node>::local_map_type;
+#else
+    using local_map_type = typename Map<Node>::local_map_type;
+#endif
     /// \brief Get the local Map for Kokkos kernels.
     local_map_type getLocalMap () const {
       throw std::runtime_error("Xpetra::EpetraMap::getLocalMap is not implemented.");
@@ -297,7 +343,11 @@ namespace Xpetra {
         global_size_t rootNGE = numGlobalElements;
         GlobalOrdinal rootIB  = indexBase;
         Teuchos::broadcast<int,global_size_t>(*comm,0,&rootNGE);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         Teuchos::broadcast<int,GlobalOrdinal>(*comm,0,&rootIB);
+#else
+        Teuchos::broadcast<>(*comm,0,&rootIB);
+#endif
         int localChecks[2], globalChecks[2];
         localChecks[0] = -1;   // fail or pass
         localChecks[1] = 0;    // fail reason
@@ -388,7 +438,11 @@ namespace Xpetra {
         }
         // now check that indexBase is equivalent across images
         GlobalOrdinal rootIB = indexBase;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         Teuchos::broadcast<int,GlobalOrdinal>(*comm,0,&rootIB);   // broadcast one ordinal from node 0
+#else
+        Teuchos::broadcast<>(*comm,0,&rootIB);   // broadcast one ordinal from node 0
+#endif
         if (indexBase != rootIB) {
           localChecks[0] = myImageID;
           localChecks[1] = 4;
@@ -522,10 +576,18 @@ namespace Xpetra {
     bool isDistributed() const { XPETRA_MONITOR("EpetraMapT::isDistributed"); return map_->DistributedGlobal(); }
 
     //! True if and only if map is compatible with this Map.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     bool isCompatible(const Map< LocalOrdinal, GlobalOrdinal, Node > &map) const { XPETRA_MONITOR("EpetraMapT::isCompatible"); return map_->PointSameAs(toEpetra<GlobalOrdinal,Node>(map)); }
+#else
+    bool isCompatible(const Map<Node > &map) const { XPETRA_MONITOR("EpetraMapT::isCompatible"); return map_->PointSameAs(toEpetra<GlobalOrdinal,Node>(map)); }
+#endif
 
     //! True if and only if map is identical to this Map.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     bool isSameAs(const Map< LocalOrdinal, GlobalOrdinal, Node > &map) const { XPETRA_MONITOR("EpetraMapT::isSameAs"); return map_->SameAs(toEpetra<GlobalOrdinal,Node>(map)); }
+#else
+    bool isSameAs(const Map<Node > &map) const { XPETRA_MONITOR("EpetraMapT::isSameAs"); return map_->SameAs(toEpetra<GlobalOrdinal,Node>(map)); }
+#endif
 
     //@}
 
@@ -643,19 +705,31 @@ namespace Xpetra {
     //@{
 
     //! Return a new Map with processes with zero elements removed.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map<int,GlobalOrdinal,Node> > removeEmptyProcesses() const {
+#else
+    RCP<const Map<Node> > removeEmptyProcesses() const {
+#endif
       const Epetra_BlockMap * NewMap = map_->RemoveEmptyProcesses();
        if (!NewMap) {
          return Teuchos::null;
        } else {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
          const RCP< const Map<int, GlobalOrdinal, Node> >  NewMapX = toXpetra<GlobalOrdinal, Node>(*NewMap);
+#else
+         const RCP< const Map<Node> >  NewMapX = toXpetra<GlobalOrdinal, Node>(*NewMap);
+#endif
          delete NewMap;   // NOTE: toXpetra *copys* the epetra map rather than wrapping it, so we have to delete NewMap to avoid a memory leak.
          return NewMapX;
        }
     }
 
     //! Replace this Map's communicator with a subset communicator.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map<int,GlobalOrdinal,Node> > replaceCommWithSubset(const Teuchos::RCP< const Teuchos::Comm< int > > &/* newComm */) const {
+#else
+    RCP<const Map<Node> > replaceCommWithSubset(const Teuchos::RCP< const Teuchos::Comm< int > > &/* newComm */) const {
+#endif
       throw std::runtime_error("Xpetra::EpetraMapT::replaceCommWithSubset has not yet been implemented.");
       TEUCHOS_UNREACHABLE_RETURN(Teuchos::null);
     }
@@ -695,7 +769,11 @@ namespace Xpetra {
 
 #ifdef HAVE_XPETRA_KOKKOS_REFACTOR
 #ifdef HAVE_XPETRA_TPETRA
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using local_map_type = typename Map<LocalOrdinal, GlobalOrdinal, Node>::local_map_type;
+#else
+    using local_map_type = typename Map<Node>::local_map_type;
+#endif
     /// \brief Get the local Map for Kokkos kernels.
     local_map_type getLocalMap () const {
       throw std::runtime_error("Xpetra::EpetraMap::getLocalMap is not implemented.");
@@ -752,7 +830,11 @@ namespace Xpetra {
         global_size_t rootNGE = numGlobalElements;
         GlobalOrdinal rootIB  = indexBase;
         Teuchos::broadcast<int,global_size_t>(*comm,0,&rootNGE);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         Teuchos::broadcast<int,GlobalOrdinal>(*comm,0,&rootIB);
+#else
+        Teuchos::broadcast<>(*comm,0,&rootIB);
+#endif
         int localChecks[2], globalChecks[2];
         localChecks[0] = -1;   // fail or pass
         localChecks[1] = 0;    // fail reason
@@ -842,7 +924,11 @@ namespace Xpetra {
         }
         // now check that indexBase is equivalent across images
         GlobalOrdinal rootIB = indexBase;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         Teuchos::broadcast<int,GlobalOrdinal>(*comm,0,&rootIB);   // broadcast one ordinal from node 0
+#else
+        Teuchos::broadcast<>(*comm,0,&rootIB);   // broadcast one ordinal from node 0
+#endif
         if (indexBase != rootIB) {
           localChecks[0] = myImageID;
           localChecks[1] = 4;
@@ -962,10 +1048,18 @@ namespace Xpetra {
     bool isDistributed() const { XPETRA_MONITOR("EpetraMapT::isDistributed"); return map_->DistributedGlobal(); }
 
     //! True if and only if map is compatible with this Map.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     bool isCompatible(const Map< LocalOrdinal, GlobalOrdinal, Node > &map) const { XPETRA_MONITOR("EpetraMapT::isCompatible"); return map_->PointSameAs(toEpetra<GlobalOrdinal,Node>(map)); }
+#else
+    bool isCompatible(const Map<Node > &map) const { XPETRA_MONITOR("EpetraMapT::isCompatible"); return map_->PointSameAs(toEpetra<GlobalOrdinal,Node>(map)); }
+#endif
 
     //! True if and only if map is identical to this Map.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     bool isSameAs(const Map< LocalOrdinal, GlobalOrdinal, Node > &map) const { XPETRA_MONITOR("EpetraMapT::isSameAs"); return map_->SameAs(toEpetra<GlobalOrdinal,Node>(map)); }
+#else
+    bool isSameAs(const Map<Node > &map) const { XPETRA_MONITOR("EpetraMapT::isSameAs"); return map_->SameAs(toEpetra<GlobalOrdinal,Node>(map)); }
+#endif
 
     //@}
 
@@ -1079,19 +1173,31 @@ namespace Xpetra {
     //@{
 
     //! Return a new Map with processes with zero elements removed.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map<int,GlobalOrdinal,Node> > removeEmptyProcesses() const {
+#else
+    RCP<const Map<Node> > removeEmptyProcesses() const {
+#endif
       const Epetra_BlockMap * NewMap = map_->RemoveEmptyProcesses();
        if (!NewMap) {
          return Teuchos::null;
        } else {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
          const RCP< const Map<int, GlobalOrdinal, Node> >  NewMapX = toXpetra<GlobalOrdinal, Node>(*NewMap);
+#else
+         const RCP< const Map<Node> >  NewMapX = toXpetra<GlobalOrdinal, Node>(*NewMap);
+#endif
          delete NewMap;   // NOTE: toXpetra *copys* the epetra map rather than wrapping it, so we have to delete NewMap to avoid a memory leak.
          return NewMapX;
        }
     }
 
     //! Replace this Map's communicator with a subset communicator.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map<int,GlobalOrdinal,Node> > replaceCommWithSubset(const Teuchos::RCP< const Teuchos::Comm< int > > &/* newComm */) const {
+#else
+    RCP<const Map<Node> > replaceCommWithSubset(const Teuchos::RCP< const Teuchos::Comm< int > > &/* newComm */) const {
+#endif
       throw std::runtime_error("Xpetra::EpetraMapT::replaceCommWithSubset has not yet been implemented.");
       // return Teuchos::null; // unreachable
     }
@@ -1129,7 +1235,11 @@ namespace Xpetra {
 
 #ifdef HAVE_XPETRA_KOKKOS_REFACTOR
 #ifdef HAVE_XPETRA_TPETRA
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using local_map_type = typename Map<LocalOrdinal, GlobalOrdinal, Node>::local_map_type;
+#else
+    using local_map_type = typename Map<Node>::local_map_type;
+#endif
     /// \brief Get the local Map for Kokkos kernels.
     local_map_type getLocalMap () const {
       throw std::runtime_error("Xpetra::EpetraMap::getLocalMap is not implemented.");

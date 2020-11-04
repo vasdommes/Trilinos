@@ -64,29 +64,69 @@ using Teuchos::RCP;
 using Teuchos::rcp;
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Ifpack2Hypre, Construct, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Ifpack2Hypre, Construct, Scalar, Node)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   global_size_t num_rows_per_proc = 10;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   const RCP<const Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> > rowmap = tif_utest::create_tpetra_map<LocalOrdinal,GlobalOrdinal,Node>(num_rows_per_proc);
+#else
+  const RCP<const Tpetra::Map<Node> > rowmap = tif_utest::create_tpetra_map<Node>(num_rows_per_proc);
+#endif
   
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<const Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > crsmatrix = tif_utest::create_test_matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>(rowmap);
+#else
+  RCP<const Tpetra::CrsMatrix<Scalar,Node> > crsmatrix = tif_utest::create_test_matrix<Scalar,Node>(rowmap);
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Ifpack2::Hypre<Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > prec(crsmatrix);
+#else
+  Ifpack2::Hypre<Tpetra::RowMatrix<Scalar,Node> > prec(crsmatrix);
+#endif
 
   prec.initialize();
   TEST_EQUALITY(0,0);
 }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Ifpack2Hypre, BoomerAMG, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Ifpack2Hypre, BoomerAMG, Scalar, Node)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   const GlobalOrdinal num_rows_per_proc = 1000;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using multivector_type = Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node>;
+#else
+  using multivector_type = Tpetra::MultiVector<Scalar,Node>;
+#endif
   const double tol = 1e-7;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   auto rowmap = tif_utest::create_tpetra_map<LocalOrdinal,GlobalOrdinal,Node>(num_rows_per_proc);
+#else
+  auto rowmap = tif_utest::create_tpetra_map<Node>(num_rows_per_proc);
+#endif
   int NumProc = rowmap->getComm()->getSize();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   auto A = tif_utest::create_test_matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>(rowmap,-Teuchos::ScalarTraits<Scalar>::one());
+#else
+  auto A = tif_utest::create_test_matrix<Scalar,Node>(rowmap,-Teuchos::ScalarTraits<Scalar>::one());
+#endif
 
   // Create the parameter list
   Teuchos::ParameterList list("Preconditioner List");
@@ -103,7 +143,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Ifpack2Hypre, BoomerAMG, Scalar, LocalOrdinal,
   list.set("hypre: SetPreconditioner", true);
   
   // Create the preconditioner
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Ifpack2::Hypre<Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > preconditioner(A);
+#else
+  Ifpack2::Hypre<Tpetra::RowMatrix<Scalar,Node> > preconditioner(A);
+#endif
   preconditioner.setParameters(list);
   preconditioner.compute();
     
@@ -122,15 +166,35 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Ifpack2Hypre, BoomerAMG, Scalar, LocalOrdinal,
   TEST_COMPARE_FLOATING_ARRAYS(v1v,v2v,tol*10*pow(10.0,NumProc));
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Ifpack2Hypre, BoomerAMGNonContiguous, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Ifpack2Hypre, BoomerAMGNonContiguous, Scalar, Node)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   const GlobalOrdinal num_rows_per_proc = 1000;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using multivector_type = Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node>;
+#else
+  using multivector_type = Tpetra::MultiVector<Scalar,Node>;
+#endif
   const double tol = 1e-7;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   auto rowmap = tif_utest::create_odd_even_map<LocalOrdinal,GlobalOrdinal,Node>(num_rows_per_proc);
+#else
+  auto rowmap = tif_utest::create_odd_even_map<Node>(num_rows_per_proc);
+#endif
   int NumProc = rowmap->getComm()->getSize();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   auto A = tif_utest::create_test_matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>(rowmap,-Teuchos::ScalarTraits<Scalar>::one());
+#else
+  auto A = tif_utest::create_test_matrix<Scalar,Node>(rowmap,-Teuchos::ScalarTraits<Scalar>::one());
+#endif
 
   // Create the parameter list
   Teuchos::ParameterList list("Preconditioner List");
@@ -148,7 +212,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Ifpack2Hypre, BoomerAMGNonContiguous, Scalar, 
   
 
   // Create the preconditioner
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Ifpack2::Hypre<Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > preconditioner(A);
+#else
+  Ifpack2::Hypre<Tpetra::RowMatrix<Scalar,Node> > preconditioner(A);
+#endif
   preconditioner.setParameters(list);
   preconditioner.compute();
     
@@ -170,17 +238,36 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Ifpack2Hypre, BoomerAMGNonContiguous, Scalar, 
 
 // Tests the hypre interface's ability to work with both a preconditioner and linear
 // solver via ApplyInverse
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Ifpack2Hypre, Apply, Scalar, LocalOrdinal, GlobalOrdinal, Node) {
   using multivector_type = Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node>;
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Ifpack2Hypre, Apply, Scalar, Node) {
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+  using multivector_type = Tpetra::MultiVector<Scalar,Node>;
+#endif
   const double tol = 1E-7;
 
   global_size_t num_rows_per_proc = 10;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   const RCP<const Tpetra::Map<LocalOrdinal,GlobalOrdinal,Node> > rowmap = tif_utest::create_tpetra_map<LocalOrdinal,GlobalOrdinal,Node>(num_rows_per_proc);
+#else
+  const RCP<const Tpetra::Map<Node> > rowmap = tif_utest::create_tpetra_map<Node>(num_rows_per_proc);
+#endif
   
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<const Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > crsmatrix = tif_utest::create_test_matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>(rowmap);
+#else
+  RCP<const Tpetra::CrsMatrix<Scalar,Node> > crsmatrix = tif_utest::create_test_matrix<Scalar,Node>(rowmap);
+#endif
   int NumProc = rowmap->getComm()->getSize();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Ifpack2::Hypre<Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > preconditioner(crsmatrix);
+#else
+  Ifpack2::Hypre<Tpetra::RowMatrix<Scalar,Node> > preconditioner(crsmatrix);
+#endif
   preconditioner.initialize();
 
   //
@@ -216,17 +303,33 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Ifpack2Hypre, Apply, Scalar, LocalOrdinal, Glo
 
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Ifpack2Hypre, DiagonalMatrixInOrder, Scalar, LocalOrdinal, GlobalOrdinal, Node) {
   using multivector_type = Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node>;
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Ifpack2Hypre, DiagonalMatrixInOrder, Scalar, Node) {
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+  using multivector_type = Tpetra::MultiVector<Scalar,Node>;
+#endif
   const double tol = 1E-7;
 
   LocalOrdinal num_rows_per_proc = 10;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Tpetra::CrsGraph<LocalOrdinal,GlobalOrdinal,Node> > crsgraph = tif_utest::create_diagonal_graph<LocalOrdinal,GlobalOrdinal,Node>(num_rows_per_proc);
   RCP<Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > crsmatrix = tif_utest::create_diagonal_matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>(crsgraph);
+#else
+  RCP<Tpetra::CrsGraph<Node> > crsgraph = tif_utest::create_diagonal_graph<Node>(num_rows_per_proc);
+  RCP<Tpetra::CrsMatrix<Scalar,Node> > crsmatrix = tif_utest::create_diagonal_matrix<Scalar,Node>(crsgraph);
+#endif
 
   int NumProc = crsmatrix->getMap()->getComm()->getSize();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Ifpack2::Hypre<Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > preconditioner(crsmatrix);
+#else
+  Ifpack2::Hypre<Tpetra::RowMatrix<Scalar,Node> > preconditioner(crsmatrix);
+#endif
   preconditioner.initialize();
 
 
@@ -269,17 +372,33 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Ifpack2Hypre, DiagonalMatrixInOrder, Scalar, L
   TEST_COMPARE_FLOATING_ARRAYS(v1v,v2v,tol*10*pow(10.0,NumProc));
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Ifpack2Hypre, DiagonalMatrixNonContiguous, Scalar, LocalOrdinal, GlobalOrdinal, Node) {
   using multivector_type = Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node>;
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Ifpack2Hypre, DiagonalMatrixNonContiguous, Scalar, Node) {
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+  using multivector_type = Tpetra::MultiVector<Scalar,Node>;
+#endif
   const double tol = 1E-7;
 
   LocalOrdinal num_rows_per_proc = 10;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   RCP<Tpetra::CrsGraph<LocalOrdinal,GlobalOrdinal,Node> > crsgraph = tif_utest::create_odd_even_diagonal_graph<LocalOrdinal,GlobalOrdinal,Node>(num_rows_per_proc);
 RCP<Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > crsmatrix = tif_utest::create_diagonal_matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>(crsgraph);
+#else
+  RCP<Tpetra::CrsGraph<Node> > crsgraph = tif_utest::create_odd_even_diagonal_graph<Node>(num_rows_per_proc);
+RCP<Tpetra::CrsMatrix<Scalar,Node> > crsmatrix = tif_utest::create_diagonal_matrix<Scalar,Node>(crsgraph);
+#endif
 
   int NumProc = crsmatrix->getMap()->getComm()->getSize();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Ifpack2::Hypre<Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > preconditioner(crsmatrix);
+#else
+  Ifpack2::Hypre<Tpetra::RowMatrix<Scalar,Node> > preconditioner(crsmatrix);
+#endif
   preconditioner.initialize();
 
 
@@ -323,6 +442,7 @@ RCP<Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > crsmatrix = tif_
 }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define UNIT_TEST_GROUP_SC_LO_GO_NO(Scalar,LocalOrdinal,GlobalOrdinal,Node) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( Ifpack2Hypre, Construct, Scalar, LocalOrdinal,GlobalOrdinal,Node) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( Ifpack2Hypre, Apply, Scalar, LocalOrdinal,GlobalOrdinal,Node) \
@@ -330,6 +450,15 @@ RCP<Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > crsmatrix = tif_
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( Ifpack2Hypre, DiagonalMatrixNonContiguous, Scalar, LocalOrdinal,GlobalOrdinal,Node) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( Ifpack2Hypre, BoomerAMG, Scalar, LocalOrdinal,GlobalOrdinal,Node) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( Ifpack2Hypre, BoomerAMGNonContiguous, Scalar, LocalOrdinal,GlobalOrdinal,Node) 
+#else
+#define UNIT_TEST_GROUP_SC_LO_GO_NO(Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Ifpack2Hypre, Construct, Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Ifpack2Hypre, Apply, Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Ifpack2Hypre, DiagonalMatrixInOrder, Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Ifpack2Hypre, DiagonalMatrixNonContiguous, Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Ifpack2Hypre, BoomerAMG, Scalar,Node) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Ifpack2Hypre, BoomerAMGNonContiguous, Scalar,Node) 
+#endif
 
 
 #include "Ifpack2_ETIHelperMacros.h"

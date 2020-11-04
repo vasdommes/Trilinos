@@ -54,8 +54,16 @@ namespace {
 
 using Tpetra::TestingUtilities::getDefaultComm;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Directory, AllMinGIDs, SC, LO, GO)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL(Directory, AllMinGIDs, SC)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LO = typename Tpetra::Map<>::local_ordinal_type;
+  using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   /*
    * This issue is described in
    * [Issue 6987](https://github.com/trilinos/Trilinos/issues/6987)
@@ -78,9 +86,15 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Directory, AllMinGIDs, SC, LO, GO)
    * values in getEntriesImpl.
    */
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using map_type = Tpetra::Map<LO, GO>;
   using vector_type = Tpetra::MultiVector<SC, LO, GO>;
   using import_type = Tpetra::Import<LO, GO>;
+#else
+  using map_type = Tpetra::Map<>;
+  using vector_type = Tpetra::MultiVector<SC>;
+  using import_type = Tpetra::Import<>;
+#endif
 
   auto comm = getDefaultComm();
   const auto my_rank = comm->getRank();
@@ -110,7 +124,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Directory, AllMinGIDs, SC, LO, GO)
     Teuchos::RCP<vector_type> vec2;
     Teuchos::RCP<const map_type> map2;
     {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       map2 = Tpetra::createLocalMap<LO,GO>(num_non_zero, comm);
+#else
+      map2 = Tpetra::createLocalMap<>(num_non_zero, comm);
+#endif
       vec2 = Teuchos::rcp(new vector_type(map2, num_vecs, true));
     }
 
@@ -145,7 +163,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(Directory, AllMinGIDs, SC, LO, GO)
 //
 
 #define THIS_TEST_GROUP(SC, LO, GO) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT(Directory, AllMinGIDs, SC, LO, GO)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT(Directory, AllMinGIDs, SC)
+#endif
 
 TPETRA_ETI_MANGLING_TYPEDEFS()
 TPETRA_INSTANTIATE_SLG(THIS_TEST_GROUP)

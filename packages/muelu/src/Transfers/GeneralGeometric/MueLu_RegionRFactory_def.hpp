@@ -60,8 +60,13 @@
 
 namespace MueLu {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   RCP<const ParameterList> RegionRFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  template <class Scalar, class Node>
+  RCP<const ParameterList> RegionRFactory<Scalar, Node>::
+#endif
   GetValidParameterList() const {
     RCP<ParameterList> validParamList = rcp(new ParameterList());
 
@@ -80,8 +85,13 @@ namespace MueLu {
     return validParamList;
   } // GetValidParameterList()
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void RegionRFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  template <class Scalar, class Node>
+  void RegionRFactory<Scalar, Node>::
+#endif
   DeclareInput(Level& fineLevel, Level& /* coarseLevel */) const {
 
     Input(fineLevel, "A");
@@ -92,8 +102,13 @@ namespace MueLu {
 
   } // DeclareInput()
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void RegionRFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  template <class Scalar, class Node>
+  void RegionRFactory<Scalar, Node>::
+#endif
   Build(Level& fineLevel, Level& coarseLevel) const {
 
     // Set debug outputs based on environment variable
@@ -193,14 +208,27 @@ namespace MueLu {
 
   } // Build()
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void RegionRFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
+#else
+  template <class Scalar, class Node>
+  void RegionRFactory<Scalar, Node>::
+#endif
   Build3D(const int numDimensions,
           Teuchos::Array<LocalOrdinal>& lFineNodesPerDim,
           const RCP<Matrix>& A,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           const RCP<Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::coordinateType, LocalOrdinal, GlobalOrdinal, Node> >& fineCoordinates,
+#else
+          const RCP<Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::coordinateType,Node> >& fineCoordinates,
+#endif
           RCP<Matrix>& R,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           RCP<Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::coordinateType, LocalOrdinal, GlobalOrdinal, Node> >& coarseCoordinates,
+#else
+          RCP<Xpetra::MultiVector<typename Teuchos::ScalarTraits<Scalar>::coordinateType,Node> >& coarseCoordinates,
+#endif
           Teuchos::Array<LocalOrdinal>& lCoarseNodesPerDim) const {
     using local_matrix_type = typename CrsMatrix::local_matrix_type;
     using local_graph_type  = typename local_matrix_type::staticcrsgraph_type;
@@ -242,7 +270,11 @@ namespace MueLu {
                                         A->getRowMap()->getIndexBase(),
                                         A->getRowMap()->getComm());
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     coarseCoordinates = Xpetra::MultiVectorFactory<real_type, LO, GO, NO>::Build(rowMap,
+#else
+    coarseCoordinates = Xpetra::MultiVectorFactory<real_type,NO>::Build(rowMap,
+#endif
                                                                                  numDimensions);
     Array<ArrayRCP<const real_type> > fineCoordData(numDimensions);
     Array<ArrayRCP<real_type> > coarseCoordData(numDimensions);

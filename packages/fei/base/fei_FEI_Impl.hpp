@@ -510,7 +510,11 @@ namespace fei {
     mutable bool nodeset_filled_;
     mutable int nodeset_blockid_;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     mutable std::map<int,int> block_dof_per_elem_;
+#else
+    mutable std::map<> block_dof_per_elem_;
+#endif
     bool any_blocks_have_elem_dof_;
   };//class FEI_Impl
 

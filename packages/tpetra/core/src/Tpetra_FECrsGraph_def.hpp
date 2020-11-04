@@ -51,8 +51,13 @@
 
 namespace Tpetra {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LocalOrdinal, class GlobalOrdinal, class Node>
 FECrsGraph<LocalOrdinal, GlobalOrdinal, Node>::
+#else
+template<class Node>
+FECrsGraph<Node>::
+#endif
 FECrsGraph(const Teuchos::RCP<const map_type> & ownedRowMap,
            const Teuchos::RCP<const map_type> & ownedPlusSharedRowMap, 
            const size_t maxNumEntriesPerRow,
@@ -68,8 +73,13 @@ FECrsGraph(const Teuchos::RCP<const map_type> & ownedRowMap,
 }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LocalOrdinal, class GlobalOrdinal, class Node>
 FECrsGraph<LocalOrdinal, GlobalOrdinal, Node>::
+#else
+template<class Node>
+FECrsGraph<Node>::
+#endif
 FECrsGraph(const Teuchos::RCP<const map_type> & ownedRowMap,
            const Teuchos::RCP<const map_type> & ownedPlusSharedRowMap,
            const size_t maxNumEntriesPerRow,
@@ -88,8 +98,13 @@ FECrsGraph(const Teuchos::RCP<const map_type> & ownedRowMap,
   setup(ownedRowMap,ownedPlusSharedRowMap,dummy,params);
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LocalOrdinal, class GlobalOrdinal, class Node>
 FECrsGraph<LocalOrdinal, GlobalOrdinal, Node>::
+#else
+template<class Node>
+FECrsGraph<Node>::
+#endif
 FECrsGraph (const Teuchos::RCP<const map_type> & ownedRowMap,
             const Teuchos::RCP<const map_type> & ownedPlusSharedRowMap,
             const Kokkos::DualView<const size_t*, device_type>& numEntPerRow,
@@ -104,8 +119,13 @@ FECrsGraph (const Teuchos::RCP<const map_type> & ownedRowMap,
   // Nothing else to do here
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LocalOrdinal, class GlobalOrdinal, class Node>
 FECrsGraph<LocalOrdinal, GlobalOrdinal, Node>::
+#else
+template<class Node>
+FECrsGraph<Node>::
+#endif
 FECrsGraph (const Teuchos::RCP<const map_type> & ownedRowMap,
             const Teuchos::RCP<const map_type> & ownedPlusSharedRowMap, 
             const Kokkos::DualView<const size_t*, device_type>& numEntPerRow,
@@ -124,8 +144,13 @@ FECrsGraph (const Teuchos::RCP<const map_type> & ownedRowMap,
   setup(ownedRowMap,ownedPlusSharedRowMap,dummy,params);
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LocalOrdinal, class GlobalOrdinal, class Node>
 FECrsGraph<LocalOrdinal, GlobalOrdinal, Node>::
+#else
+template<class Node>
+FECrsGraph<Node>::
+#endif
 FECrsGraph(const Teuchos::RCP<const map_type> & ownedRowMap,
            const Teuchos::RCP<const map_type> & ownedPlusSharedRowMap, 
            const Teuchos::RCP<const map_type> & ownedPlusSharedColMap, 
@@ -141,8 +166,13 @@ FECrsGraph(const Teuchos::RCP<const map_type> & ownedRowMap,
   // Nothing else to do here
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LocalOrdinal, class GlobalOrdinal, class Node>
 FECrsGraph<LocalOrdinal, GlobalOrdinal, Node>::
+#else
+template<class Node>
+FECrsGraph<Node>::
+#endif
 FECrsGraph(const Teuchos::RCP<const map_type> & ownedRowMap,
            const Teuchos::RCP<const map_type> & ownedPlusSharedRowMap, 
            const Teuchos::RCP<const map_type> & ownedPlusSharedColMap, 
@@ -161,8 +191,13 @@ FECrsGraph(const Teuchos::RCP<const map_type> & ownedRowMap,
   setup(ownedRowMap,ownedPlusSharedRowMap, ownedPlusSharedColMap,params);
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LocalOrdinal, class GlobalOrdinal, class Node>
 FECrsGraph<LocalOrdinal, GlobalOrdinal, Node>::
+#else
+template<class Node>
+FECrsGraph<Node>::
+#endif
 FECrsGraph (const Teuchos::RCP<const map_type> & ownedRowMap,
             const Teuchos::RCP<const map_type> & ownedPlusSharedRowMap, 
             const Teuchos::RCP<const map_type> & ownedPlusSharedColMap, 
@@ -178,8 +213,13 @@ FECrsGraph (const Teuchos::RCP<const map_type> & ownedRowMap,
   // Nothing else to do here
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LocalOrdinal, class GlobalOrdinal, class Node>
 FECrsGraph<LocalOrdinal, GlobalOrdinal, Node>::
+#else
+template<class Node>
+FECrsGraph<Node>::
+#endif
 FECrsGraph (const Teuchos::RCP<const map_type> & ownedRowMap,
             const Teuchos::RCP<const map_type> & ownedPlusSharedRowMap, 
             const Teuchos::RCP<const map_type> & ownedPlusSharedColMap, 
@@ -198,8 +238,13 @@ FECrsGraph (const Teuchos::RCP<const map_type> & ownedRowMap,
   setup(ownedRowMap,ownedPlusSharedRowMap, ownedPlusSharedColMap,params);
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LocalOrdinal, class GlobalOrdinal, class Node>
 void FECrsGraph<LocalOrdinal, GlobalOrdinal, Node>::
+#else
+template<class Node>
+void FECrsGraph<Node>::
+#endif
 setup(const Teuchos::RCP<const map_type>  & ownedRowMap,
       const Teuchos::RCP<const map_type> & ownedPlusSharedRowMap,
       const Teuchos::RCP<const map_type> & ownedPlusSharedColMap,
@@ -249,8 +294,13 @@ setup(const Teuchos::RCP<const map_type>  & ownedRowMap,
  }
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LocalOrdinal, class GlobalOrdinal, class Node>
 void FECrsGraph<LocalOrdinal, GlobalOrdinal, Node>::doOwnedPlusSharedToOwned(const CombineMode CM) {
+#else
+template<class Node>
+void FECrsGraph<Node>::doOwnedPlusSharedToOwned(const CombineMode CM) {
+#endif
   const char tfecfFuncName[] = "FECrsGraph::doOwnedPlusSharedToOwned(CombineMode): ";
   if(!ownedRowsImporter_.is_null() && *activeCrsGraph_ == FE_ACTIVE_OWNED_PLUS_SHARED) {
     Teuchos::RCP<const map_type> ownedRowMap = ownedRowsImporter_->getSourceMap();
@@ -325,13 +375,23 @@ void FECrsGraph<LocalOrdinal, GlobalOrdinal, Node>::doOwnedPlusSharedToOwned(con
 }//end doOverlapToLocal
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LocalOrdinal, class GlobalOrdinal, class Node>
 void FECrsGraph<LocalOrdinal, GlobalOrdinal, Node>::doOwnedToOwnedPlusShared(const CombineMode /* CM */) {
+#else
+template<class Node>
+void FECrsGraph<Node>::doOwnedToOwnedPlusShared(const CombineMode /* CM */) {
+#endif
   // This should be a no-op for all of our purposes
 }//end doLocalToOverlap
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LocalOrdinal, class GlobalOrdinal, class Node>
 void FECrsGraph<LocalOrdinal, GlobalOrdinal, Node>::switchActiveCrsGraph() {
+#else
+template<class Node>
+void FECrsGraph<Node>::switchActiveCrsGraph() {
+#endif
   if(*activeCrsGraph_ == FE_ACTIVE_OWNED_PLUS_SHARED)
     *activeCrsGraph_ = FE_ACTIVE_OWNED;
   else
@@ -345,8 +405,13 @@ void FECrsGraph<LocalOrdinal, GlobalOrdinal, Node>::switchActiveCrsGraph() {
 
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LocalOrdinal, class GlobalOrdinal, class Node>
 void FECrsGraph<LocalOrdinal, GlobalOrdinal, Node>::endFill() {
+#else
+template<class Node>
+void FECrsGraph<Node>::endFill() {
+#endif
   const char tfecfFuncName[] = "FECrsGraph::endFill(): ";
 
   /* What has to go on here is complicated.  
@@ -389,8 +454,13 @@ void FECrsGraph<LocalOrdinal, GlobalOrdinal, Node>::endFill() {
 }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LocalOrdinal, class GlobalOrdinal, class Node>
 void FECrsGraph<LocalOrdinal, GlobalOrdinal, Node>::beginFill() {
+#else
+template<class Node>
+void FECrsGraph<Node>::beginFill() {
+#endif
   const char tfecfFuncName[] = "FECrsGraph::beginFill(): ";
   
   // Unlike FECrsMatrix and FEMultiVector, we do not allow you to call beginFill() after calling endFill()
@@ -399,9 +469,17 @@ void FECrsGraph<LocalOrdinal, GlobalOrdinal, Node>::beginFill() {
 
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <class LocalOrdinal, class GlobalOrdinal, class Node>
+#else
+template <class Node>
+#endif
 Teuchos::RCP<const Teuchos::ParameterList>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 FECrsGraph<LocalOrdinal, GlobalOrdinal, Node>::getValidParameters () const
+#else
+FECrsGraph<Node>::getValidParameters () const
+#endif
 {
   auto valid_pl = Teuchos::rcp(new Teuchos::ParameterList("Tpetra::FECrsGraph"));
   valid_pl->validateParametersAndSetDefaults(*crs_graph_type::getValidParameters());
@@ -418,8 +496,13 @@ FECrsGraph<LocalOrdinal, GlobalOrdinal, Node>::getValidParameters () const
 //
 // Must be expanded from within the Tpetra namespace!
 //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define TPETRA_FECRSGRAPH_INSTANT(LO,GO,NODE) \
   template class FECrsGraph<LO, GO, NODE>;
+#else
+#define TPETRA_FECRSGRAPH_INSTANT(NODE) \
+  template class FECrsGraph<NODE>;
+#endif
 
 
 

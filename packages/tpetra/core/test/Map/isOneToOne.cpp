@@ -60,11 +60,23 @@ namespace {
   typedef Tpetra::global_size_t GST;
   typedef Teuchos::Comm<int> comm_type;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Map, isOneToOne_contig_uniform_distributed, LO, GO)
+#else
+  TEUCHOS_UNIT_TEST(Map, isOneToOne_contig_uniform_distributed)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     out << "Testing Map::isOneToOne with a contiguous uniform Map" << endl;
     Teuchos::OSTab tab0 (out);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using map_type = Tpetra::Map<LO, GO>;
+#else
+    using map_type = Tpetra::Map<>;
+#endif
 
     RCP<const comm_type> comm = Tpetra::getDefaultComm ();
 
@@ -121,11 +133,23 @@ namespace {
   }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Map, isOneToOne_serial_contig_uniform_distributed, LO, GO)
+#else
+  TEUCHOS_UNIT_TEST(Map, isOneToOne_serial_contig_uniform_distributed)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     out << "Testing Map::isOneToOne with a contiguous uniform Map over one process" << endl;
     Teuchos::OSTab tab0 (out);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using map_type = Tpetra::Map<LO, GO>;
+#else
+    using map_type = Tpetra::Map<>;
+#endif
 
     RCP<const comm_type> comm = rcp (new Teuchos::SerialComm<int> ());
 
@@ -182,11 +206,23 @@ namespace {
   }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Map, isOneToOne_contig_uniform_replicated, LO, GO)
+#else
+  TEUCHOS_UNIT_TEST(Map, isOneToOne_contig_uniform_replicated)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     out << "Testing Map::isOneToOne with a contiguous uniform replicated Map" << endl;
     Teuchos::OSTab tab0 (out);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using map_type = Tpetra::Map<LO, GO>;
+#else
+    using map_type = Tpetra::Map<>;
+#endif
 
     RCP<const comm_type> comm = Tpetra::getDefaultComm ();
 
@@ -245,11 +281,23 @@ namespace {
   }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Map, isOneToOne_serial_contig_uniform_replicated, LO, GO)
+#else
+  TEUCHOS_UNIT_TEST(Map, isOneToOne_serial_contig_uniform_replicated)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     out << "Testing Map::isOneToOne with a contiguous uniform replicated Map over one process" << endl;
     Teuchos::OSTab tab0 (out);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using map_type = Tpetra::Map<LO, GO>;
+#else
+    using map_type = Tpetra::Map<>;
+#endif
 
     RCP<const comm_type> comm = rcp (new Teuchos::SerialComm<int> ());
 
@@ -310,11 +358,23 @@ namespace {
   }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Map, isOneToOne_contig_nonuniform, LO, GO)
+#else
+  TEUCHOS_UNIT_TEST(Map, isOneToOne_contig_nonuniform)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     out << "Testing Map::isOneToOne with a contiguous nonuniform Map" << endl;
     Teuchos::OSTab tab0 (out);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using map_type = Tpetra::Map<LO, GO>;
+#else
+    using map_type = Tpetra::Map<>;
+#endif
 
     RCP<const comm_type> comm = Tpetra::getDefaultComm ();
 
@@ -373,11 +433,23 @@ namespace {
   }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Map, isOneToOne_serial_contig_nonuniform, LO, GO)
+#else
+  TEUCHOS_UNIT_TEST(Map, isOneToOne_serial_contig_nonuniform)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     out << "Testing Map::isOneToOne with a contiguous nonuniform Map over one process" << endl;
     Teuchos::OSTab tab0 (out);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using map_type = Tpetra::Map<LO, GO>;
+#else
+    using map_type = Tpetra::Map<>;
+#endif
 
     RCP<const comm_type> comm = rcp (new Teuchos::SerialComm<int> ());
 
@@ -436,11 +508,23 @@ namespace {
   }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Map, isOneToOne_noncontig_oneToOne, LO, GO)
+#else
+  TEUCHOS_UNIT_TEST(Map, isOneToOne_noncontig_oneToOne)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     out << "Testing Map::isOneToOne with a noncontiguous, one-to-one Map" << endl;
     Teuchos::OSTab tab0 (out);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using map_type = Tpetra::Map<LO, GO>;
+#else
+    using map_type = Tpetra::Map<>;
+#endif
 
     RCP<const comm_type> comm = Tpetra::getDefaultComm ();
 
@@ -508,11 +592,23 @@ namespace {
   }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Map, isOneToOne_noncontig_replicated, LO, GO)
+#else
+  TEUCHOS_UNIT_TEST(Map, isOneToOne_noncontig_replicated)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     out << "Testing Map::isOneToOne with a noncontiguous, replicated Map" << endl;
     Teuchos::OSTab tab0 (out);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using map_type = Tpetra::Map<LO, GO>;
+#else
+    using map_type = Tpetra::Map<>;
+#endif
 
     RCP<const comm_type> comm = Tpetra::getDefaultComm ();
 
@@ -580,11 +676,23 @@ namespace {
 
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(Map, isOneToOne_noncontig_notOneToOne, LO, GO)
+#else
+  TEUCHOS_UNIT_TEST(Map, isOneToOne_noncontig_notOneToOne)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     out << "Testing Map::isOneToOne with a noncontiguous, not one-to-one Map" << endl;
     Teuchos::OSTab tab0 (out);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using map_type = Tpetra::Map<LO, GO>;
+#else
+    using map_type = Tpetra::Map<>;
+#endif
 
     RCP<const comm_type> comm = Tpetra::getDefaultComm ();
 
@@ -657,15 +765,30 @@ namespace {
 // Instantiations of tests
 //
 #define UNIT_TEST_GROUP(LO, GO) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Map, isOneToOne_contig_uniform_distributed, LO, GO) \
+#else
+#endif
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Map, isOneToOne_serial_contig_uniform_distributed, LO, GO) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Map, isOneToOne_contig_uniform_replicated, LO, GO) \
+#else
+#endif
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Map, isOneToOne_serial_contig_uniform_replicated, LO, GO) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Map, isOneToOne_contig_nonuniform, LO, GO) \
+#else
+#endif
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Map, isOneToOne_serial_contig_nonuniform, LO, GO) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Map, isOneToOne_noncontig_oneToOne, LO, GO) \
+#else
+#endif
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Map, isOneToOne_noncontig_replicated, LO, GO) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(Map, isOneToOne_noncontig_notOneToOne, LO, GO)
+#else
+#endif
 
   TPETRA_ETI_MANGLING_TYPEDEFS()
 

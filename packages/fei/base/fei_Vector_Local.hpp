@@ -148,7 +148,11 @@ class Vector_Local : public fei::Vector {
 
   fei::SharedPtr<fei::VectorSpace> vecSpace_;
   std::vector<double> coefs_;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int> global_to_local_;
+#else
+  std::map<> global_to_local_;
+#endif
   std::vector<int> work_indices_;
 };//class Vector_Local
 

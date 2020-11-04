@@ -28,10 +28,18 @@ private:
 
   void exchangeLocalSizes(const std::set<int>& neighborProcessors,
                           int& numLocallyOwnedNodes,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                           std::map<int, int>& numLocallyOwnedByRank);
+#else
+                          std::map<>& numLocallyOwnedByRank);
+#endif
 
   void changeOwnersOfNodes(const std::map<stk::mesh::Entity, std::vector<int> >& interfaceNodesAndProcessors,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
                            std::map<int, int>& numLocallyOwnedByRank,
+#else
+                           std::map<>& numLocallyOwnedByRank,
+#endif
                            int numLocallyOwnedNodes);
 
   stk::mesh::BulkData & m_bulkData;

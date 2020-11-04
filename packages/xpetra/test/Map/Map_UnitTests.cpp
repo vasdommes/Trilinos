@@ -119,8 +119,16 @@ namespace {
   //
   // UNIT TESTS
   //
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( Map, validConstructor1, M, LO, GO, N )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Map, validConstructor1, M, N )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // create a comm
     Teuchos::RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
     const Xpetra::global_size_t GSTI = 100;
@@ -133,8 +141,16 @@ namespace {
     TEST_EQUALITY_CONST( globalSuccess_int, 0 );
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( Map, validConstructor2, M, LO, GO, N )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Map, validConstructor2, M, N )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // create a comm
     Teuchos::RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
     const int numImages = comm->getSize();
@@ -146,10 +162,18 @@ namespace {
     TEST_EQUALITY_CONST( globalSuccess_int, 0 );
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( Map, validConstructor3, M, LO, GO, N )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Map, validConstructor3, M, N )
+#endif
   {
 #ifdef HAVE_XPETRA_KOKKOS_REFACTOR
 #ifdef HAVE_XPETRA_TPETRA
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // create Kokkos templates
     typedef typename N::device_type device_type;
     typedef typename device_type::execution_space execution_space;
@@ -348,8 +372,16 @@ namespace {
   }
 
   // This test exercises Tpetra's debug-mode checks.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( Map, invalidConstructor1, M, LO, GO, N )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Map, invalidConstructor1, M, N )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     using Teuchos::outArg;
     using Teuchos::REDUCE_MIN;
     using std::endl;
@@ -420,8 +452,16 @@ namespace {
   }
 
   // This test exercises Tpetra's debug-mode checks.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( Map, invalidConstructor2, M, LO, GO, N )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Map, invalidConstructor2, M, N )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     if (! mapDebugChecksEnabled()) {
       return;
     }
@@ -447,8 +487,16 @@ namespace {
 #if 0 // failing for epetra. Epetra does not throw
 #ifdef HAVE_TPETRA_DEBUG
   // This test will only pass in a debug build of Tpetra (HAVE_TPETRA_DEBUG).
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( Map, invalidConstructor3, M, LO, GO, N )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Map, invalidConstructor3, M, N )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // create a comm
     Teuchos::RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
     const int numImages = comm->getSize();
@@ -471,8 +519,16 @@ namespace {
 
 #if !defined(HAVE_TPETRA_EXPLICIT_INSTANTIATION) && defined(HAVE_TPETRA_ENABLE_SS_TESTING) && defined(HAVE_MPI)
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( Map, RogersUnsignedGOBugVerification, M, LO, GO, N )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Map, RogersUnsignedGOBugVerification, M, N )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // create a comm
     Teuchos::RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
     const int numImages = comm->getSize();
@@ -490,8 +546,16 @@ namespace {
 
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( Map, compatabilityTests, M, LO, GO, N )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Map, compatabilityTests, M, N )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // create a comm
     Teuchos::RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
     const int numImages = comm->getSize();
@@ -550,10 +614,18 @@ namespace {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( Map, localMap, M, LO, GO, N )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Map, localMap, M, N )
+#endif
   {
 #ifdef HAVE_XPETRA_KOKKOS_REFACTOR
 #ifdef HAVE_XPETRA_TPETRA  // Note: get Kokkos interface for Epetra is only available if Tpetra is also enabled!
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     typedef typename N::device_type device_type;
     typedef typename device_type::execution_space execution_space;
     typedef Kokkos::RangePolicy<execution_space, int> range_type;
@@ -649,8 +721,16 @@ namespace {
 
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( Map, sameasTests, M, LO, GO, N )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Map, sameasTests, M, N )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // create a comm
     Teuchos::RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
     const int numImages = comm->getSize();
@@ -683,8 +763,16 @@ namespace {
 
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( Map, ContigUniformMap, M, LO, GO, N )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Map, ContigUniformMap, M, N )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // create a comm
     Teuchos::RCP<const Teuchos::Comm<int> > comm = getDefaultComm();
     const int numImages = comm->getSize();
@@ -741,19 +829,29 @@ namespace {
   //
 #ifdef HAVE_XPETRA_TPETRA
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   #define XPETRA_TPETRA_TYPES( LO, GO, N) \
     typedef typename Xpetra::TpetraMap<LO,GO,N> M##LO##GO##N;
+#else
+  #define XPETRA_TPETRA_TYPES(N) \
+    typedef typename Xpetra::TpetraMap<N> M##LO##GO##N;
+#endif
 
 #endif
 
 #ifdef HAVE_XPETRA_EPETRA
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   #define XPETRA_EPETRA_TYPES( LO, GO, N) \
+#else
+  #define XPETRA_EPETRA_TYPES(N) \
+#endif
     typedef typename Xpetra::EpetraMapT<GO,N> M##LO##GO##N;
 
 #endif
 
 // List of tests (which run both on Epetra and Tpetra)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define XP_MAP_INSTANT(LO,GO,N) \
     TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( Map, invalidConstructor1, M##LO##GO##N, LO, GO, N) \
     TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( Map, invalidConstructor2, M##LO##GO##N, LO, GO, N) \
@@ -763,10 +861,26 @@ namespace {
     TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( Map, ContigUniformMap,    M##LO##GO##N, LO, GO, N) \
     TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( Map, validConstructor1,   M##LO##GO##N, LO, GO, N) \
     TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( Map, validConstructor2,   M##LO##GO##N, LO, GO, N)
+#else
+#define XP_MAP_INSTANT(N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Map, invalidConstructor1, M##LO##GO##N, N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Map, invalidConstructor2, M##LO##GO##N, N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Map, compatabilityTests,  M##LO##GO##N, N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Map, localMap,            M##LO##GO##N, N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Map, sameasTests,         M##LO##GO##N, N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Map, ContigUniformMap,    M##LO##GO##N, N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Map, validConstructor1,   M##LO##GO##N, N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Map, validConstructor2,   M##LO##GO##N, N)
+#endif
 
 // List of tests (which run on Tpetra only)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define XPT_MAP_INSTANT(LO,GO,N) \
     TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( Map, validConstructor3,   M##LO##GO##N, LO, GO, N)
+#else
+#define XPT_MAP_INSTANT(N) \
+    TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( Map, validConstructor3,   M##LO##GO##N, N)
+#endif
 
 
 #if defined(HAVE_XPETRA_TPETRA)

@@ -110,10 +110,17 @@ namespace Zoltan2 {
     using part_t = typename Adapter::part_t;
     using weight_t = typename Adapter::scalar_t;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using graph_t = Tpetra::CrsGraph<lno_t, gno_t, node_t>;
     using matrix_t = Tpetra::CrsMatrix<scalar_t, lno_t, gno_t, node_t>;
     using mvector_t = Tpetra::MultiVector<scalar_t, lno_t, gno_t, node_t>;  
     using op_t = Tpetra::Operator<scalar_t, lno_t, gno_t, node_t>;
+#else
+    using graph_t = Tpetra::CrsGraph<node_t>;
+    using matrix_t = Tpetra::CrsMatrix<scalar_t, node_t>;
+    using mvector_t = Tpetra::MultiVector<scalar_t, node_t>;  
+    using op_t = Tpetra::Operator<scalar_t, node_t>;
+#endif
 
     enum problemType {COMBINATORIAL, GENERALIZED, NORMALIZED};
     
@@ -449,7 +456,11 @@ namespace Zoltan2 {
 	typename node_t::device_type::execution_space, Kokkos::IndexType<lno_t>>;
       using values_view_t = Kokkos::View<scalar_t*, typename node_t::device_type>;
       using offset_view_t = Kokkos::View<size_t*, typename node_t::device_type>;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       using vector_t = Tpetra::Vector<scalar_t, lno_t, gno_t, node_t>;
+#else
+      using vector_t = Tpetra::Vector<scalar_t, node_t>;
+#endif
       using dual_view_t = typename vector_t::dual_view_type;
       using KAT = Kokkos::Details::ArithTraits<scalar_t>;
 
@@ -793,9 +804,17 @@ namespace Zoltan2 {
       
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     using prec_t = MueLu::TpetraOperator<scalar_t, lno_t, gno_t, node_t>;
+#else
+    using prec_t = MueLu::TpetraOperator<scalar_t, node_t>;
+#endif
     Teuchos::RCP<prec_t> prec = MueLu::CreateTpetraPreconditioner<
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       scalar_t, lno_t, gno_t, node_t>(laplacian_, paramList);
+#else
+      scalar_t, node_t>(laplacian_, paramList);
+#endif
   
     problem->setPrec(prec);
 
@@ -849,7 +868,11 @@ namespace Zoltan2 {
   void Sphynx<Adapter>::setJacobiPreconditioner(Teuchos::RCP<problem_t> &problem)
   {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::RCP<Ifpack2::Preconditioner<scalar_t, lno_t, gno_t, node_t>> prec;
+#else
+    Teuchos::RCP<Ifpack2::Preconditioner<scalar_t, node_t>> prec;
+#endif
     std::string precType = "RELAXATION";
 
     prec = Ifpack2::Factory::create<matrix_t> (precType, laplacian_);

@@ -48,7 +48,11 @@ int main(int narg, char **arg)
 
   // Create a new map with IDs uniquely assigned to ranks (oneToOneMap)
   Teuchos::RCP<const map_t> oneToOneMap =
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           Tpetra::createOneToOne<lno_t, gno_t>(mapWithCopies);
+#else
+          Tpetra::createOneToOne<>(mapWithCopies);
+#endif
 
   // Create vectors with each map
   typedef Tpetra::Vector<scalar_t, lno_t, gno_t> vector_t;
@@ -61,8 +65,13 @@ int main(int narg, char **arg)
     oneToOneVec.replaceLocalValue(i, me);
 
   // Now import oneToOneVec's values back to vecWithCopies
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::RCP<const Tpetra::Import<lno_t, gno_t> > importer =
       Tpetra::createImport<lno_t, gno_t>(oneToOneMap, mapWithCopies);
+#else
+  Teuchos::RCP<const Tpetra::Import<> > importer =
+      Tpetra::createImport<>(oneToOneMap, mapWithCopies);
+#endif
   vecWithCopies.doImport(oneToOneVec, *importer, Tpetra::REPLACE);
 
   // Print the entries of each vector

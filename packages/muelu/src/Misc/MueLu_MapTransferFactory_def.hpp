@@ -59,14 +59,24 @@
 
 namespace MueLu {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   MapTransferFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::MapTransferFactory()
+#else
+  template <class Scalar, class Node>
+  MapTransferFactory<Scalar, Node>::MapTransferFactory()
+#endif
   {
   }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   RCP<const ParameterList> MapTransferFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::GetValidParameterList() const {
+#else
+  template <class Scalar, class Node>
+  RCP<const ParameterList> MapTransferFactory<Scalar, Node>::GetValidParameterList() const {
+#endif
     RCP<ParameterList> validParamList = rcp(new ParameterList());
 
     validParamList->setEntry("map: name", Teuchos::ParameterEntry(std::string("")));
@@ -76,8 +86,13 @@ namespace MueLu {
     return validParamList;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void MapTransferFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level& fineLevel, Level& coarseLevel) const {
+#else
+  template <class Scalar, class Node>
+  void MapTransferFactory<Scalar, Node>::DeclareInput(Level& fineLevel, Level& coarseLevel) const {
+#endif
     const ParameterList & pL = GetParameterList();
     std::string mapFactName = pL.get<std::string>("map: factory");
     std::string mapName     = pL.get<std::string>("map: name");
@@ -101,8 +116,13 @@ namespace MueLu {
     coarseLevel.DeclareInput("P", tentPFact.get(), this);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   void MapTransferFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(Level& fineLevel, Level& coarseLevel) const {
+#else
+  template <class Scalar, class Node>
+  void MapTransferFactory<Scalar, Node>::Build(Level& fineLevel, Level& coarseLevel) const {
+#endif
     Monitor m(*this, "MapTransferFactory");
 
     const ParameterList & pL = GetParameterList();

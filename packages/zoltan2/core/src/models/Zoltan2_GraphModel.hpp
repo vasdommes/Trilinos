@@ -738,7 +738,11 @@ void GraphModel<Adapter>::shared_constructor(
                              &myMinGID, &minGID);
 
       gno_t dummy = Teuchos::OrdinalTraits<gno_t>::invalid();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Tpetra::Map<lno_t,gno_t> vtxMap(dummy, adapterVGids(), minGID, comm_);
+#else
+      Tpetra::Map<> vtxMap(dummy, adapterVGids(), minGID, comm_);
+#endif
 
       // Need to filter requested edges to make a unique list,
       // as Tpetra::Map does not return correct info for duplicated entries

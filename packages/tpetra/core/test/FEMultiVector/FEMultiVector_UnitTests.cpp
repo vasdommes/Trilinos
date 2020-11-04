@@ -90,8 +90,16 @@ namespace {
   // UNIT TESTS
   //
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( FEMultiVector, doImport, LO, GO, Scalar, NO )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( FEMultiVector, doImport, Scalar, NO )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     const GST INVALID = Teuchos::OrdinalTraits<GST>::invalid ();
     const RCP<const Comm<int> > comm = Tpetra::getDefaultComm();
     const int myRank = comm->getRank();
@@ -115,12 +123,22 @@ namespace {
       const int num_local_elements = 3;
 
       // create Map
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       RCP<const Tpetra::Map<LO, GO, NO> > map =
         rcp( new Tpetra::Map<LO,GO,NO>(INVALID, num_local_elements, 0, comm));
+#else
+      RCP<const Tpetra::Map<NO> > map =
+        rcp( new Tpetra::Map<NO>(INVALID, num_local_elements, 0, comm));
+#endif
 
       // create CrsGraph object
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       RCP<Tpetra::CrsGraph<LO, GO, NO> > graph =
              rcp (new Tpetra::CrsGraph<LO, GO, NO> (map, 3, Tpetra::StaticProfile));
+#else
+      RCP<Tpetra::CrsGraph<NO> > graph =
+             rcp (new Tpetra::CrsGraph<NO> (map, 3, Tpetra::StaticProfile));
+#endif
 
       // Create a simple tridiagonal source graph.
       Array<GO> entry(1);
@@ -142,11 +160,19 @@ namespace {
 
       Scalar ZERO = Teuchos::ScalarTraits<Scalar>::zero();
       Scalar ONE = Teuchos::ScalarTraits<Scalar>::one();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       RCP<const Tpetra::Map<LO,GO,NO> > domainMap = graph->getDomainMap();
       RCP<const Tpetra::Map<LO,GO,NO> > columnMap = graph->getColMap();
       RCP<const Tpetra::Import<LO,GO,NO> > importer = graph->getImporter();
       Tpetra::MultiVector<Scalar,LO,GO,NO> Vdomain(domainMap,1), Vcolumn(columnMap,1);
       Tpetra::FEMultiVector<Scalar,LO,GO,NO> Vfe(domainMap,importer,1);
+#else
+      RCP<const Tpetra::Map<NO> > domainMap = graph->getDomainMap();
+      RCP<const Tpetra::Map<NO> > columnMap = graph->getColMap();
+      RCP<const Tpetra::Import<NO> > importer = graph->getImporter();
+      Tpetra::MultiVector<Scalar,NO> Vdomain(domainMap,1), Vcolumn(columnMap,1);
+      Tpetra::FEMultiVector<Scalar,NO> Vfe(domainMap,importer,1);
+#endif
       size_t Ndomain = domainMap->getNodeNumElements();
       size_t Ncolumn = domainMap->getNodeNumElements();
 
@@ -192,8 +218,16 @@ namespace {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( FEMultiVector, AssemblyHelpers, LO , GO , Scalar , Node )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( FEMultiVector, AssemblyHelpers , Scalar , Node )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     const GST INVALID = Teuchos::OrdinalTraits<GST>::invalid ();
     const RCP<const Comm<int> > comm = Tpetra::getDefaultComm();
     int rank = comm->getRank();
@@ -202,7 +236,11 @@ namespace {
     // create maps
     const size_t numLocal = 10;
     const size_t numOverlap = numLocal + (rank!=0) + (rank!=size-1);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Tpetra::Map<LO,GO,Node> > map = createContigMapWithNode<LO,GO,Node>(INVALID,numLocal,comm);
+#else
+    RCP<const Tpetra::Map<Node> > map = createContigMapWithNode<Node>(INVALID,numLocal,comm);
+#endif
 
     Array<GO> overlapList(numOverlap);
     for(size_t i = 0; i< numLocal; i++) {
@@ -212,12 +250,23 @@ namespace {
     if(rank!=0)      {overlapList[iii] = overlapList[0]-1; iii++;}
     if(rank!=size-1) {overlapList[iii] = overlapList[numLocal-1]+1;}
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Tpetra::Map<LO,GO,Node> > overlapMap    = rcp(new Tpetra::Map<LO,GO,Node>(INVALID,overlapList(),0,comm));
     RCP<const Tpetra::Import<LO,GO,Node> > importer   = rcp(new Tpetra::Import<LO,GO,Node>(map,overlapMap));
+#else
+    RCP<const Tpetra::Map<Node> > overlapMap    = rcp(new Tpetra::Map<Node>(INVALID,overlapList(),0,comm));
+    RCP<const Tpetra::Import<Node> > importer   = rcp(new Tpetra::Import<Node>(map,overlapMap));
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Tpetra::FEMultiVector<Scalar,LO,GO,Node> v1(map,importer,1);
     Tpetra::FEMultiVector<Scalar,LO,GO,Node> v2(map,importer,1);
     Tpetra::FEMultiVector<Scalar,LO,GO,Node> v3(map,importer,1);
+#else
+    Tpetra::FEMultiVector<Scalar,Node> v1(map,importer,1);
+    Tpetra::FEMultiVector<Scalar,Node> v2(map,importer,1);
+    Tpetra::FEMultiVector<Scalar,Node> v3(map,importer,1);
+#endif
 
     // Just check to make sure beginFill() / endFill() compile
     Tpetra::beginFill(v1,v2,v3);
@@ -225,9 +274,15 @@ namespace {
     Tpetra::endFill(v1,v2,v3);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define UNIT_TEST_GROUP( SC, LO, GO, NO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( FEMultiVector, doImport, LO, GO, SC, NO ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( FEMultiVector, AssemblyHelpers, LO, GO, SC, NO )
+#else
+#define UNIT_TEST_GROUP( SC, NO ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( FEMultiVector, doImport, SC, NO ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( FEMultiVector, AssemblyHelpers, SC, NO )
+#endif
 
   TPETRA_ETI_MANGLING_TYPEDEFS()
 

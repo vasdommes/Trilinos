@@ -54,9 +54,17 @@
 namespace MueLuTests {
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, Constructor, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(CoalesceDropFactory, Constructor, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
@@ -66,9 +74,17 @@ namespace MueLuTests {
 
   } //Constructor
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, Build, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(CoalesceDropFactory, Build, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
@@ -76,9 +92,17 @@ namespace MueLuTests {
     RCP<const Teuchos::Comm<int> > comm = Parameters::getDefaultComm();
 
     Level fineLevel;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(fineLevel);
+#else
+    TestHelpers::TestFactory<SC,NO>::createSingleLevelHierarchy(fineLevel);
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers::TestFactory<SC,LO,GO,NO>::Build1DPoisson(36);
+#else
+    RCP<Matrix> A = TestHelpers::TestFactory<SC,NO>::Build1DPoisson(36);
+#endif
     fineLevel.Set("A", A);
 
     CoalesceDropFactory coalesceDropFact;
@@ -106,17 +130,33 @@ namespace MueLuTests {
   } //Build
 
   // TODO remove this
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, PreDrop, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(CoalesceDropFactory, PreDrop, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
     out << "version: " << MueLu::Version() << std::endl;
 
     Level fineLevel;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(fineLevel);
+#else
+    TestHelpers::TestFactory<SC,NO>::createSingleLevelHierarchy(fineLevel);
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers::TestFactory<SC,LO,GO,NO>::Build1DPoisson(3);
+#else
+    RCP<Matrix> A = TestHelpers::TestFactory<SC,NO>::Build1DPoisson(3);
+#endif
     fineLevel.Set("A", A);
     A->describe(out,Teuchos::VERB_EXTREME);
 
@@ -138,8 +178,16 @@ namespace MueLuTests {
 
   } //PreDrop
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, AmalgamationBasic, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(CoalesceDropFactory, AmalgamationBasic, Scalar, Node)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // unit test for block size 3.
     // lightweight wrap = false
 #   include <MueLu_UseShortNames.hpp>
@@ -150,12 +198,20 @@ namespace MueLuTests {
     RCP<const Teuchos::Comm<int> > comm = Parameters::getDefaultComm();
 
     Level fineLevel;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(fineLevel);
+#else
+    TestHelpers::TestFactory<SC,NO>::createSingleLevelHierarchy(fineLevel);
+#endif
 
     int blockSize=3;
 
     int nx = blockSize*comm->getSize();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers::TestFactory<SC,LO,GO,NO>::Build1DPoisson(nx);
+#else
+    RCP<Matrix> A = TestHelpers::TestFactory<SC,NO>::Build1DPoisson(nx);
+#endif
     A->SetFixedBlockSize(blockSize, 0);
     fineLevel.Set("A", A);
     CoalesceDropFactory dropFact = CoalesceDropFactory();
@@ -217,8 +273,16 @@ namespace MueLuTests {
     TEST_EQUALITY(Teuchos::as<bool>(myDomainMap->getNodeNumElements()==1), true);
   } // AmalgamationBasic
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, AmalgamationStrided, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(CoalesceDropFactory, AmalgamationStrided, Scalar, Node)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // unit test for block size 3 using a strided map
     // lightweight wrap = false
 #   include <MueLu_UseShortNames.hpp>
@@ -229,23 +293,39 @@ namespace MueLuTests {
     RCP<const Teuchos::Comm<int> > comm = Parameters::getDefaultComm();
 
     Level fineLevel;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(fineLevel);
+#else
+    TestHelpers::TestFactory<SC,NO>::createSingleLevelHierarchy(fineLevel);
+#endif
 
     int blockSize = 3;
     int nx = blockSize*comm->getSize();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers::TestFactory<SC,LO,GO,NO>::Build1DPoisson(nx);
+#else
+    RCP<Matrix> A = TestHelpers::TestFactory<SC,NO>::Build1DPoisson(nx);
+#endif
 
     std::vector<size_t> stridingInfo;
     stridingInfo.push_back(Teuchos::as<size_t>(blockSize));
     LocalOrdinal stridedBlockId = -1;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Xpetra::StridedMap<LocalOrdinal, GlobalOrdinal, Node> > stridedRangeMap = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(
+#else
+    RCP<const Xpetra::StridedMap<Node> > stridedRangeMap = Xpetra::StridedMapFactory<Node>::Build(
+#endif
                                                   A->getRangeMap(),
                                                   stridingInfo,
                                                   stridedBlockId,
                                                   0 /*offset*/
                                                   );
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map> stridedDomainMap = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(
+#else
+    RCP<const Map> stridedDomainMap = Xpetra::StridedMapFactory<Node>::Build(
+#endif
                                             A->getDomainMap(),
                                             stridingInfo,
                                             stridedBlockId,
@@ -314,8 +394,16 @@ namespace MueLuTests {
     TEST_EQUALITY(Teuchos::as<bool>(myDomainMap->getNodeNumElements()==1), true);
   } // AmalgamationStrided
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, AmalgamationStrided2, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(CoalesceDropFactory, AmalgamationStrided2, Scalar, Node)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // unit test for block size 3 = (2,1). wrap block 0
     // lightweight wrap = false
 #   include <MueLu_UseShortNames.hpp>
@@ -332,24 +420,44 @@ namespace MueLuTests {
     stridingInfo.push_back(Teuchos::as<size_t>(1));
     LocalOrdinal stridedBlockId = 0;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const StridedMap> dofMap = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(lib, 3*comm->getSize(), 0,
+#else
+    RCP<const StridedMap> dofMap = Xpetra::StridedMapFactory<Node>::Build(lib, 3*comm->getSize(), 0,
+#endif
                                   stridingInfo, comm,
                                   stridedBlockId /*blockId*/, 0 /*offset*/);
 
     /////////////////////////////////////////////////////
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::RCP<Matrix> mtx = TestHelpers::TestFactory<SC,LO,GO,NO>::BuildTridiag(dofMap, 2.0, -1.0, -1.0);
+#else
+    Teuchos::RCP<Matrix> mtx = TestHelpers::TestFactory<SC,NO>::BuildTridiag(dofMap, 2.0, -1.0, -1.0);
+#endif
 
     Level fineLevel;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(fineLevel);
+#else
+    TestHelpers::TestFactory<SC,NO>::createSingleLevelHierarchy(fineLevel);
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Xpetra::StridedMap<LocalOrdinal, GlobalOrdinal, Node> > stridedRangeMap = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(
+#else
+    RCP<const Xpetra::StridedMap<Node> > stridedRangeMap = Xpetra::StridedMapFactory<Node>::Build(
+#endif
                                                   mtx->getRangeMap(),
                                                   stridingInfo,
                                                   stridedBlockId,
                                                   0 /*offset*/
                                                   );
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map> stridedDomainMap = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(
+#else
+    RCP<const Map> stridedDomainMap = Xpetra::StridedMapFactory<Node>::Build(
+#endif
                                             mtx->getDomainMap(),
                                             stridingInfo,
                                             stridedBlockId,
@@ -420,8 +528,16 @@ namespace MueLuTests {
     TEST_EQUALITY(Teuchos::as<bool>(myDomainMap->getNodeNumElements()==1), true);
   } // AmalgamationStrided2
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, AmalgamationStridedOffset, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(CoalesceDropFactory, AmalgamationStridedOffset, Scalar, Node)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // unit test for block size 9 = (2,3,4). wrap block 1.
     // lightweight wrap = false
 #   include <MueLu_UseShortNames.hpp>
@@ -440,24 +556,44 @@ namespace MueLuTests {
     LocalOrdinal stridedBlockId = 1;
     GlobalOrdinal offset = 19;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const StridedMap> dofMap = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(lib, 9*comm->getSize(), 0,
+#else
+    RCP<const StridedMap> dofMap = Xpetra::StridedMapFactory<Node>::Build(lib, 9*comm->getSize(), 0,
+#endif
                                   stridingInfo, comm,
                                   stridedBlockId, offset);
 
     /////////////////////////////////////////////////////
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::RCP<Matrix> mtx = TestHelpers::TestFactory<SC,LO,GO,NO>::BuildTridiag(dofMap, 2.0, -1.0, -3.0);
+#else
+    Teuchos::RCP<Matrix> mtx = TestHelpers::TestFactory<SC,NO>::BuildTridiag(dofMap, 2.0, -1.0, -3.0);
+#endif
 
     Level fineLevel;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(fineLevel);
+#else
+    TestHelpers::TestFactory<SC,NO>::createSingleLevelHierarchy(fineLevel);
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map> stridedRangeMap = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(
+#else
+    RCP<const Map> stridedRangeMap = Xpetra::StridedMapFactory<Node>::Build(
+#endif
                                                   mtx->getRangeMap(),
                                                   stridingInfo,
                                                   stridedBlockId,
                                                   offset
                                                   );
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map> stridedDomainMap = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(
+#else
+    RCP<const Map> stridedDomainMap = Xpetra::StridedMapFactory<Node>::Build(
+#endif
                                             mtx->getDomainMap(),
                                             stridingInfo,
                                             stridedBlockId,
@@ -528,8 +664,16 @@ namespace MueLuTests {
     TEST_EQUALITY(Teuchos::as<bool>(myDomainMap->getNodeNumElements()==1), true);
   } // AmalgamationStridedOffset
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, AmalgamationLightweight, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(CoalesceDropFactory, AmalgamationLightweight, Scalar, Node)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // unit test for block size 3
     // lightweight wrap = true
 #   include <MueLu_UseShortNames.hpp>
@@ -541,12 +685,21 @@ namespace MueLuTests {
     Xpetra::UnderlyingLib lib = TestHelpers::Parameters::getLib();
 
     Level fineLevel;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(fineLevel);
+#else
+    TestHelpers::TestFactory<SC,NO>::createSingleLevelHierarchy(fineLevel);
+#endif
 
     int blockSize=3;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map> dofMap = Xpetra::MapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(lib, blockSize*comm->getSize(), 0, comm);
     Teuchos::RCP<Matrix> mtx = TestHelpers::TestFactory<SC,LO,GO,NO>::BuildTridiag(dofMap, 2.0, -1.0, -1.0);
+#else
+    RCP<const Map> dofMap = Xpetra::MapFactory<Node>::Build(lib, blockSize*comm->getSize(), 0, comm);
+    Teuchos::RCP<Matrix> mtx = TestHelpers::TestFactory<SC,NO>::BuildTridiag(dofMap, 2.0, -1.0, -1.0);
+#endif
     mtx->SetFixedBlockSize(blockSize, 0);
     fineLevel.Set("A", mtx);
 
@@ -608,8 +761,16 @@ namespace MueLuTests {
     TEST_EQUALITY(Teuchos::as<bool>(myDomainMap->getNodeNumElements()==1), true);
   } // AmalgamationLightweight
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, AmalgamationLightweightDrop, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(CoalesceDropFactory, AmalgamationLightweightDrop, Scalar, Node)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // unit test for block size 1
     // lightweight wrap = true
     // drop small values
@@ -622,10 +783,19 @@ namespace MueLuTests {
     Xpetra::UnderlyingLib lib = TestHelpers::Parameters::getLib();
 
     Level fineLevel;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(fineLevel);
+#else
+    TestHelpers::TestFactory<SC,NO>::createSingleLevelHierarchy(fineLevel);
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map> dofMap = Xpetra::MapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(lib, 3*comm->getSize(), 0, comm);
     Teuchos::RCP<Matrix> mtx = TestHelpers::TestFactory<SC,LO,GO,NO>::BuildTridiag(dofMap, 1.0, -1.0, -0.0001);
+#else
+    RCP<const Map> dofMap = Xpetra::MapFactory<Node>::Build(lib, 3*comm->getSize(), 0, comm);
+    Teuchos::RCP<Matrix> mtx = TestHelpers::TestFactory<SC,NO>::BuildTridiag(dofMap, 1.0, -1.0, -0.0001);
+#endif
     mtx->SetFixedBlockSize(1, 0);
     fineLevel.Set("A", mtx);
 
@@ -669,8 +839,16 @@ namespace MueLuTests {
     TEST_EQUALITY(Teuchos::as<bool>(myDomainMap->getNodeNumElements()==3), true);
   } // AmalgamationLightweightDrop
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, AmalgamationStridedLW, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(CoalesceDropFactory, AmalgamationStridedLW, Scalar, Node)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // unit test for block size 3 using a strided map
     // lightweight wrap = true
 #   include <MueLu_UseShortNames.hpp>
@@ -681,24 +859,40 @@ namespace MueLuTests {
     RCP<const Teuchos::Comm<int> > comm = Parameters::getDefaultComm();
 
     Level fineLevel;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(fineLevel);
+#else
+    TestHelpers::TestFactory<SC,NO>::createSingleLevelHierarchy(fineLevel);
+#endif
 
     int blockSize=3;
 
     int nx = blockSize*comm->getSize();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers::TestFactory<SC,LO,GO,NO>::Build1DPoisson(nx);
+#else
+    RCP<Matrix> A = TestHelpers::TestFactory<SC,NO>::Build1DPoisson(nx);
+#endif
 
     std::vector<size_t> stridingInfo;
     stridingInfo.push_back(Teuchos::as<size_t>(blockSize));
     LocalOrdinal stridedBlockId = -1;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Xpetra::StridedMap<LocalOrdinal, GlobalOrdinal, Node> > stridedRangeMap = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(
+#else
+    RCP<const Xpetra::StridedMap<Node> > stridedRangeMap = Xpetra::StridedMapFactory<Node>::Build(
+#endif
                                                   A->getRangeMap(),
                                                   stridingInfo,
                                                   stridedBlockId,
                                                   0 /*offset*/
                                                   );
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map> stridedDomainMap = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(
+#else
+    RCP<const Map> stridedDomainMap = Xpetra::StridedMapFactory<Node>::Build(
+#endif
                                             A->getDomainMap(),
                                             stridingInfo,
                                             stridedBlockId,
@@ -768,8 +962,16 @@ namespace MueLuTests {
     TEST_EQUALITY(Teuchos::as<bool>(myDomainMap->getNodeNumElements()==1), true);
   } // AmalgamationStridedLW
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, AmalgamationStrided2LW, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(CoalesceDropFactory, AmalgamationStrided2LW, Scalar, Node)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // unit test for block size 3 = (2,1). wrap block 0
     // lightweight wrap = true
 #   include <MueLu_UseShortNames.hpp>
@@ -788,24 +990,44 @@ namespace MueLuTests {
 
     int blockSize=3;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const StridedMap> dofMap = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(lib, blockSize*comm->getSize(), 0,
+#else
+    RCP<const StridedMap> dofMap = Xpetra::StridedMapFactory<Node>::Build(lib, blockSize*comm->getSize(), 0,
+#endif
                                   stridingInfo, comm,
                                   stridedBlockId /*blockId*/, 0 /*offset*/);
 
     /////////////////////////////////////////////////////
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::RCP<Matrix> mtx = TestHelpers::TestFactory<SC,LO,GO,NO>::BuildTridiag(dofMap, 2.0, -1.0, -1.0);
+#else
+    Teuchos::RCP<Matrix> mtx = TestHelpers::TestFactory<SC,NO>::BuildTridiag(dofMap, 2.0, -1.0, -1.0);
+#endif
 
     Level fineLevel;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(fineLevel);
+#else
+    TestHelpers::TestFactory<SC,NO>::createSingleLevelHierarchy(fineLevel);
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Xpetra::StridedMap<LocalOrdinal, GlobalOrdinal, Node> > stridedRangeMap = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(
+#else
+    RCP<const Xpetra::StridedMap<Node> > stridedRangeMap = Xpetra::StridedMapFactory<Node>::Build(
+#endif
                                                   mtx->getRangeMap(),
                                                   stridingInfo,
                                                   stridedBlockId,
                                                   0 /*offset*/
                                                   );
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map> stridedDomainMap = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(
+#else
+    RCP<const Map> stridedDomainMap = Xpetra::StridedMapFactory<Node>::Build(
+#endif
                                             mtx->getDomainMap(),
                                             stridingInfo,
                                             stridedBlockId,
@@ -875,8 +1097,16 @@ namespace MueLuTests {
     TEST_EQUALITY(Teuchos::as<bool>(myDomainMap->getNodeNumElements()==1), true);
   } // AmalgamationStrided2LW
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, AmalgamationStridedOffsetLW, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(CoalesceDropFactory, AmalgamationStridedOffsetLW, Scalar, Node)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // unit test for block size 9 = (2,3,4). wrap block 1.
     // lightweight wrap = true
 #   include <MueLu_UseShortNames.hpp>
@@ -897,24 +1127,44 @@ namespace MueLuTests {
 
     int blockSize=9;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const StridedMap> dofMap = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(lib, blockSize*comm->getSize(), 0,
+#else
+    RCP<const StridedMap> dofMap = Xpetra::StridedMapFactory<Node>::Build(lib, blockSize*comm->getSize(), 0,
+#endif
                                   stridingInfo, comm,
                                   stridedBlockId, offset);
 
     /////////////////////////////////////////////////////
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::RCP<Matrix> mtx = TestHelpers::TestFactory<SC,LO,GO,NO>::BuildTridiag(dofMap, 2.0, -1.0, -3.0);
+#else
+    Teuchos::RCP<Matrix> mtx = TestHelpers::TestFactory<SC,NO>::BuildTridiag(dofMap, 2.0, -1.0, -3.0);
+#endif
 
     Level fineLevel;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(fineLevel);
+#else
+    TestHelpers::TestFactory<SC,NO>::createSingleLevelHierarchy(fineLevel);
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map> stridedRangeMap = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(
+#else
+    RCP<const Map> stridedRangeMap = Xpetra::StridedMapFactory<Node>::Build(
+#endif
                                                   mtx->getRangeMap(),
                                                   stridingInfo,
                                                   stridedBlockId,
                                                   offset
                                                   );
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map> stridedDomainMap = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(
+#else
+    RCP<const Map> stridedDomainMap = Xpetra::StridedMapFactory<Node>::Build(
+#endif
                                             mtx->getDomainMap(),
                                             stridingInfo,
                                             stridedBlockId,
@@ -976,8 +1226,16 @@ namespace MueLuTests {
     TEST_EQUALITY(Teuchos::as<bool>(myDomainMap->getNodeNumElements()==1), true);
   } // AmalgamationStridedOffsetLW
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, AmalgamationDroppingLW, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(CoalesceDropFactory, AmalgamationDroppingLW, Scalar, Node)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // unit test for block size 3 = (3)
     // drop small entries
     // lightweight wrap = true
@@ -990,10 +1248,19 @@ namespace MueLuTests {
     Xpetra::UnderlyingLib lib = TestHelpers::Parameters::getLib();
 
     Level fineLevel;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(fineLevel);
+#else
+    TestHelpers::TestFactory<SC,NO>::createSingleLevelHierarchy(fineLevel);
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map> dofMap = Xpetra::MapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(lib, 3*comm->getSize(), 0, comm);
     Teuchos::RCP<Matrix> mtx = TestHelpers::TestFactory<SC,LO,GO,NO>::BuildTridiag(dofMap, 2.0, -1.0, 0.00001);
+#else
+    RCP<const Map> dofMap = Xpetra::MapFactory<Node>::Build(lib, 3*comm->getSize(), 0, comm);
+    Teuchos::RCP<Matrix> mtx = TestHelpers::TestFactory<SC,NO>::BuildTridiag(dofMap, 2.0, -1.0, 0.00001);
+#endif
     mtx->SetFixedBlockSize(3, 0);
     fineLevel.Set("A", mtx);
 
@@ -1039,8 +1306,16 @@ namespace MueLuTests {
 
   } // AmalgamationDroppingLW
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, AmalgamationStridedOffsetDropping2LW, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(CoalesceDropFactory, AmalgamationStridedOffsetDropping2LW, Scalar, Node)
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // unit test for block size 9 = (2,3,4). wrap block 1.
     // drop small entries
     // lightweight wrap = true
@@ -1060,24 +1335,44 @@ namespace MueLuTests {
     LocalOrdinal stridedBlockId = 1;
     GlobalOrdinal offset = 19;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const StridedMap> dofMap = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(lib, 9*comm->getSize(), 0,
+#else
+    RCP<const StridedMap> dofMap = Xpetra::StridedMapFactory<Node>::Build(lib, 9*comm->getSize(), 0,
+#endif
                                   stridingInfo, comm,
                                   stridedBlockId, offset);
 
     /////////////////////////////////////////////////////
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::RCP<Matrix> mtx = TestHelpers::TestFactory<SC,LO,GO,NO>::BuildTridiag(dofMap, 2.0, 1.0, 0.0001);
+#else
+    Teuchos::RCP<Matrix> mtx = TestHelpers::TestFactory<SC,NO>::BuildTridiag(dofMap, 2.0, 1.0, 0.0001);
+#endif
 
     Level fineLevel;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(fineLevel);
+#else
+    TestHelpers::TestFactory<SC,NO>::createSingleLevelHierarchy(fineLevel);
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map> stridedRangeMap = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(
+#else
+    RCP<const Map> stridedRangeMap = Xpetra::StridedMapFactory<Node>::Build(
+#endif
                                                   mtx->getRangeMap(),
                                                   stridingInfo,
                                                   stridedBlockId,
                                                   offset
                                                   );
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map> stridedDomainMap = Xpetra::StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(
+#else
+    RCP<const Map> stridedDomainMap = Xpetra::StridedMapFactory<Node>::Build(
+#endif
                                             mtx->getDomainMap(),
                                             stridingInfo,
                                             stridedBlockId,
@@ -1140,12 +1435,24 @@ namespace MueLuTests {
   } // AmalgamationStridedOffsetDropping2LW
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, DistanceLaplacian, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(CoalesceDropFactory, DistanceLaplacian, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     typedef Teuchos::ScalarTraits<SC> STS;
     typedef typename STS::magnitudeType real_type;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Xpetra::MultiVector<real_type,LO,GO,NO> RealValuedMultiVector;
+#else
+    typedef Xpetra::MultiVector<real_type,NO> RealValuedMultiVector;
+#endif
 
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
@@ -1154,9 +1461,17 @@ namespace MueLuTests {
     RCP<const Teuchos::Comm<int> > comm = Parameters::getDefaultComm();
 
     Level fineLevel;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(fineLevel);
+#else
+    TestHelpers::TestFactory<SC,NO>::createSingleLevelHierarchy(fineLevel);
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers::TestFactory<SC,LO,GO,NO>::Build1DPoisson(36);
+#else
+    RCP<Matrix> A = TestHelpers::TestFactory<SC,NO>::Build1DPoisson(36);
+#endif
     fineLevel.Set("A", A);
 
     Teuchos::ParameterList galeriList;
@@ -1199,12 +1514,24 @@ namespace MueLuTests {
   } // DistanceLaplacian
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, DistanceLaplacianCut, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(CoalesceDropFactory, DistanceLaplacianCut, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     typedef Teuchos::ScalarTraits<SC> STS;
     typedef typename STS::magnitudeType real_type;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Xpetra::MultiVector<real_type,LO,GO,NO> RealValuedMultiVector;
+#else
+    typedef Xpetra::MultiVector<real_type,NO> RealValuedMultiVector;
+#endif
 
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
@@ -1213,9 +1540,17 @@ namespace MueLuTests {
     RCP<const Teuchos::Comm<int> > comm = Parameters::getDefaultComm();
 
     Level fineLevel;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(fineLevel);
+#else
+    TestHelpers::TestFactory<SC,NO>::createSingleLevelHierarchy(fineLevel);
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers::TestFactory<SC,LO,GO,NO>::Build1DPoisson(36);
+#else
+    RCP<Matrix> A = TestHelpers::TestFactory<SC,NO>::Build1DPoisson(36);
+#endif
     fineLevel.Set("A", A);
 
     Teuchos::ParameterList galeriList;
@@ -1264,12 +1599,24 @@ namespace MueLuTests {
 
   } // DistanceLaplacianCut
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory, DistanceLaplacianCutSym, Scalar, LocalOrdinal, GlobalOrdinal, Node)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL(CoalesceDropFactory, DistanceLaplacianCutSym, Scalar, Node)
+#endif
   {
 #   include <MueLu_UseShortNames.hpp>
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     typedef Teuchos::ScalarTraits<SC> STS;
     typedef typename STS::magnitudeType real_type;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Xpetra::MultiVector<real_type,LO,GO,NO> RealValuedMultiVector;
+#else
+    typedef Xpetra::MultiVector<real_type,NO> RealValuedMultiVector;
+#endif
 
     MUELU_TESTING_SET_OSTREAM;
     MUELU_TESTING_LIMIT_SCOPE(Scalar,GlobalOrdinal,Node);
@@ -1278,9 +1625,17 @@ namespace MueLuTests {
     RCP<const Teuchos::Comm<int> > comm = Parameters::getDefaultComm();
 
     Level fineLevel;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     TestHelpers::TestFactory<SC,LO,GO,NO>::createSingleLevelHierarchy(fineLevel);
+#else
+    TestHelpers::TestFactory<SC,NO>::createSingleLevelHierarchy(fineLevel);
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Matrix> A = TestHelpers::TestFactory<SC,LO,GO,NO>::Build1DPoisson(36);
+#else
+    RCP<Matrix> A = TestHelpers::TestFactory<SC,NO>::Build1DPoisson(36);
+#endif
     fineLevel.Set("A", A);
 
     Teuchos::ParameterList galeriList;
@@ -1332,6 +1687,7 @@ namespace MueLuTests {
 
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define MUELU_ETI_GROUP(SC,LO,GO,Node) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(CoalesceDropFactory,Constructor,SC,LO,GO,Node) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(CoalesceDropFactory,Build,SC,LO,GO,Node) \
@@ -1350,6 +1706,26 @@ namespace MueLuTests {
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(CoalesceDropFactory,DistanceLaplacian,SC,LO,GO,Node) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(CoalesceDropFactory,DistanceLaplacianCut,SC,LO,GO,Node) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(CoalesceDropFactory,DistanceLaplacianCutSym,SC,LO,GO,Node)
+#else
+#define MUELU_ETI_GROUP(SC,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(CoalesceDropFactory,Constructor,SC,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(CoalesceDropFactory,Build,SC,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(CoalesceDropFactory,PreDrop,SC,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(CoalesceDropFactory,AmalgamationBasic,SC,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(CoalesceDropFactory,AmalgamationStrided,SC,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(CoalesceDropFactory,AmalgamationStrided2,SC,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(CoalesceDropFactory,AmalgamationStridedOffset,SC,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(CoalesceDropFactory,AmalgamationLightweight,SC,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(CoalesceDropFactory,AmalgamationLightweightDrop,SC,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(CoalesceDropFactory,AmalgamationStridedLW,SC,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(CoalesceDropFactory,AmalgamationStrided2LW,SC,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(CoalesceDropFactory,AmalgamationStridedOffsetLW,SC,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(CoalesceDropFactory,AmalgamationDroppingLW,SC,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(CoalesceDropFactory,AmalgamationStridedOffsetDropping2LW,SC,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(CoalesceDropFactory,DistanceLaplacian,SC,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(CoalesceDropFactory,DistanceLaplacianCut,SC,Node) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT(CoalesceDropFactory,DistanceLaplacianCutSym,SC,Node)
+#endif
 
 #include <MueLu_ETI_4arg.hpp>
 

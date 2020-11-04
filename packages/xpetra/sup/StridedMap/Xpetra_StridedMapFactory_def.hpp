@@ -55,9 +55,15 @@
 
 namespace Xpetra {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LocalOrdinal, class GlobalOrdinal, class Node>
 RCP<Xpetra::StridedMap<LocalOrdinal, GlobalOrdinal, Node>>
 StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::
+#else
+template<class Node>
+RCP<Xpetra::StridedMap<Node>>
+StridedMapFactory<Node>::
+#endif
 Build(UnderlyingLib                                 lib,
       global_size_t                                 numGlobalElements,
       GlobalOrdinal                                 indexBase,
@@ -67,13 +73,23 @@ Build(UnderlyingLib                                 lib,
       GlobalOrdinal                                 offset,
       LocalGlobal                                   lg)
 {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   return rcp(new Xpetra::StridedMap<LocalOrdinal, GlobalOrdinal, Node>(lib, numGlobalElements, indexBase, stridingInfo, comm, stridedBlockId, offset, lg));
+#else
+  return rcp(new Xpetra::StridedMap<Node>(lib, numGlobalElements, indexBase, stridingInfo, comm, stridedBlockId, offset, lg));
+#endif
 }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LocalOrdinal, class GlobalOrdinal, class Node>
 RCP<Xpetra::StridedMap<LocalOrdinal,GlobalOrdinal,Node>>
 StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::
+#else
+template<class Node>
+RCP<Xpetra::StridedMap<Node>>
+StridedMapFactory<Node>::
+#endif
 Build(UnderlyingLib                                 lib,
       global_size_t                                 numGlobalElements,
       size_t                                        numLocalElements,
@@ -87,9 +103,15 @@ Build(UnderlyingLib                                 lib,
 }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LocalOrdinal, class GlobalOrdinal, class Node>
 RCP<Xpetra::StridedMap<LocalOrdinal,GlobalOrdinal,Node>>
 StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::
+#else
+template<class Node>
+RCP<Xpetra::StridedMap<Node>>
+StridedMapFactory<Node>::
+#endif
 Build(const RCP<const Map>& map,
       std::vector<size_t>&  stridingInfo,
       LocalOrdinal          stridedBlockId,
@@ -99,9 +121,15 @@ Build(const RCP<const Map>& map,
 }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LocalOrdinal, class GlobalOrdinal, class Node>
 RCP<Xpetra::StridedMap<LocalOrdinal,GlobalOrdinal,Node>>
 StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::
+#else
+template<class Node>
+RCP<Xpetra::StridedMap<Node>>
+StridedMapFactory<Node>::
+#endif
 Build(const RCP<const StridedMap>& map, LocalOrdinal stridedBlockId)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(stridedBlockId < 0, Exceptions::RuntimeError,
@@ -147,9 +175,15 @@ Build(const RCP<const StridedMap>& map, LocalOrdinal stridedBlockId)
 }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LocalOrdinal, class GlobalOrdinal, class Node>
 RCP<Xpetra::StridedMap<LocalOrdinal,GlobalOrdinal,Node>>
 StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::
+#else
+template<class Node>
+RCP<Xpetra::StridedMap<Node>>
+StridedMapFactory<Node>::
+#endif
 Build(const StridedMap& map)
 {
   XPETRA_MONITOR("MapFactory::Build");
@@ -166,9 +200,15 @@ Build(const StridedMap& map)
 }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template<class LocalOrdinal, class GlobalOrdinal, class Node>
 RCP<Xpetra::StridedMap<LocalOrdinal,GlobalOrdinal,Node>>
 StridedMapFactory<LocalOrdinal, GlobalOrdinal, Node>::
+#else
+template<class Node>
+RCP<Xpetra::StridedMap<Node>>
+StridedMapFactory<Node>::
+#endif
 Build(UnderlyingLib                                  lib,
       global_size_t                                  numGlobalElements,
       const Teuchos::ArrayView<const GlobalOrdinal>& elementList,

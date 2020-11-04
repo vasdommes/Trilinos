@@ -81,25 +81,41 @@ namespace Xpetra {
   Don't forget to cast to \c Xpetra::BlockedMultiVector , if you need the blocked layout directly.
 */
 template<class Scalar,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
          class LocalOrdinal,
          class GlobalOrdinal,
+#endif
          class Node = KokkosClassic::DefaultNode::DefaultNodeType>
 class MultiVectorFactory
 {
   private:
 
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+    using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     //! Private constructor. This is a static class.
     MultiVectorFactory() {}
 
   public:
 
     //! Constructor specifying the number of non-zeros for all rows.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP<MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node>>
     Build(const Teuchos::RCP<const Map<LocalOrdinal, GlobalOrdinal, Node>>& map, size_t NumVectors, bool zeroOut = true);
+#else
+    static Teuchos::RCP<MultiVector<Scalar, Node>>
+    Build(const Teuchos::RCP<const Map<Node>>& map, size_t NumVectors, bool zeroOut = true);
+#endif
 
     //! Set multi-vector values from array of pointers using Teuchos memory management classes. (copy).
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP<MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node>>
     Build(const Teuchos::RCP<const Map<LocalOrdinal, GlobalOrdinal, Node>>& map,
+#else
+    static Teuchos::RCP<MultiVector<Scalar, Node>>
+    Build(const Teuchos::RCP<const Map<Node>>& map,
+#endif
           const Teuchos::ArrayView<const Teuchos::ArrayView<const Scalar>>& ArrayOfPtrs,
           size_t                                                            NumVectors);
 };
@@ -131,12 +147,22 @@ class MultiVectorFactory<double, int, int, EpetraNode>
 
   public:
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static RCP<MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node>>
     Build(const Teuchos::RCP<const Map<LocalOrdinal, GlobalOrdinal, Node>>& map, size_t NumVectors, bool zeroOut = true);
+#else
+    static RCP<MultiVector<Scalar, Node>>
+    Build(const Teuchos::RCP<const Map<Node>>& map, size_t NumVectors, bool zeroOut = true);
+#endif
 
     //! Set multi-vector values from array of pointers using Teuchos memory management classes. (copy).
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP<MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node>>
     Build(const Teuchos::RCP<const Map<LocalOrdinal, GlobalOrdinal, Node>>& map,
+#else
+    static Teuchos::RCP<MultiVector<Scalar, Node>>
+    Build(const Teuchos::RCP<const Map<Node>>& map,
+#endif
           const Teuchos::ArrayView<const Teuchos::ArrayView<const Scalar>>& ArrayOfPtrs,
           size_t                                                            NumVectors);
 };
@@ -159,12 +185,22 @@ class MultiVectorFactory<int, int, int, EpetraNode>
 
   public:
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static RCP<MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node>>
     Build(const Teuchos::RCP<const Map<LocalOrdinal, GlobalOrdinal, Node>>& map, size_t NumVectors, bool zeroOut = true);
+#else
+    static RCP<MultiVector<Scalar, Node>>
+    Build(const Teuchos::RCP<const Map<Node>>& map, size_t NumVectors, bool zeroOut = true);
+#endif
 
     //! Set multi-vector values from array of pointers using Teuchos memory management classes. (copy).
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::RCP<MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node>>
     Build(const Teuchos::RCP<const Map<LocalOrdinal, GlobalOrdinal, Node>>& map,
+#else
+    static Teuchos::RCP<MultiVector<Scalar, Node>>
+    Build(const Teuchos::RCP<const Map<Node>>& map,
+#endif
           const Teuchos::ArrayView<const Teuchos::ArrayView<const Scalar>>& ArrayOfPtrs,
           size_t                                                            NumVectors);
 };
@@ -189,14 +225,24 @@ private:
 
 public:
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   static RCP<MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node> >
   Build(const Teuchos::RCP<const Map<LocalOrdinal, GlobalOrdinal, Node> > &map,
+#else
+  static RCP<MultiVector<Scalar, Node> >
+  Build(const Teuchos::RCP<const Map<Node> > &map,
+#endif
         size_t NumVectors,
         bool zeroOut = true);
 
   //! Set multi-vector values from array of pointers using Teuchos memory management classes. (copy).
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   static Teuchos::RCP<MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node> >
   Build(const Teuchos::RCP< const Map< LocalOrdinal, GlobalOrdinal, Node > > &map,
+#else
+  static Teuchos::RCP<MultiVector<Scalar, Node> >
+  Build(const Teuchos::RCP< const Map<Node > > &map,
+#endif
         const Teuchos::ArrayView< const Teuchos::ArrayView< const Scalar > > &ArrayOfPtrs,
         size_t NumVectors);
 
@@ -219,14 +265,24 @@ private:
 
 public:
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   static RCP<MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node> >
   Build(const Teuchos::RCP<const Map<LocalOrdinal, GlobalOrdinal, Node> > &map,
+#else
+  static RCP<MultiVector<Scalar, Node> >
+  Build(const Teuchos::RCP<const Map<Node> > &map,
+#endif
         size_t NumVectors,
         bool zeroOut = true);
 
   //! Set multi-vector values from array of pointers using Teuchos memory management classes. (copy).
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   static Teuchos::RCP<MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node> >
   Build(const Teuchos::RCP< const Map< LocalOrdinal, GlobalOrdinal, Node > > &map,
+#else
+  static Teuchos::RCP<MultiVector<Scalar, Node> >
+  Build(const Teuchos::RCP< const Map<Node > > &map,
+#endif
         const Teuchos::ArrayView< const Teuchos::ArrayView< const Scalar > > &ArrayOfPtrs,
         size_t NumVectors);
 

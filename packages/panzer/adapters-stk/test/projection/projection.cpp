@@ -277,7 +277,11 @@ TEUCHOS_UNIT_TEST(L2Projection, ToNodal)
   timer->stop("projectionFactory.buildRHSMatrix()");
 
   // Store in vector for convenience
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::vector<RCP<Tpetra::CrsMatrix<double,LO,GO,NodeType>>> rhsMatrices;
+#else
+  std::vector<RCP<Tpetra::CrsMatrix<double,NodeType>>> rhsMatrices;
+#endif
   rhsMatrices.push_back(rhsMatrix_PHI);
   rhsMatrices.push_back(rhsMatrix_DPHI_DX);
   rhsMatrices.push_back(rhsMatrix_DPHI_DY);
@@ -304,7 +308,11 @@ TEUCHOS_UNIT_TEST(L2Projection, ToNodal)
 
   // Allocate the source vector
   timer->start("Allocate Source Vector");
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using VectorType = Tpetra::Vector<double,LO,GO,NodeType>;
+#else
+  using VectorType = Tpetra::Vector<double,NodeType>;
+#endif
   auto sourceValues = rcp(new VectorType(rhsMatrix_PHI->getDomainMap(),true));
   timer->stop("Allocate Source Vector");
 
@@ -542,7 +550,11 @@ TEUCHOS_UNIT_TEST(L2Projection, ToNodal)
   timer->start("Copy RHS Values into MV");
   const auto targetRangeMap = massMatrix->getRangeMap();
   const int numVectors = 10; // PHI, DPHI_DX, DPHI_XY, DPHI_DZ, E, B
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   const auto rhsMV = rcp(new Tpetra::MultiVector<double,LO,GO,NodeType>(targetRangeMap,numVectors,false));
+#else
+  const auto rhsMV = rcp(new Tpetra::MultiVector<double,NodeType>(targetRangeMap,numVectors,false));
+#endif
   const auto mvView = rhsMV->getLocalView<NodeType>();
   TEST_EQUALITY(mvView.extent(1),static_cast<size_t>(numVectors));
   for (int col=0; col < numVectors; ++col) {
@@ -554,9 +566,15 @@ TEUCHOS_UNIT_TEST(L2Projection, ToNodal)
   timer->stop("Copy RHS Values into MV");
 
   // Solve the multiple matrices
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using MV = Tpetra::MultiVector<double,LO,GO,NodeType>;
   using OP = Tpetra::Operator<double,LO,GO,NodeType>;
   const auto solutionMV = rcp(new Tpetra::MultiVector<double,LO,GO,NodeType>(targetRangeMap,numVectors,true));
+#else
+  using MV = Tpetra::MultiVector<double,NodeType>;
+  using OP = Tpetra::Operator<double,NodeType>;
+  const auto solutionMV = rcp(new Tpetra::MultiVector<double,NodeType>(targetRangeMap,numVectors,true));
+#endif
   const auto problem = rcp(new Belos::LinearProblem<double,MV,OP>(massMatrix, solutionMV, rhsMV));
   problem->setProblem();
 
@@ -928,7 +946,11 @@ TEUCHOS_UNIT_TEST(L2Projection, CurlMassMatrix)
 
   // compute difference between the two versions of the mass matrix
   using NodeType = Kokkos::Compat::KokkosDeviceWrapperNode<PHX::Device>;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   auto difference = Tpetra::MatrixMatrix::add<double,LO,GO,NodeType>(1.0,false,*curlMassMatrix,-1.0,false,*connMassMatrix);
+#else
+  auto difference = Tpetra::MatrixMatrix::add<double,NodeType>(1.0,false,*curlMassMatrix,-1.0,false,*connMassMatrix);
+#endif
   double error = difference->getFrobeniusNorm();
   double norm = connMassMatrix->getFrobeniusNorm();
   double tol = 1.0e-14;
@@ -1052,7 +1074,11 @@ TEUCHOS_UNIT_TEST(L2Projection, HighOrderTri)
   timer->stop("projectionFactory.buildRHSMatrix()");
 
   // Store in vector for convenience
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::vector<RCP<Tpetra::CrsMatrix<double,LO,GO,NodeType>>> rhsMatrices;
+#else
+  std::vector<RCP<Tpetra::CrsMatrix<double,NodeType>>> rhsMatrices;
+#endif
   rhsMatrices.push_back(rhsMatrix_PHI);
   rhsMatrices.push_back(rhsMatrix_DPHI_DX);
   rhsMatrices.push_back(rhsMatrix_DPHI_DY);
@@ -1065,7 +1091,11 @@ TEUCHOS_UNIT_TEST(L2Projection, HighOrderTri)
 
   // Allocate the source vector
   timer->start("Allocate Source Vector");
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using VectorType = Tpetra::Vector<double,LO,GO,NodeType>;
+#else
+  using VectorType = Tpetra::Vector<double,NodeType>;
+#endif
   auto sourceValues = rcp(new VectorType(rhsMatrix_PHI->getDomainMap(),true));
   timer->stop("Allocate Source Vector");
 
@@ -1146,7 +1176,11 @@ TEUCHOS_UNIT_TEST(L2Projection, HighOrderTri)
   timer->start("Copy RHS Values into MV");
   const auto targetRangeMap = massMatrix->getRangeMap();
   const int numVectors = 3; // PHI, DPHI_DX, DPHI_XY
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   const auto rhsMV = rcp(new Tpetra::MultiVector<double,LO,GO,NodeType>(targetRangeMap,numVectors,false));
+#else
+  const auto rhsMV = rcp(new Tpetra::MultiVector<double,NodeType>(targetRangeMap,numVectors,false));
+#endif
   const auto mvView = rhsMV->getLocalView<NodeType>();
   TEST_EQUALITY(mvView.extent(1),static_cast<size_t>(numVectors));
   for (int col=0; col < numVectors; ++col) {
@@ -1158,9 +1192,15 @@ TEUCHOS_UNIT_TEST(L2Projection, HighOrderTri)
   timer->stop("Copy RHS Values into MV");
 
   // Solve the multiple matrices
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   using MV = Tpetra::MultiVector<double,LO,GO,NodeType>;
   using OP = Tpetra::Operator<double,LO,GO,NodeType>;
   const auto solutionMV = rcp(new Tpetra::MultiVector<double,LO,GO,NodeType>(targetRangeMap,numVectors,true));
+#else
+  using MV = Tpetra::MultiVector<double,NodeType>;
+  using OP = Tpetra::Operator<double,NodeType>;
+  const auto solutionMV = rcp(new Tpetra::MultiVector<double,NodeType>(targetRangeMap,numVectors,true));
+#endif
   const auto problem = rcp(new Belos::LinearProblem<double,MV,OP>(massMatrix, solutionMV, rhsMV));
   problem->setProblem();
 

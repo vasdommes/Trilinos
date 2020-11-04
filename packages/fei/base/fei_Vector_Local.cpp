@@ -81,7 +81,11 @@ Vector_Local::giveToVector(int numValues, const int* indices,
   }
 
   for(int i=0; i<numValues; ++i) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::map<int,int>::iterator
+#else
+    std::map<>::iterator
+#endif
      iter = global_to_local_.find(indices[i]);
     if (iter == global_to_local_.end()) {
       fei::console_out() << "fei::Vector_Local ERROR, eqn "<<indices[i]<<" not found "
@@ -219,7 +223,11 @@ Vector_Local::copyOutFieldData(int fieldID,
                                         indicesPtr) );
 
   for(int i=0; i<(int)work_indices_.size(); ++i) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::map<int,int>::iterator
+#else
+    std::map<>::iterator
+#endif
       iter = global_to_local_.find(work_indices_[i]);
     if (iter == global_to_local_.end()) {
       fei::console_out() << "fei::Vector_Local::copyOut ERROR, eqn "<<work_indices_[i]<<" not found "
@@ -243,7 +251,11 @@ Vector_Local::copyOut(int numValues, const int* indices,
   }
 
   for(int i=0; i<numValues; ++i) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::map<int,int>::const_iterator
+#else
+    std::map<>::const_iterator
+#endif
      iter = global_to_local_.find(indices[i]);
     if (iter == global_to_local_.end()) {
       fei::console_out() << "fei::Vector_Local::copyOut ERROR, eqn "<<indices[i]<<" not found "
@@ -293,7 +305,11 @@ Vector_Local::writeToStream(FEI_OSTREAM& ostrm,
   ostrm.setf(IOS_SCIENTIFIC, IOS_FLOATFIELD);
   ostrm.precision(13);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::iterator
+#else
+  std::map<>::iterator
+#endif
     iter = global_to_local_.begin();
 
   for(unsigned i=0; i<coefs_.size(); ++i) {

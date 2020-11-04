@@ -246,11 +246,21 @@ struct InputTraits {
 #endif
 
 template <typename Scalar,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           typename LocalOrdinal,
           typename GlobalOrdinal,
+#endif
           typename Node>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 struct InputTraits<BasicUserTypes<Scalar, LocalOrdinal, GlobalOrdinal, Node> >
+#else
+struct InputTraits<BasicUserTypes<Scalar, Node> >
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   typedef Scalar        scalar_t;
   typedef LocalOrdinal  lno_t;
   typedef GlobalOrdinal gno_t;
@@ -263,11 +273,21 @@ struct InputTraits<BasicUserTypes<Scalar, LocalOrdinal, GlobalOrdinal, Node> >
 };
 
 template <typename Scalar,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           typename LocalOrdinal,
           typename GlobalOrdinal,
+#endif
           typename Node>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 struct InputTraits<Xpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >
+#else
+struct InputTraits<Xpetra::CrsMatrix<Scalar,Node> >
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   typedef Scalar        scalar_t;
   typedef LocalOrdinal  lno_t;
   typedef GlobalOrdinal gno_t;
@@ -280,11 +300,21 @@ struct InputTraits<Xpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >
 };
 
 template <typename Scalar,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           typename LocalOrdinal,
           typename GlobalOrdinal,
+#endif
           typename Node>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 struct InputTraits<Tpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >
+#else
+struct InputTraits<Tpetra::CrsMatrix<Scalar,Node> >
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   typedef Scalar        scalar_t;
   typedef LocalOrdinal  lno_t;
   typedef GlobalOrdinal gno_t;
@@ -311,11 +341,21 @@ struct InputTraits<Epetra_CrsMatrix>
 #endif
 
 template <typename Scalar,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           typename LocalOrdinal,
           typename GlobalOrdinal,
+#endif
           typename Node>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 struct InputTraits<Xpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >
+#else
+struct InputTraits<Xpetra::RowMatrix<Scalar,Node> >
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   typedef Scalar        scalar_t;
   typedef LocalOrdinal  lno_t;
   typedef GlobalOrdinal gno_t;
@@ -328,11 +368,21 @@ struct InputTraits<Xpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >
 };
 
 template <typename Scalar,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           typename LocalOrdinal,
           typename GlobalOrdinal,
+#endif
           typename Node>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 struct InputTraits<Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >
+#else
+struct InputTraits<Tpetra::RowMatrix<Scalar,Node> >
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   typedef Scalar        scalar_t;
   typedef LocalOrdinal  lno_t;
   typedef GlobalOrdinal gno_t;
@@ -344,11 +394,20 @@ struct InputTraits<Tpetra::RowMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >
   Z2_STATIC_ASSERT_TYPES // validate the types
 };
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <typename LocalOrdinal,
           typename GlobalOrdinal,
           typename Node>
 struct InputTraits<Tpetra::RowGraph<LocalOrdinal,GlobalOrdinal,Node> >
+#else
+template <typename Node>
+struct InputTraits<Tpetra::RowGraph<Node> >
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   typedef default_scalar_t scalar_t;
   typedef LocalOrdinal  lno_t;
   typedef GlobalOrdinal gno_t;
@@ -358,11 +417,20 @@ struct InputTraits<Tpetra::RowGraph<LocalOrdinal,GlobalOrdinal,Node> >
   static inline std::string name() {return "Tpetra::RowGraph";}
 };
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <typename LocalOrdinal,
           typename GlobalOrdinal,
           typename Node>
 struct InputTraits<Xpetra::CrsGraph<LocalOrdinal,GlobalOrdinal,Node> >
+#else
+template <typename Node>
+struct InputTraits<Xpetra::CrsGraph<Node> >
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   typedef default_scalar_t scalar_t;
   typedef LocalOrdinal  lno_t;
   typedef GlobalOrdinal gno_t;
@@ -374,11 +442,20 @@ struct InputTraits<Xpetra::CrsGraph<LocalOrdinal,GlobalOrdinal,Node> >
   Z2_STATIC_ASSERT_TYPES // validate the types
 };
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <typename LocalOrdinal,
           typename GlobalOrdinal,
           typename Node>
 struct InputTraits<Tpetra::CrsGraph<LocalOrdinal,GlobalOrdinal,Node> >
+#else
+template <typename Node>
+struct InputTraits<Tpetra::CrsGraph<Node> >
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   typedef default_scalar_t scalar_t;
   typedef LocalOrdinal  lno_t;
   typedef GlobalOrdinal gno_t;
@@ -405,11 +482,21 @@ struct InputTraits<Epetra_CrsGraph>
 #endif
 
 template <typename Scalar,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           typename LocalOrdinal,
           typename GlobalOrdinal,
+#endif
           typename Node>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 struct InputTraits<Xpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> >
+#else
+struct InputTraits<Xpetra::Vector<Scalar,Node> >
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   typedef Scalar        scalar_t;
   typedef LocalOrdinal  lno_t;
   typedef GlobalOrdinal gno_t;
@@ -425,11 +512,21 @@ struct InputTraits<Xpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> >
  *     define MultiVector traits only?  Ditto with Xpetra.  Test this.
  */
 template <typename Scalar,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           typename LocalOrdinal,
           typename GlobalOrdinal,
+#endif
           typename Node>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 struct InputTraits<Tpetra::Vector<Scalar,LocalOrdinal,GlobalOrdinal,Node> >
+#else
+struct InputTraits<Tpetra::Vector<Scalar,Node> >
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   typedef Scalar        scalar_t;
   typedef LocalOrdinal  lno_t;
   typedef GlobalOrdinal gno_t;
@@ -456,11 +553,21 @@ struct InputTraits<Epetra_Vector>
 #endif
 
 template <typename Scalar,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           typename LocalOrdinal,
           typename GlobalOrdinal,
+#endif
           typename Node>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 struct InputTraits<Xpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> >
+#else
+struct InputTraits<Xpetra::MultiVector<Scalar,Node> >
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   typedef Scalar        scalar_t;
   typedef LocalOrdinal  lno_t;
   typedef GlobalOrdinal gno_t;
@@ -473,11 +580,21 @@ struct InputTraits<Xpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> >
 };
 
 template <typename Scalar,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           typename LocalOrdinal,
           typename GlobalOrdinal,
+#endif
           typename Node>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 struct InputTraits<Tpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> >
+#else
+struct InputTraits<Tpetra::MultiVector<Scalar,Node> >
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   typedef Scalar        scalar_t;
   typedef LocalOrdinal  lno_t;
   typedef GlobalOrdinal gno_t;

@@ -101,8 +101,13 @@
 
 namespace MueLu {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
   RCP<const ParameterList> SmooVecCoalesceDropFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::GetValidParameterList() const {
+#else
+  template <class Scalar, class Node>
+  RCP<const ParameterList> SmooVecCoalesceDropFactory<Scalar, Node>::GetValidParameterList() const {
+#endif
     RCP<ParameterList> validParamList = rcp(new ParameterList());
 
 #define SET_VALID_ENTRY(name) validParamList->setEntry(name, MasterList::getEntry(name))
@@ -124,11 +129,21 @@ namespace MueLu {
     return validParamList;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   SmooVecCoalesceDropFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::SmooVecCoalesceDropFactory() : predrop_(Teuchos::null) { }
+#else
+  template <class Scalar, class Node>
+  SmooVecCoalesceDropFactory<Scalar, Node>::SmooVecCoalesceDropFactory() : predrop_(Teuchos::null) { }
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void SmooVecCoalesceDropFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level &currentLevel) const {
+#else
+  template <class Scalar, class Node>
+  void SmooVecCoalesceDropFactory<Scalar, Node>::DeclareInput(Level &currentLevel) const {
+#endif
     Input(currentLevel, "A");
     if (currentLevel.IsAvailable("PreSmoother")) {    // rst: totally unsure that this is legal
       Input(currentLevel, "PreSmoother");             //      my guess is that this is not yet available
@@ -138,8 +153,13 @@ namespace MueLu {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void SmooVecCoalesceDropFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(Level &currentLevel) const {
+#else
+  template <class Scalar, class Node>
+  void SmooVecCoalesceDropFactory<Scalar, Node>::Build(Level &currentLevel) const {
+#endif
 
     FactoryMonitor m(*this, "Build", currentLevel);
 
@@ -158,7 +178,11 @@ namespace MueLu {
    RCP< MultiVector > nearNull;
 
 #ifdef takeOut
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
    testVecs = Xpetra::IO<SC,LO,GO,Node>::ReadMultiVector("TpetraTVecs.mm", A->getRowMap());
+#else
+   testVecs = Xpetra::IO<SC,Node>::ReadMultiVector("TpetraTVecs.mm", A->getRowMap());
+#endif
 #endif
    size_t numRandom= as<size_t>(pL.get<int>("aggregation: number of random vectors"));
    testVecs = MultiVectorFactory::Build(A->getRowMap(), numRandom, true);
@@ -244,8 +268,13 @@ namespace MueLu {
 
   } //Build
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void SmooVecCoalesceDropFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::badGuysCoalesceDrop(const Matrix& Amat, Teuchos::ArrayRCP<Scalar> & penaltyPolyCoef , LO nPDEs, const MultiVector& testVecs, const MultiVector& nearNull, RCP<GraphBase>& filteredGraph) const {
+#else
+  template <class Scalar, class Node>
+  void SmooVecCoalesceDropFactory<Scalar, Node>::badGuysCoalesceDrop(const Matrix& Amat, Teuchos::ArrayRCP<Scalar> & penaltyPolyCoef , LO nPDEs, const MultiVector& testVecs, const MultiVector& nearNull, RCP<GraphBase>& filteredGraph) const {
+#endif
   /* 
    * Compute coalesce/drop graph (in filteredGraph) for A. The basic idea is to 
    * balance trade-offs associated with 
@@ -419,8 +448,13 @@ namespace MueLu {
 
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void SmooVecCoalesceDropFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::badGuysDropfunc(LO row, const Teuchos::ArrayView<const LocalOrdinal>& cols, const Teuchos::ArrayView<const Scalar>& vals, const MultiVector&  testVecs, LO nPDEs, Teuchos::ArrayRCP<Scalar> & penalties, const MultiVector& nearNull, Teuchos::ArrayRCP<LO>& Bcols, Teuchos::ArrayRCP<bool>& keepOrNot, LO &Nbcols, LO nLoc) const {
+#else
+  template <class Scalar, class Node>
+  void SmooVecCoalesceDropFactory<Scalar, Node>::badGuysDropfunc(LO row, const Teuchos::ArrayView<const LocalOrdinal>& cols, const Teuchos::ArrayView<const Scalar>& vals, const MultiVector&  testVecs, LO nPDEs, Teuchos::ArrayRCP<Scalar> & penalties, const MultiVector& nearNull, Teuchos::ArrayRCP<LO>& Bcols, Teuchos::ArrayRCP<bool>& keepOrNot, LO &Nbcols, LO nLoc) const {
+#endif
 
   LO nLeng  = cols.size();
   typename Teuchos::ScalarTraits<Scalar>::coordinateType temp;

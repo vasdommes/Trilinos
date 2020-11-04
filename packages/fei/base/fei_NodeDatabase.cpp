@@ -20,7 +20,11 @@
 #include <fei_ErrMacros.hpp>
 
 //------------------------------------------------------------------------------
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 NodeDatabase::NodeDatabase(std::map<int,int>* fieldDatabase,
+#else
+NodeDatabase::NodeDatabase(std::map<>* fieldDatabase,
+#endif
                            NodeCommMgr* nodeCommMgr)
   : nodePtrs_(),
     eqnNumbers_(0), eqnNodeIndices_(),
@@ -82,7 +86,11 @@ int NodeDatabase::getNodeWithNumber(int nodeNumber, const NodeDescriptor*& node)
 {
   if (!synchronized_) ERReturn(-1);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::const_iterator iter = nodeNumbers_.find(nodeNumber);
+#else
+  std::map<>::const_iterator iter = nodeNumbers_.find(nodeNumber);
+#endif
   if (iter == nodeNumbers_.end()) {
     // The node wasn't found, return a NULL ptr.
     node = NULL;
@@ -359,7 +367,11 @@ int NodeDatabase::getAssociatedNodeNumber(int eqnNumber)
     int lastEqn = fieldEqnNumbers[numFields-1];
 
     int fieldSize = -1;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::map<int,int>::const_iterator f_iter
+#else
+    std::map<>::const_iterator f_iter
+#endif
       = fieldDB_->find(fieldIDList[numFields-1]);
     if (f_iter == fieldDB_->end()) ERReturn(-1);
     fieldSize = (*f_iter).second;
@@ -396,7 +408,11 @@ int NodeDatabase::getAssociatedFieldID(int eqnNumber)
   int lastEqn = fieldEqnNumbers[numFields-1];
 
   int fieldSize = -1;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>::const_iterator f_iter
+#else
+  std::map<>::const_iterator f_iter
+#endif
     = fieldDB_->find(fieldIDList[numFields-1]);
   if (f_iter == fieldDB_->end()) ERReturn(-1);
   fieldSize = (*f_iter).second;

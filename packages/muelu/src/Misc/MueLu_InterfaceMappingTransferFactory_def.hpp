@@ -50,22 +50,37 @@
 namespace MueLu
 {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <class LocalOrdinal, class GlobalOrdinal, class Node>
 RCP<const ParameterList> InterfaceMappingTransferFactory<LocalOrdinal, GlobalOrdinal, Node>::GetValidParameterList() const
+#else
+template <class Node>
+RCP<const ParameterList> InterfaceMappingTransferFactory<Node>::GetValidParameterList() const
+#endif
 {
   RCP<ParameterList> validParamList = rcp(new ParameterList());
   validParamList->set<RCP<const FactoryBase>>("CoarseDualNodeID2PrimalNodeID", Teuchos::null, "Generating factory of the CoarseDualNodeID2PrimalNodeID map");
   return validParamList;
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <class LocalOrdinal, class GlobalOrdinal, class Node>
 void InterfaceMappingTransferFactory<LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level &fineLevel, Level &coarseLevel) const
+#else
+template <class Node>
+void InterfaceMappingTransferFactory<Node>::DeclareInput(Level &fineLevel, Level &coarseLevel) const
+#endif
 {
   Input(fineLevel, "CoarseDualNodeID2PrimalNodeID");
 }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 template <class LocalOrdinal, class GlobalOrdinal, class Node>
 void InterfaceMappingTransferFactory<LocalOrdinal, GlobalOrdinal, Node>::Build(Level &fineLevel, Level &coarseLevel) const
+#else
+template <class Node>
+void InterfaceMappingTransferFactory<Node>::Build(Level &fineLevel, Level &coarseLevel) const
+#endif
 {
   Monitor m(*this, "Interface Mapping transfer factory");
 

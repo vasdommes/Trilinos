@@ -206,12 +206,26 @@ inline void tupleToArray(Array<T> &arr, const tuple &tup)
   //
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( CrsMatrix, NonSquare, LO, GO, Scalar, Node )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( CrsMatrix, NonSquare, Scalar, Node )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     typedef ScalarTraits<Scalar> ST;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef CrsMatrix<Scalar,LO,GO,Node> MAT;
     typedef MultiVector<Scalar,LO,GO,Node> MV;
     typedef Map<LO,GO,Node> map_type;
+#else
+    typedef CrsMatrix<Scalar,Node> MAT;
+    typedef MultiVector<Scalar,Node> MV;
+    typedef Map<Node> map_type;
+#endif
     typedef typename ST::magnitudeType Mag;
     typedef ScalarTraits<Mag> MT;
     const global_size_t INVALID = OrdinalTraits<global_size_t>::invalid();
@@ -254,7 +268,11 @@ inline void tupleToArray(Array<T> &arr, const tuple &tup)
     //
     const int numVecs  = 3;
     RCP<const map_type> rowmap (new map_type (INVALID, M, 0, comm));
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const map_type> lclmap = createLocalMapWithNode<LO,GO,Node> (P, comm);
+#else
+    RCP<const map_type> lclmap = createLocalMapWithNode<Node> (P, comm);
+#endif
 
     // create the matrix
     MAT A(rowmap,P,TPETRA_DEFAULT_PROFILE_TYPE);
@@ -306,11 +324,24 @@ inline void tupleToArray(Array<T> &arr, const tuple &tup)
 
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( CrsMatrix, DomainRange, LO, GO, Scalar, Node )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( CrsMatrix, DomainRange, Scalar, Node )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     typedef ScalarTraits<Scalar> ST;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef MultiVector<Scalar,LO,GO,Node> MV;
     typedef CrsMatrix<Scalar,LO,GO,Node> MAT;
+#else
+    typedef MultiVector<Scalar,Node> MV;
+    typedef CrsMatrix<Scalar,Node> MAT;
+#endif
     typedef typename ST::magnitudeType Mag;
     typedef ScalarTraits<Mag> MT;
     const global_size_t INVALID = OrdinalTraits<global_size_t>::invalid();
@@ -354,9 +385,15 @@ inline void tupleToArray(Array<T> &arr, const tuple &tup)
     // domain map will be equal to the row map
     // range  map will be [0,np] [1,np+1] [2,np+2]
     const int numVecs  = 5;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<Map<LO,GO,Node> > rowmap = rcp( new Map<LO,GO,Node>(INVALID,tuple<GO>(2*myImageID,2*myImageID+1),0,comm) );
     RCP<Map<LO,GO,Node> > rngmap = rcp( new Map<LO,GO,Node>(INVALID,tuple<GO>(myImageID,numImages+myImageID),0,comm) );
     RCP<RowMatrix<Scalar,LO,GO,Node> > tri;
+#else
+    RCP<Map<Node> > rowmap = rcp( new Map<Node>(INVALID,tuple<GO>(2*myImageID,2*myImageID+1),0,comm) );
+    RCP<Map<Node> > rngmap = rcp( new Map<Node>(INVALID,tuple<GO>(myImageID,numImages+myImageID),0,comm) );
+    RCP<RowMatrix<Scalar,Node> > tri;
+#endif
     RCP<MAT> tri_crs;
     {
       tri_crs = rcp(new MAT(rowmap,3) );
@@ -462,13 +499,29 @@ inline void tupleToArray(Array<T> &arr, const tuple &tup)
 
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( CrsMatrix, FullMatrixTriDiag, LO, GO, Scalar, Node )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( CrsMatrix, FullMatrixTriDiag, Scalar, Node )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // do a FEM-type communication, then apply to a MultiVector containing the identity
     // this will check non-trivial communication and test multivector apply
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef CrsMatrix<Scalar,LO,GO,Node> MAT;
+#else
+    typedef CrsMatrix<Scalar,Node> MAT;
+#endif
     typedef ScalarTraits<Scalar> ST;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef MultiVector<Scalar,LO,GO,Node> MV;
+#else
+    typedef MultiVector<Scalar,Node> MV;
+#endif
     typedef typename ST::magnitudeType Mag;
     typedef ScalarTraits<Mag> MT;
     const size_t ONE = OrdinalTraits<size_t>::one();
@@ -479,8 +532,13 @@ inline void tupleToArray(Array<T> &arr, const tuple &tup)
     const size_t myImageID = comm->getRank();
     if (numImages < 3) return;
     // create a Map
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map<LO,GO,Node> > map =
       createContigMapWithNode<LO,GO,Node> (INVALID, ONE, comm);
+#else
+    RCP<const Map<Node> > map =
+      createContigMapWithNode<Node> (INVALID, ONE, comm);
+#endif
 
     // RCP<FancyOStream> fos = Teuchos::fancyOStream(rcp(&std::cout,false));
 
@@ -566,12 +624,25 @@ inline void tupleToArray(Array<T> &arr, const tuple &tup)
 
 
   ////
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL( CrsMatrix, BadGID, LO, GO, Scalar, Node )
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( CrsMatrix, BadGID, Scalar, Node )
+#endif
   {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+    using LO = typename Tpetra::Map<>::local_ordinal_type;
+    using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
     // what happens when we call CrsMatrix::insertGlobalValues() for a row that isn't on the Map?
     typedef ScalarTraits<Scalar> ST;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef CrsMatrix<Scalar,LO,GO,Node> MAT;
     typedef Map<LO,GO,Node> map_type;
+#else
+    typedef CrsMatrix<Scalar,Node> MAT;
+    typedef Map<Node> map_type;
+#endif
 
     const global_size_t INVALID = OrdinalTraits<global_size_t>::invalid();
     // get a comm
@@ -616,11 +687,19 @@ inline void tupleToArray(Array<T> &arr, const tuple &tup)
 // INSTANTIATIONS
 //
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 #define UNIT_TEST_GROUP( SCALAR, LO, GO, NODE ) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( CrsMatrix, BadGID,         LO, GO, SCALAR, NODE ) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( CrsMatrix, FullMatrixTriDiag, LO, GO, SCALAR, NODE ) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( CrsMatrix, DomainRange,    LO, GO, SCALAR, NODE ) \
       TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT( CrsMatrix, NonSquare,      LO, GO, SCALAR, NODE )
+#else
+#define UNIT_TEST_GROUP( SCALAR, NODE ) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( CrsMatrix, BadGID, SCALAR, NODE ) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( CrsMatrix, FullMatrixTriDiag, SCALAR, NODE ) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( CrsMatrix, DomainRange, SCALAR, NODE ) \
+      TEUCHOS_UNIT_TEST_TEMPLATE_2_INSTANT( CrsMatrix, NonSquare, SCALAR, NODE )
+#endif
 
   TPETRA_ETI_MANGLING_TYPEDEFS()
 

@@ -81,11 +81,19 @@ TEUCHOS_UNIT_TEST( Map, ProblematicLookup )
   RCP<const map_type> map;
   if (myRank == 0) {
     Array<GO> gids (tuple<GO> (1));
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     map = Tpetra::createNonContigMap<LO, GO> (gids ().getConst () , comm);
+#else
+    map = Tpetra::createNonContigMap<> (gids ().getConst () , comm);
+#endif
   }
   else {
     Array<GO> gids (tuple<GO> (3));
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     map = Tpetra::createNonContigMap<LO, GO> (gids ().getConst (), comm);
+#else
+    map = Tpetra::createNonContigMap<> (gids ().getConst (), comm);
+#endif
   }
 
   {

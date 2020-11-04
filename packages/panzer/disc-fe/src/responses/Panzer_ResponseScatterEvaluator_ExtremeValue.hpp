@@ -68,10 +68,16 @@ public:
                                  WorksetDetailsAccessor& wda,
                                  Teuchos::ArrayRCP<double> & dgdx) const = 0;
 };
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
  
 template <typename LO,typename GO>
+#endif
 class ExtremeValueScatter : public ExtremeValueScatterBase {
 public:
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+   using LO = typename Tpetra::Map<>::local_ordinal_type;
+   using GO = typename Tpetra::Map<>::global_ordinal_type;
+#endif
    ExtremeValueScatter(const Teuchos::RCP<const panzer::GlobalIndexer> & globalIndexer)
      : globalIndexer_(globalIndexer) { }
 
@@ -115,9 +121,13 @@ private:
   Teuchos::RCP<ExtremeValueScatterBase> scatterObj_;
   bool useMax_;
 };
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 
 template <typename LO,typename GO>
 void ExtremeValueScatter<LO,GO>::scatterDerivative(
+#else
+void ExtremeValueScatter<>::scatterDerivative(
+#endif
                                         const PHX::MDField<const panzer::Traits::Jacobian::ScalarT,panzer::Cell> & /* cellExtremeValue */,
                                         panzer::Traits::EvalData /* workset */, 
                                         WorksetDetailsAccessor& /* wda */,

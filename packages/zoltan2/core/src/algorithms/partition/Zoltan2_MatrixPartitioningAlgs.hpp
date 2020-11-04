@@ -265,13 +265,21 @@ void AlgMatrix<Adapter>::partitionMatrix(const RCP<MatrixPartitioningSolution<Ad
   	{
           int buffSize;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   	  Teuchos::receive<int,int>(*mProblemComm, src, 1, &buffSize);
+#else
+  	  Teuchos::receive<>(*mProblemComm, src, 1, &buffSize);
+#endif
 
           if(buffSize>0)
   	  {
             recvBuf.resize(buffSize);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   	    Teuchos::receive<int,gno_t>(*mProblemComm, src, buffSize, recvBuf.data());
+#else
+  	    Teuchos::receive<>(*mProblemComm, src, buffSize, recvBuf.data());
+#endif
 
             for(int i=0;i<buffSize;i++)
   	    {
@@ -308,9 +316,17 @@ void AlgMatrix<Adapter>::partitionMatrix(const RCP<MatrixPartitioningSolution<Ad
       //is the dst proc info correct here?
 
       // Root of procColI is rank procColI
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Teuchos::send<int,int>(*mProblemComm,1,&sizeToSend,procColI);
+#else
+      Teuchos::send<>(*mProblemComm,1,&sizeToSend,procColI);
+#endif
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Teuchos::send<int,gno_t>(*mProblemComm,sizeToSend,idsInProcColI[procColI].data(),procColI);
+#else
+      Teuchos::send<>(*mProblemComm,sizeToSend,idsInProcColI[procColI].data(),procColI);
+#endif
     }
     /////////////////////////////////////////////////////////////////
 
@@ -341,8 +357,13 @@ void AlgMatrix<Adapter>::partitionMatrix(const RCP<MatrixPartitioningSolution<Ad
       {
         int sizeToSend = colIDs.size();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   	Teuchos::send<int,int>(*mProblemComm,1,&sizeToSend,dstRank);
         Teuchos::send<int,gno_t>(*mProblemComm,sizeToSend,colIDs.get(),dstRank);
+#else
+  	Teuchos::send<>(*mProblemComm,1,&sizeToSend,dstRank);
+        Teuchos::send<>(*mProblemComm,sizeToSend,colIDs.get(),dstRank);
+#endif
 
       }
     }
@@ -360,10 +381,18 @@ void AlgMatrix<Adapter>::partitionMatrix(const RCP<MatrixPartitioningSolution<Ad
     int srcRank = myProcCol;
 
     int buffSize;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::receive<int,int>(*mProblemComm, srcRank, 1, &buffSize);
+#else
+    Teuchos::receive<>(*mProblemComm, srcRank, 1, &buffSize);
+#endif
 
     colIDs.resize(buffSize);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::receive<int,gno_t>(*mProblemComm, srcRank, buffSize, colIDs.get());
+#else
+    Teuchos::receive<>(*mProblemComm, srcRank, buffSize, colIDs.get());
+#endif
   }
   /////////////////////////////////////////////////////////////////
 
@@ -455,7 +484,11 @@ void AlgMatrix<Adapter>::partitionMatrix(const RCP<MatrixPartitioningSolution<Ad
   }    
 
   // Gather all ids onto all processes in procRow
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   Teuchos::gatherAll<int,gno_t>(*rowcomm,maxProcRowNCols, locRowIDs.data(),
+#else
+  Teuchos::gatherAll<>(*rowcomm,maxProcRowNCols, locRowIDs.data(),
+#endif
                                 maxProcRowNCols*procDim, rowIDs.get());
   //////////////////////////////////////////////////////////////////////
 

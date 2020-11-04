@@ -60,8 +60,10 @@
 #include "shylu_errorBDDC.hpp"
 
 namespace bddc {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 
   template <class LO, class GO>
+#endif
     void unionData(const LO numRows,
 		   const GO* rowGlobalIDs,
 		   const int* rowSend,
@@ -240,17 +242,26 @@ namespace bddc {
       }
     }
   }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 
   template <class LO,class GO>
+#endif
    void getNodeSend(const LO numNode, 
 		    const GO* nodeGlobalIDs,
 		    MPI_Comm mpiComm,
 		    std::vector<int> & nodeSend)
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::Map<LO,GO>                                 Map;
     typedef Tpetra::CrsGraph<LO,GO>                            CrsGraph;
     typedef Tpetra::Export<LO,GO>                              Export;
     typedef Tpetra::Import<LO,GO>                              Import;
+#else
+    typedef Tpetra::Map<>                                 Map;
+    typedef Tpetra::CrsGraph<>                            CrsGraph;
+    typedef Tpetra::Export<>                              Export;
+    typedef Tpetra::Import<>                              Import;
+#endif
     RCP<const Teuchos::Comm<int> > Comm = 
       rcp( new Teuchos::MpiComm<int>(mpiComm) );
     const int myPID = Comm->getRank();
@@ -267,7 +278,11 @@ namespace bddc {
     for (LO i=0; i<numNode; i++) {
       nodeProcs.insertLocalIndices(i, Teuchos::ArrayView<LO>(zero));
     }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map> nodeMap1to1 = Tpetra::createOneToOne<LO,GO>(nodeMap);
+#else
+    RCP<const Map> nodeMap1to1 = Tpetra::createOneToOne<>(nodeMap);
+#endif
     nodeProcs.fillComplete(colMap, nodeMap1to1);
     CrsGraph nodeProcs1to1(nodeMap1to1, 0);
     Export Exporter(nodeMap, nodeMap1to1);
@@ -291,18 +306,27 @@ namespace bddc {
       if (minProc < myPID) nodeSend[i] = minProc;
     }
   }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 
   template <class LO,class GO>
+#endif
    void determineNodeProcs(const LO numNode, 
 			   const GO* nodeGlobalIDs,
 			   MPI_Comm mpiComm,
 			   std::vector<int> & adjProcs,
 			   std::vector< std::vector<int> > & nodeProcsVec)
   {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Tpetra::Map<LO,GO>                                 Map;
     typedef Tpetra::CrsGraph<LO,GO>                            CrsGraph;
     typedef Tpetra::Export<LO,GO>                              Export;
     typedef Tpetra::Import<LO,GO>                              Import;
+#else
+    typedef Tpetra::Map<>                                 Map;
+    typedef Tpetra::CrsGraph<>                            CrsGraph;
+    typedef Tpetra::Export<>                              Export;
+    typedef Tpetra::Import<>                              Import;
+#endif
     int myPID;
     MPI_Comm_rank(mpiComm, &myPID);
     RCP<const Teuchos::Comm<int> > Comm = 
@@ -320,7 +344,11 @@ namespace bddc {
     for (LO i=0; i<numNode; i++) {
       nodeProcs.insertLocalIndices(i, Teuchos::ArrayView<LO>(zero));
     }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     RCP<const Map> nodeMap1to1 = Tpetra::createOneToOne<LO,GO>(nodeMap);
+#else
+    RCP<const Map> nodeMap1to1 = Tpetra::createOneToOne<>(nodeMap);
+#endif
     nodeProcs.fillComplete(colMap, nodeMap1to1);
     CrsGraph nodeProcs1to1(nodeMap1to1, 0);
     Export Exporter(nodeMap, nodeMap1to1);
@@ -344,7 +372,11 @@ namespace bddc {
     BDDC_TEST_FOR_EXCEPTION(numOtherProc != std::max(0, numProcAll-1), 
 			    std::runtime_error, "numOtherProc error");
     std::sort(adjProcs.begin(), adjProcs.end()); // sorted important later
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::map<int,int> procMap;
+#else
+    std::map<> procMap;
+#endif
     for (LO i=0; i<numOtherProc; i++) {
       procMap.insert(std::make_pair(adjProcs[i], i)); 
     }

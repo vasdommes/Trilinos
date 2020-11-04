@@ -769,8 +769,13 @@ void AlgZoltan<Adapter>::partition(
       oneToOneVec.replaceLocalValue(i, oParts[i]);
     
     // Now import oneToOneVec's values back to vecWithCopies
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     Teuchos::RCP<const Tpetra::Import<lno_t, gno_t> > importer = 
       Tpetra::createImport<lno_t, gno_t>(oneToOneMap, mapWithCopies);
+#else
+    Teuchos::RCP<const Tpetra::Import<> > importer = 
+      Tpetra::createImport<>(oneToOneMap, mapWithCopies);
+#endif
     vecWithCopies.doImport(oneToOneVec, *importer, Tpetra::REPLACE);
 
     // Should see copied vector values when print VEC WITH COPIES

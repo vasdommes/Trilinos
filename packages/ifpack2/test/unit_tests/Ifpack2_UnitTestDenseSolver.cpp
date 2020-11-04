@@ -58,8 +58,16 @@
 
 namespace {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(DenseSolver, LapackComparison, ScalarType, LocalOrdinalType, GlobalOrdinalType)
+#else
+TEUCHOS_UNIT_TEST_TEMPLATE_1_DECL(DenseSolver, LapackComparison, ScalarType)
+#endif
 {
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+  using LocalOrdinalType = typename Tpetra::Map<>::local_ordinal_type;
+  using GlobalOrdinalType = typename Tpetra::Map<>::global_ordinal_type;
+#endif
   using Teuchos::Array;
   using Teuchos::ArrayRCP;
   using Teuchos::as;
@@ -371,7 +379,11 @@ TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL(DenseSolver, LapackComparison, ScalarType, Loc
 
 // Define the set of unit tests to instantiate in this file.
 #define UNIT_TEST_GROUP_SC_LO_GO(Scalar,LocalOrdinal,GlobalOrdinal) \
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( DenseSolver, LapackComparison, Scalar, LocalOrdinal, GlobalOrdinal)
+#else
+  TEUCHOS_UNIT_TEST_TEMPLATE_1_INSTANT( DenseSolver, LapackComparison, Scalar)
+#endif
 
 #include "Ifpack2_ETIHelperMacros.h"
 

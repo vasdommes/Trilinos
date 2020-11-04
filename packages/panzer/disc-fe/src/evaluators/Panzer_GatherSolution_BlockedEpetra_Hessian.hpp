@@ -59,7 +59,11 @@ namespace panzer
    *  solution names vector.
    */
   template<typename TRAITS, typename LO, typename GO>
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   class GatherSolution_BlockedEpetra<panzer::Traits::Hessian, TRAITS, LO, GO>
+#else
+  class GatherSolution_BlockedEpetra<panzer::Traits::Hessian, TRAITS>
+#endif
     :
     public panzer::EvaluatorWithBaseImpl<TRAITS>,
     public PHX::EvaluatorDerived<panzer::Traits::Hessian, TRAITS>,
@@ -76,7 +80,11 @@ namespace panzer
        *                      handle the global unknown numbering.
        */
       GatherSolution_BlockedEpetra(
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         const std::vector<Teuchos::RCP<const GlobalIndexer<LO, int>>>&
+#else
+        const std::vector<Teuchos::RCP<const GlobalIndexer<>>>&
+#endif
           indexers)
         :
         indexers_(indexers)
@@ -96,7 +104,11 @@ namespace panzer
        *                      `GatherSolution_Input`.
        */
       GatherSolution_BlockedEpetra(
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         const std::vector<Teuchos::RCP<const GlobalIndexer<LO, int>>>&
+#else
+        const std::vector<Teuchos::RCP<const GlobalIndexer<>>>&
+#endif
           indexers,
         const Teuchos::ParameterList& p);
     
@@ -160,7 +172,11 @@ namespace panzer
         using panzer::Traits;
         using Teuchos::rcp;
         return rcp(new
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           GatherSolution_BlockedEpetra<Traits::Hessian, TRAITS, LO, GO>
+#else
+          GatherSolution_BlockedEpetra<Traits::Hessian, TRAITS>
+#endif
           (indexers_, pl));
       } // end of clone()
     
@@ -190,7 +206,11 @@ namespace panzer
        *  \brief These map the local (field, element, basis) triplet to a
        *         global ID for scattering.
        */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       std::vector<Teuchos::RCP<const GlobalIndexer<LO, int>>> indexers_;
+#else
+      std::vector<Teuchos::RCP<const GlobalIndexer<>>> indexers_;
+#endif
 
       /**
        *  \brief The block index into `indexers_`.

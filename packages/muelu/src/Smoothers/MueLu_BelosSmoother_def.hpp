@@ -72,8 +72,13 @@
 
 namespace MueLu {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   BelosSmoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::BelosSmoother(const std::string type, const Teuchos::ParameterList& paramList)
+#else
+  template <class Scalar, class Node>
+  BelosSmoother<Scalar, Node>::BelosSmoother(const std::string type, const Teuchos::ParameterList& paramList)
+#endif
   : type_(type)
   {
     bool solverSupported = false;
@@ -101,20 +106,35 @@ namespace MueLu {
       SetParameterList(paramList);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void BelosSmoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::SetParameterList(const Teuchos::ParameterList& paramList) {
+#else
+  template <class Scalar, class Node>
+  void BelosSmoother<Scalar, Node>::SetParameterList(const Teuchos::ParameterList& paramList) {
+#endif
     Factory::SetParameterList(paramList);
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void BelosSmoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::DeclareInput(Level& currentLevel) const {
+#else
+  template <class Scalar, class Node>
+  void BelosSmoother<Scalar, Node>::DeclareInput(Level& currentLevel) const {
+#endif
 
     this->Input(currentLevel, "A");
 
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void BelosSmoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Setup(Level& currentLevel) {
+#else
+  template <class Scalar, class Node>
+  void BelosSmoother<Scalar, Node>::Setup(Level& currentLevel) {
+#endif
     FactoryMonitor m(*this, "Setup Smoother", currentLevel);
 
     A_ = Factory::Get< RCP<Matrix> >(currentLevel, "A");
@@ -124,8 +144,13 @@ namespace MueLu {
   }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void BelosSmoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::SetupBelos(Level& currentLevel) {
+#else
+  template <class Scalar, class Node>
+  void BelosSmoother<Scalar, Node>::SetupBelos(Level& currentLevel) {
+#endif
 
     bool useTpetra = A_->getRowMap()->lib() == Xpetra::UseTpetra;
 
@@ -144,8 +169,13 @@ namespace MueLu {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void BelosSmoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Apply(MultiVector& X, const MultiVector& B, bool InitialGuessIsZero) const {
+#else
+  template <class Scalar, class Node>
+  void BelosSmoother<Scalar, Node>::Apply(MultiVector& X, const MultiVector& B, bool InitialGuessIsZero) const {
+#endif
     TEUCHOS_TEST_FOR_EXCEPTION(SmootherPrototype::IsSetup() == false, Exceptions::RuntimeError, "MueLu::BelosSmoother::Apply(): Setup() has not been called");
 
     if (A_->getRowMap()->lib() == Xpetra::UseTpetra) {
@@ -153,8 +183,13 @@ namespace MueLu {
       if (InitialGuessIsZero) {
         X.putScalar(0.0);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         RCP<Tpetra::MultiVector<SC,LO,GO,NO> >       tpX = rcpFromRef(Utilities::MV2NonConstTpetraMV(X));
         RCP<const Tpetra::MultiVector<SC,LO,GO,NO> > tpB = rcpFromRef(Utilities::MV2TpetraMV(B));
+#else
+        RCP<Tpetra::MultiVector<SC,NO> >       tpX = rcpFromRef(Utilities::MV2NonConstTpetraMV(X));
+        RCP<const Tpetra::MultiVector<SC,NO> > tpB = rcpFromRef(Utilities::MV2TpetraMV(B));
+#endif
 
         tBelosProblem_->setInitResVec(tpB);
         tBelosProblem_->setProblem(tpX, tpB);
@@ -165,8 +200,13 @@ namespace MueLu {
         RCP<MultiVector> Residual   = Utilities::Residual(*A_, X, B);
         RCP<MultiVector> Correction = MultiVectorFactory::Build(A_->getDomainMap(), X.getNumVectors());
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         RCP<Tpetra::MultiVector<SC,LO,GO,NO> >       tpX = rcpFromRef(Utilities::MV2NonConstTpetraMV(*Correction));
         RCP<const Tpetra::MultiVector<SC,LO,GO,NO> > tpB = rcpFromRef(Utilities::MV2TpetraMV(*Residual));
+#else
+        RCP<Tpetra::MultiVector<SC,NO> >       tpX = rcpFromRef(Utilities::MV2NonConstTpetraMV(*Correction));
+        RCP<const Tpetra::MultiVector<SC,NO> > tpB = rcpFromRef(Utilities::MV2TpetraMV(*Residual));
+#endif
 
         tBelosProblem_->setInitResVec(tpB);
         tBelosProblem_->setProblem(tpX, tpB);
@@ -181,15 +221,25 @@ namespace MueLu {
 
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   RCP<MueLu::SmootherPrototype<Scalar, LocalOrdinal, GlobalOrdinal, Node> > BelosSmoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Copy() const {
+#else
+  template <class Scalar, class Node>
+  RCP<MueLu::SmootherPrototype<Scalar, Node> > BelosSmoother<Scalar, Node>::Copy() const {
+#endif
     RCP<BelosSmoother> smoother = rcp(new BelosSmoother(*this) );
     smoother->SetParameterList(this->GetParameterList());
     return smoother;
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   std::string BelosSmoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::description() const {
+#else
+  template <class Scalar, class Node>
+  std::string BelosSmoother<Scalar, Node>::description() const {
+#endif
     std::ostringstream out;
     if (SmootherPrototype::IsSetup()) {
       if (A_->getRowMap()->lib() == Xpetra::UseTpetra) {
@@ -203,8 +253,13 @@ namespace MueLu {
     return out.str();
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   void BelosSmoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::print(Teuchos::FancyOStream &out, const VerbLevel verbLevel) const {
+#else
+  template <class Scalar, class Node>
+  void BelosSmoother<Scalar, Node>::print(Teuchos::FancyOStream &out, const VerbLevel verbLevel) const {
+#endif
     MUELU_DESCRIBE;
 
     if (verbLevel & Parameters1) {
@@ -233,8 +288,13 @@ namespace MueLu {
     }
   }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   template <class Scalar,class LocalOrdinal, class GlobalOrdinal, class Node>
   size_t BelosSmoother<Scalar, LocalOrdinal, GlobalOrdinal, Node>::getNodeSmootherComplexity() const {
+#else
+  template <class Scalar, class Node>
+  size_t BelosSmoother<Scalar, Node>::getNodeSmootherComplexity() const {
+#endif
     return Teuchos::OrdinalTraits<size_t>::invalid();
   }
 

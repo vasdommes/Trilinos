@@ -53,14 +53,27 @@
 
 using LO = Tpetra::Map<>::local_ordinal_type;
 using GO = Tpetra::Map<>::global_ordinal_type;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 typedef Tpetra::Map<LO,GO>  Tpetra_Map;
 typedef Tpetra::Vector<double,LO,GO>  Tpetra_Vector;
 typedef Tpetra::MultiVector<double,LO,GO>  Tpetra_MultiVector;
 typedef Tpetra::Operator<double,LO,GO>  Tpetra_Operator;
 typedef Tpetra::CrsGraph<LO,GO>  Tpetra_CrsGraph;
 typedef Tpetra::CrsMatrix<double,LO,GO>  Tpetra_CrsMatrix;
+#else
+typedef Tpetra::Map<>  Tpetra_Map;
+typedef Tpetra::Vector<double>  Tpetra_Vector;
+typedef Tpetra::MultiVector<double>  Tpetra_MultiVector;
+typedef Tpetra::Operator<double>  Tpetra_Operator;
+typedef Tpetra::CrsGraph<>  Tpetra_CrsGraph;
+typedef Tpetra::CrsMatrix<double>  Tpetra_CrsMatrix;
+#endif
 typedef Thyra::TpetraOperatorVectorExtraction<
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     double, LO, GO> ConverterT;
+#else
+    double> ConverterT;
+#endif
 
 /** \brief Concrete Tpetra-based Model Evaluator
  *

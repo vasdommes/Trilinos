@@ -102,14 +102,21 @@ namespace MueLu {
     go away, while others should be moved to Xpetra.
   */
   template <class Scalar,
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
             class LocalOrdinal = DefaultLocalOrdinal,
             class GlobalOrdinal = DefaultGlobalOrdinal,
+#endif
             class Node = DefaultNode>
   class UtilitiesBase {
   public:
 #undef MUELU_UTILITIESBASE_SHORT
+#ifndef TPETRA_ENABLE_TEMPLATE_ORDINALS
+using LocalOrdinal = typename Tpetra::Map<>::local_ordinal_type;
+using GlobalOrdinal = typename Tpetra::Map<>::global_ordinal_type;
+#endif
 //#include "MueLu_UseShortNames.hpp"
   private:
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     typedef Xpetra::CrsMatrixWrap<Scalar,LocalOrdinal,GlobalOrdinal,Node> CrsMatrixWrap;
     typedef Xpetra::CrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> CrsMatrix;
     typedef Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> Matrix;
@@ -119,6 +126,17 @@ namespace MueLu {
     typedef Xpetra::BlockedMultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> BlockedMultiVector;
     typedef Xpetra::BlockedMap<LocalOrdinal,GlobalOrdinal,Node> BlockedMap;
     typedef Xpetra::Map<LocalOrdinal,GlobalOrdinal,Node> Map;
+#else
+    typedef Xpetra::CrsMatrixWrap<Scalar,Node> CrsMatrixWrap;
+    typedef Xpetra::CrsMatrix<Scalar,Node> CrsMatrix;
+    typedef Xpetra::Matrix<Scalar,Node> Matrix;
+    typedef Xpetra::Vector<Scalar,Node> Vector;
+    typedef Xpetra::BlockedVector<Scalar,Node> BlockedVector;
+    typedef Xpetra::MultiVector<Scalar,Node> MultiVector;
+    typedef Xpetra::BlockedMultiVector<Scalar,Node> BlockedMultiVector;
+    typedef Xpetra::BlockedMap<Node> BlockedMap;
+    typedef Xpetra::Map<Node> Map;
+#endif
   public:
     typedef typename Teuchos::ScalarTraits<Scalar>::magnitudeType Magnitude;
 
@@ -169,11 +187,19 @@ namespace MueLu {
       RCP<const Matrix> rcpA = Teuchos::rcpFromRef(A);
 
       RCP<const Map> rowMap = rcpA->getRowMap();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       RCP<Vector> diag = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(rowMap,true);
+#else
+      RCP<Vector> diag = Xpetra::VectorFactory<Scalar,Node>::Build(rowMap,true);
+#endif
 
       rcpA->getLocalDiagCopy(*diag);
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       RCP<Vector> inv = MueLu::UtilitiesBase<Scalar,LocalOrdinal,GlobalOrdinal,Node>::GetInverse(diag, tol, tolReplacement);
+#else
+      RCP<Vector> inv = MueLu::UtilitiesBase<Scalar,Node>::GetInverse(diag, tol, tolReplacement);
+#endif
 
       return inv;
     }
@@ -225,11 +251,20 @@ namespace MueLu {
       const Scalar zero = Teuchos::ScalarTraits<Scalar>::zero();
       const Scalar one = Teuchos::ScalarTraits<Scalar>::one();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       RCP<const Xpetra::BlockedCrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > bA =
           Teuchos::rcp_dynamic_cast<const Xpetra::BlockedCrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >(rcpA);
+#else
+      RCP<const Xpetra::BlockedCrsMatrix<Scalar,Node> > bA =
+          Teuchos::rcp_dynamic_cast<const Xpetra::BlockedCrsMatrix<Scalar,Node> >(rcpA);
+#endif
       if(bA == Teuchos::null) {
         RCP<const Map> rowMap = rcpA->getRowMap();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         diag = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(rowMap,true);
+#else
+        diag = Xpetra::VectorFactory<Scalar,Node>::Build(rowMap,true);
+#endif
         ArrayRCP<Scalar> diagVals = diag->getDataNonConst(0);
         Teuchos::ArrayView<const LocalOrdinal> cols;
         Teuchos::ArrayView<const Scalar> vals;
@@ -254,13 +289,21 @@ namespace MueLu {
         //TEUCHOS_TEST_FOR_EXCEPTION(bA->Rows() != bA->Cols(), Xpetra::Exceptions::RuntimeError,
         //  "UtilitiesBase::GetLumpedMatrixDiagonal(): you cannot extract the diagonal of a "<< bA->Rows() << "x"<< bA->Cols() << " blocked matrix." );
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         diag = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(bA->getRangeMapExtractor()->getFullMap(),true);
+#else
+        diag = Xpetra::VectorFactory<Scalar,Node>::Build(bA->getRangeMapExtractor()->getFullMap(),true);
+#endif
 
         for (size_t row = 0; row < bA->Rows(); ++row) {
           for (size_t col = 0; col < bA->Cols(); ++col) {
             if (!bA->getMatrix(row,col).is_null()) {
               // if we are in Thyra mode, but the block (row,row) is again a blocked operator, we have to use (pseudo) Xpetra-style GIDs with offset!
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
               bool bThyraMode = bA->getRangeMapExtractor()->getThyraMode() && (Teuchos::rcp_dynamic_cast<Xpetra::BlockedCrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >(bA->getMatrix(row,col)) == Teuchos::null);
+#else
+              bool bThyraMode = bA->getRangeMapExtractor()->getThyraMode() && (Teuchos::rcp_dynamic_cast<Xpetra::BlockedCrsMatrix<Scalar,Node> >(bA->getMatrix(row,col)) == Teuchos::null);
+#endif
               RCP<Vector> ddtemp = bA->getRangeMapExtractor()->ExtractVector(diag,row,bThyraMode);
               RCP<const Vector> dd = GetLumpedMatrixDiagonal(bA->getMatrix(row,col));
               ddtemp->update(Teuchos::as<Scalar>(1.0),*dd,Teuchos::as<Scalar>(1.0));
@@ -284,7 +327,11 @@ namespace MueLu {
     */
     static Teuchos::RCP<Vector> GetInverse(Teuchos::RCP<const Vector> v, Magnitude tol = Teuchos::ScalarTraits<Scalar>::eps()*100, Scalar tolReplacement = Teuchos::ScalarTraits<Scalar>::zero()) {
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       RCP<Vector> ret = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(v->getMap(),true);
+#else
+      RCP<Vector> ret = Xpetra::VectorFactory<Scalar,Node>::Build(v->getMap(),true);
+#endif
 
       // check whether input vector "v" is a BlockedVector
       RCP<const BlockedVector> bv = Teuchos::rcp_dynamic_cast<const BlockedVector>(v);
@@ -295,7 +342,11 @@ namespace MueLu {
         for(size_t r = 0; r < bmap->getNumMaps(); ++r) {
           RCP<const MultiVector> submvec = bv->getMultiVector(r,bmap->getThyraMode());
           RCP<const Vector> subvec = submvec->getVector(0);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
           RCP<Vector> subvecinf = MueLu::UtilitiesBase<Scalar,LocalOrdinal,GlobalOrdinal,Node>::GetInverse(subvec,tol,tolReplacement);
+#else
+          RCP<Vector> subvecinf = MueLu::UtilitiesBase<Scalar,Node>::GetInverse(subvec,tol,tolReplacement);
+#endif
           bret->setMultiVector(r, subvecinf, bmap->getThyraMode());
         }
         return ret;
@@ -327,7 +378,11 @@ namespace MueLu {
       RCP<const BlockedMap> browMap = Teuchos::rcp_dynamic_cast<const BlockedMap>(rowMap);
       if(!browMap.is_null()) rowMap = browMap->getMap();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       RCP<Vector> localDiag = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(rowMap);
+#else
+      RCP<Vector> localDiag = Xpetra::VectorFactory<Scalar,Node>::Build(rowMap);
+#endif
       try {
          const CrsMatrixWrap* crsOp = dynamic_cast<const CrsMatrixWrap*>(&A);
          if (crsOp == NULL) {
@@ -345,11 +400,20 @@ namespace MueLu {
         localDiagVals = diagVals = null;
       }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       RCP<Vector> diagonal = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(colMap);
       RCP< const Xpetra::Import<LocalOrdinal,GlobalOrdinal,Node> > importer;
+#else
+      RCP<Vector> diagonal = Xpetra::VectorFactory<Scalar,Node>::Build(colMap);
+      RCP< const Xpetra::Import<Node> > importer;
+#endif
       importer = A.getCrsGraph()->getImporter();
       if (importer == Teuchos::null) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         importer = Xpetra::ImportFactory<LocalOrdinal,GlobalOrdinal,Node>::Build(rowMap, colMap);
+#else
+        importer = Xpetra::ImportFactory<Node>::Build(rowMap, colMap);
+#endif
       }
       diagonal->doImport(*localDiag, *(importer), Xpetra::INSERT);
       return diagonal;
@@ -374,8 +438,13 @@ namespace MueLu {
       RCP<const BlockedMap> browMap = Teuchos::rcp_dynamic_cast<const BlockedMap>(rowMap);
       if(!browMap.is_null()) rowMap = browMap->getMap();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       RCP<Vector> local   = Xpetra::VectorFactory<SC,LO,GO,Node>::Build(rowMap);
       RCP<Vector> ghosted = Xpetra::VectorFactory<SC,LO,GO,Node>::Build(colMap,true);
+#else
+      RCP<Vector> local   = Xpetra::VectorFactory<SC,Node>::Build(rowMap);
+      RCP<Vector> ghosted = Xpetra::VectorFactory<SC,Node>::Build(colMap,true);
+#endif
       ArrayRCP<SC> localVals = local->getDataNonConst(0);
 
       for (LO row = 0; row < static_cast<LO>(A.getRowMap()->getNodeNumElements()); ++row) {
@@ -394,10 +463,18 @@ namespace MueLu {
 	localVals[row] = si;
       }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       RCP< const Xpetra::Import<LO,GO,Node> > importer;
+#else
+      RCP< const Xpetra::Import<Node> > importer;
+#endif
       importer = A.getCrsGraph()->getImporter();
       if (importer == Teuchos::null) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         importer = Xpetra::ImportFactory<LO,GO,Node>::Build(rowMap, colMap);
+#else
+        importer = Xpetra::ImportFactory<Node>::Build(rowMap, colMap);
+#endif
       }
       ghosted->doImport(*local, *(importer), Xpetra::INSERT);
       return ghosted;
@@ -405,7 +482,11 @@ namespace MueLu {
 
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static RCP<Xpetra::Vector<Magnitude,LocalOrdinal,GlobalOrdinal,Node> >
+#else
+    static RCP<Xpetra::Vector<Magnitude,Node> >
+#endif
     GetMatrixOverlappedAbsDeletedRowsum(const Matrix& A) {
       RCP<const Map> rowMap = A.getRowMap(), colMap = A.getColMap();
       using STS = typename Teuchos::ScalarTraits<Scalar>;
@@ -414,14 +495,23 @@ namespace MueLu {
       using LO  = LocalOrdinal;
       using GO  = GlobalOrdinal;
       using SC  = Scalar;
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       using RealValuedVector = Xpetra::Vector<MT,LO,GO,Node>;
+#else
+      using RealValuedVector = Xpetra::Vector<MT,Node>;
+#endif
 
       // Undo block map (if we have one)
       RCP<const BlockedMap> browMap = Teuchos::rcp_dynamic_cast<const BlockedMap>(rowMap);
       if(!browMap.is_null()) rowMap = browMap->getMap();
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       RCP<RealValuedVector> local     = Xpetra::VectorFactory<MT,LO,GO,Node>::Build(rowMap);
       RCP<RealValuedVector> ghosted   = Xpetra::VectorFactory<MT,LO,GO,Node>::Build(colMap,true);
+#else
+      RCP<RealValuedVector> local     = Xpetra::VectorFactory<MT,Node>::Build(rowMap);
+      RCP<RealValuedVector> ghosted   = Xpetra::VectorFactory<MT,Node>::Build(colMap,true);
+#endif
       ArrayRCP<MT>          localVals = local->getDataNonConst(0);
 
       for (LO rowIdx = 0; rowIdx < static_cast<LO>(A.getRowMap()->getNodeNumElements()); ++rowIdx) {
@@ -440,10 +530,18 @@ namespace MueLu {
         localVals[rowIdx] = si;
       }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       RCP< const Xpetra::Import<LO,GO,Node> > importer;
+#else
+      RCP< const Xpetra::Import<Node> > importer;
+#endif
       importer = A.getCrsGraph()->getImporter();
       if (importer == Teuchos::null) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         importer = Xpetra::ImportFactory<LO,GO,Node>::Build(rowMap, colMap);
+#else
+        importer = Xpetra::ImportFactory<Node>::Build(rowMap, colMap);
+#endif
       }
       ghosted->doImport(*local, *(importer), Xpetra::INSERT);
       return ghosted;
@@ -455,7 +553,11 @@ namespace MueLu {
     // - ArrayRCP<> ResidualNorm(Matrix const &Op, MultiVector const &X, MultiVector const &RHS)
     // or
     // - void ResidualNorm(Matrix const &Op, MultiVector const &X, MultiVector const &RHS, Array &)
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::Array<Magnitude> ResidualNorm(const Xpetra::Operator<Scalar,LocalOrdinal,GlobalOrdinal,Node>& Op, const MultiVector& X, const MultiVector& RHS) {
+#else
+    static Teuchos::Array<Magnitude> ResidualNorm(const Xpetra::Operator<Scalar,Node>& Op, const MultiVector& X, const MultiVector& RHS) {
+#endif
       TEUCHOS_TEST_FOR_EXCEPTION(X.getNumVectors() != RHS.getNumVectors(), Exceptions::RuntimeError, "Number of solution vectors != number of right-hand sides")
        const size_t numVecs = X.getNumVectors();
        RCP<MultiVector> RES = Residual(Op, X, RHS);
@@ -464,7 +566,11 @@ namespace MueLu {
        return norms;
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::Array<Magnitude> ResidualNorm(const Xpetra::Operator<Scalar,LocalOrdinal,GlobalOrdinal,Node>& Op, const MultiVector& X, const MultiVector& RHS, MultiVector & Resid) {
+#else
+    static Teuchos::Array<Magnitude> ResidualNorm(const Xpetra::Operator<Scalar,Node>& Op, const MultiVector& X, const MultiVector& RHS, MultiVector & Resid) {
+#endif
       TEUCHOS_TEST_FOR_EXCEPTION(X.getNumVectors() != RHS.getNumVectors(), Exceptions::RuntimeError, "Number of solution vectors != number of right-hand sides")
        const size_t numVecs = X.getNumVectors();
        Residual(Op,X,RHS,Resid);
@@ -473,17 +579,29 @@ namespace MueLu {
        return norms;
     }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static RCP<MultiVector> Residual(const Xpetra::Operator<Scalar,LocalOrdinal,GlobalOrdinal,Node>& Op, const MultiVector& X, const MultiVector& RHS) {
+#else
+    static RCP<MultiVector> Residual(const Xpetra::Operator<Scalar,Node>& Op, const MultiVector& X, const MultiVector& RHS) {
+#endif
       TEUCHOS_TEST_FOR_EXCEPTION(X.getNumVectors() != RHS.getNumVectors(), Exceptions::RuntimeError, "Number of solution vectors != number of right-hand sides")
         const size_t numVecs = X.getNumVectors();
         // TODO Op.getRangeMap should return a BlockedMap if it is a BlockedCrsOperator
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         RCP<MultiVector> RES = Xpetra::MultiVectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(RHS.getMap(), numVecs, false); // no need to initialize to zero
+#else
+        RCP<MultiVector> RES = Xpetra::MultiVectorFactory<Scalar,Node>::Build(RHS.getMap(), numVecs, false); // no need to initialize to zero
+#endif
         Op.residual(X,RHS,*RES);
         return RES;
     }
 
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static void Residual(const Xpetra::Operator<Scalar,LocalOrdinal,GlobalOrdinal,Node>& Op, const MultiVector& X, const MultiVector& RHS, MultiVector & Resid) {
+#else
+    static void Residual(const Xpetra::Operator<Scalar,Node>& Op, const MultiVector& X, const MultiVector& RHS, MultiVector & Resid) {
+#endif
       TEUCHOS_TEST_FOR_EXCEPTION(X.getNumVectors() != RHS.getNumVectors(), Exceptions::RuntimeError, "Number of solution vectors != number of right-hand sides");
       TEUCHOS_TEST_FOR_EXCEPTION(Resid.getNumVectors() != RHS.getNumVectors(), Exceptions::RuntimeError, "Number of residual vectors != number of right-hand sides");
       Op.residual(X,RHS,Resid);
@@ -537,9 +655,17 @@ namespace MueLu {
       // power iteration
       RCP<Vector> diagInvVec;
       if (scaleByDiag) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         RCP<Vector> diagVec = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(A.getRowMap());
+#else
+        RCP<Vector> diagVec = Xpetra::VectorFactory<Scalar,Node>::Build(A.getRowMap());
+#endif
         A.getLocalDiagCopy(*diagVec);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
         diagInvVec = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(A.getRowMap());
+#else
+        diagInvVec = Xpetra::VectorFactory<Scalar,Node>::Build(A.getRowMap());
+#endif
         diagInvVec->reciprocal(*diagVec);
       }
 
@@ -564,9 +690,15 @@ namespace MueLu {
           "Utils::PowerMethod: operator must have domain and range maps that are equivalent.");
 
       // Create three vectors, fill z with random numbers
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       RCP<Vector> q = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(A.getDomainMap());
       RCP<Vector> r = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(A.getRangeMap());
       RCP<Vector> z = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(A.getRangeMap());
+#else
+      RCP<Vector> q = Xpetra::VectorFactory<Scalar,Node>::Build(A.getDomainMap());
+      RCP<Vector> r = Xpetra::VectorFactory<Scalar,Node>::Build(A.getRangeMap());
+      RCP<Vector> z = Xpetra::VectorFactory<Scalar,Node>::Build(A.getRangeMap());
+#endif
 
       z->setSeed(seed);  // seed random number generator
       z->randomize(true);// use Xpetra implementation: -> same results for Epetra and Tpetra
@@ -637,7 +769,11 @@ namespace MueLu {
 
         @return boolean array.  The ith entry is true iff row i is a Dirichlet row.
     */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::ArrayRCP<const bool> DetectDirichletRows(const Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>& A, const Magnitude& tol = Teuchos::ScalarTraits<Scalar>::zero(), bool count_twos_as_dirichlet=false) {
+#else
+    static Teuchos::ArrayRCP<const bool> DetectDirichletRows(const Xpetra::Matrix<Scalar,Node>& A, const Magnitude& tol = Teuchos::ScalarTraits<Scalar>::zero(), bool count_twos_as_dirichlet=false) {
+#endif
       LocalOrdinal numRows = A.getNodeNumRows();
       typedef Teuchos::ScalarTraits<Scalar> STS;
       ArrayRCP<bool> boundaryNodes(numRows, true);
@@ -689,12 +825,20 @@ namespace MueLu {
         @param[in] tol If a row entry's magnitude is less than or equal to this tolerance, the entry is treated as zero.
         @return boolean array.  The ith entry is true iff row i is a Dirichlet row.
     */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::ArrayRCP<const bool> DetectDirichletRowsExt(const Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>& A, bool & bHasZeroDiagonal, const Magnitude& tol = Teuchos::ScalarTraits<Scalar>::zero()) {
+#else
+    static Teuchos::ArrayRCP<const bool> DetectDirichletRowsExt(const Xpetra::Matrix<Scalar,Node>& A, bool & bHasZeroDiagonal, const Magnitude& tol = Teuchos::ScalarTraits<Scalar>::zero()) {
+#endif
 
       // assume that there is no zero diagonal in matrix
       bHasZeroDiagonal = false;
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Teuchos::RCP<Vector> diagVec = Xpetra::VectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(A.getRowMap());
+#else
+      Teuchos::RCP<Vector> diagVec = Xpetra::VectorFactory<Scalar,Node>::Build(A.getRowMap());
+#endif
       A.getLocalDiagCopy(*diagVec);
       Teuchos::ArrayRCP< const Scalar > diagVecData = diagVec->getData(0);
 
@@ -731,13 +875,23 @@ namespace MueLu {
 
         @return boolean array.  The ith entry is true iff row i is a Dirichlet column.
     */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Teuchos::ArrayRCP<const bool> DetectDirichletCols(const Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>& A,
+#else
+    static Teuchos::ArrayRCP<const bool> DetectDirichletCols(const Xpetra::Matrix<Scalar,Node>& A,
+#endif
                                                              const Teuchos::ArrayRCP<const bool>& dirichletRows) {
       Scalar zero = Teuchos::ScalarTraits<Scalar>::zero();
       Scalar one = Teuchos::ScalarTraits<Scalar>::one();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Teuchos::RCP<const Xpetra::Map<LocalOrdinal,GlobalOrdinal,Node> > domMap = A.getDomainMap();
       Teuchos::RCP<const Xpetra::Map<LocalOrdinal,GlobalOrdinal,Node> > colMap = A.getColMap();
       Teuchos::RCP<Xpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> > myColsToZero = Xpetra::MultiVectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(colMap,1);
+#else
+      Teuchos::RCP<const Xpetra::Map<Node> > domMap = A.getDomainMap();
+      Teuchos::RCP<const Xpetra::Map<Node> > colMap = A.getColMap();
+      Teuchos::RCP<Xpetra::MultiVector<Scalar,Node> > myColsToZero = Xpetra::MultiVectorFactory<Scalar,Node>::Build(colMap,1);
+#endif
       myColsToZero->putScalar(zero);
       // Find all local column indices that are in Dirichlet rows, record in myColsToZero as 1.0
       for(size_t i=0; i<(size_t) dirichletRows.size(); i++) {
@@ -750,9 +904,17 @@ namespace MueLu {
         }
       }
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Teuchos::RCP<Xpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> > globalColsToZero = Xpetra::MultiVectorFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>::Build(domMap,1);
+#else
+      Teuchos::RCP<Xpetra::MultiVector<Scalar,Node> > globalColsToZero = Xpetra::MultiVectorFactory<Scalar,Node>::Build(domMap,1);
+#endif
       globalColsToZero->putScalar(zero);
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       Teuchos::RCP<Xpetra::Export<LocalOrdinal,GlobalOrdinal,Node> > exporter = Xpetra::ExportFactory<LocalOrdinal,GlobalOrdinal,Node>::Build(colMap,domMap);
+#else
+      Teuchos::RCP<Xpetra::Export<Node> > exporter = Xpetra::ExportFactory<Node>::Build(colMap,domMap);
+#endif
       // export to domain map
       globalColsToZero->doExport(*myColsToZero,*exporter,Xpetra::ADD);
       // import to column map
@@ -771,7 +933,11 @@ namespace MueLu {
 
        Used in energy minimization algorithms
     */
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static Scalar Frobenius(const Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>& A, const Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>& B) {
+#else
+    static Scalar Frobenius(const Xpetra::Matrix<Scalar,Node>& A, const Xpetra::Matrix<Scalar,Node>& B) {
+#endif
       // We check only row maps. Column may be different. One would hope that they are the same, as we typically
       // calculate frobenius norm of the specified sparsity pattern with an updated matrix from the previous step,
       // but matrix addition, even when one is submatrix of the other, changes column map (though change may be as
@@ -865,7 +1031,11 @@ namespace MueLu {
     // Finds the OAZ Dirichlet rows for this matrix
     // so far only used in IntrepidPCoarsenFactory
     // TODO check whether we can use DetectDirichletRows instead
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static void FindDirichletRows(Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > &A,
+#else
+    static void FindDirichletRows(Teuchos::RCP<Xpetra::Matrix<Scalar,Node> > &A,
+#endif
                                   std::vector<LocalOrdinal>& dirichletRows, bool count_twos_as_dirichlet=false) {
       typedef typename Teuchos::ScalarTraits<Scalar>::magnitudeType MT;
       dirichletRows.resize(0);
@@ -887,7 +1057,11 @@ namespace MueLu {
 
     // Applies Ones-and-Zeros to matrix rows
     // Takes a vector of row indices
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static void ApplyOAZToMatrixRows(Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >& A,
+#else
+    static void ApplyOAZToMatrixRows(Teuchos::RCP<Xpetra::Matrix<Scalar,Node> >& A,
+#endif
                                const std::vector<LocalOrdinal>& dirichletRows) {
       RCP<const Map> Rmap = A->getRowMap();
       RCP<const Map> Cmap = A->getColMap();
@@ -913,7 +1087,11 @@ namespace MueLu {
 
     // Applies Ones-and-Zeros to matrix rows
     // Takes a Boolean array.
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static void ApplyOAZToMatrixRows(Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >& A,
+#else
+    static void ApplyOAZToMatrixRows(Teuchos::RCP<Xpetra::Matrix<Scalar,Node> >& A,
+#endif
                                      const Teuchos::ArrayRCP<const bool>& dirichletRows) {
       TEUCHOS_ASSERT(A->isFillComplete());
       RCP<const Map> domMap = A->getDomainMap();
@@ -947,7 +1125,11 @@ namespace MueLu {
 
     // Zeros out rows
     // Takes a vector containg Dirichlet row indices
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static void ZeroDirichletRows(Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >& A,
+#else
+    static void ZeroDirichletRows(Teuchos::RCP<Xpetra::Matrix<Scalar,Node> >& A,
+#endif
                                   const std::vector<LocalOrdinal>& dirichletRows,
                                   Scalar replaceWith=Teuchos::ScalarTraits<Scalar>::zero()) {
       for(size_t i=0; i<dirichletRows.size(); i++) {
@@ -963,7 +1145,11 @@ namespace MueLu {
 
     // Zeros out rows
     // Takes a Boolean ArrayRCP
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static void ZeroDirichletRows(Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >& A,
+#else
+    static void ZeroDirichletRows(Teuchos::RCP<Xpetra::Matrix<Scalar,Node> >& A,
+#endif
                                   const Teuchos::ArrayRCP<const bool>& dirichletRows,
                                   Scalar replaceWith=Teuchos::ScalarTraits<Scalar>::zero()) {
       TEUCHOS_ASSERT(static_cast<size_t>(dirichletRows.size()) == A->getRowMap()->getNodeNumElements());
@@ -982,7 +1168,11 @@ namespace MueLu {
 
     // Zeros out rows
     // Takes a Boolean ArrayRCP
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static void ZeroDirichletRows(Teuchos::RCP<Xpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node> >& X,
+#else
+    static void ZeroDirichletRows(Teuchos::RCP<Xpetra::MultiVector<Scalar,Node> >& X,
+#endif
                                   const Teuchos::ArrayRCP<const bool>& dirichletRows,
                                   Scalar replaceWith=Teuchos::ScalarTraits<Scalar>::zero()) {
       TEUCHOS_ASSERT(static_cast<size_t>(dirichletRows.size()) == X->getMap()->getNodeNumElements());
@@ -1013,15 +1203,25 @@ namespace MueLu {
     }
 
     // Finds the OAZ Dirichlet rows for this matrix
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static void FindDirichletRowsAndPropagateToCols(Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> > &A,
                                                     Teuchos::RCP<Xpetra::Vector<int,LocalOrdinal,GlobalOrdinal,Node> >& isDirichletRow,
                                                     Teuchos::RCP<Xpetra::Vector<int,LocalOrdinal,GlobalOrdinal,Node> >& isDirichletCol) {
+#else
+    static void FindDirichletRowsAndPropagateToCols(Teuchos::RCP<Xpetra::Matrix<Scalar,Node> > &A,
+                                                    Teuchos::RCP<Xpetra::Vector<int,Node> >& isDirichletRow,
+                                                    Teuchos::RCP<Xpetra::Vector<int,Node> >& isDirichletCol) {
+#endif
 
       // Make sure A's RowMap == DomainMap
       if(!A->getRowMap()->isSameAs(*A->getDomainMap())) {
         throw std::runtime_error("UtilitiesBase::FindDirichletRowsAndPropagateToCols row and domain maps must match.");
       }
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       RCP<const Xpetra::Import<LocalOrdinal,GlobalOrdinal,Node> > importer = A->getCrsGraph()->getImporter();
+#else
+      RCP<const Xpetra::Import<Node> > importer = A->getCrsGraph()->getImporter();
+#endif
       bool has_import = !importer.is_null();
 
       // Find the Dirichlet rows
@@ -1036,8 +1236,13 @@ namespace MueLu {
     fflush(stdout);
 #endif
       // Allocate all as non-Dirichlet
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       isDirichletRow = Xpetra::VectorFactory<int,LocalOrdinal,GlobalOrdinal,Node>::Build(A->getRowMap(),true);
       isDirichletCol = Xpetra::VectorFactory<int,LocalOrdinal,GlobalOrdinal,Node>::Build(A->getColMap(),true);
+#else
+      isDirichletRow = Xpetra::VectorFactory<int,Node>::Build(A->getRowMap(),true);
+      isDirichletCol = Xpetra::VectorFactory<int,Node>::Build(A->getColMap(),true);
+#endif
 
       Teuchos::ArrayRCP<int> dr_rcp = isDirichletRow->getDataNonConst(0);
       Teuchos::ArrayView<int> dr    = dr_rcp();
@@ -1056,14 +1261,24 @@ namespace MueLu {
     // This routine takes a BlockedMap and an Importer (assuming that the BlockedMap matches the source of the importer) and generates a BlockedMap corresponding
     // to the Importer's target map.  We assume that the targetMap is unique (which, is not a strict requirement of an Importer, but is here and no, we don't check)
     // This is largely intended to be used in repartitioning of blocked matrices
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static RCP<const Xpetra::BlockedMap<LocalOrdinal,GlobalOrdinal,Node> > GeneratedBlockedTargetMap(const Xpetra::BlockedMap<LocalOrdinal,GlobalOrdinal,Node> & sourceBlockedMap,
 												     const Xpetra::Import<LocalOrdinal,GlobalOrdinal,Node> & Importer) {
       typedef Xpetra::Vector<int,LocalOrdinal,GlobalOrdinal,Node> IntVector;
+#else
+    static RCP<const Xpetra::BlockedMap<Node> > GeneratedBlockedTargetMap(const Xpetra::BlockedMap<Node> & sourceBlockedMap,
+												     const Xpetra::Import<Node> & Importer) {
+      typedef Xpetra::Vector<int,Node> IntVector;
+#endif
       Xpetra::UnderlyingLib lib = sourceBlockedMap.lib();
 
       // De-stride the map if we have to (might regret this later)
       RCP<const Map> fullMap    = sourceBlockedMap.getMap();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       RCP<const Map> stridedMap = Teuchos::rcp_dynamic_cast<const Xpetra::StridedMap<LocalOrdinal,GlobalOrdinal,Node> >(fullMap);
+#else
+      RCP<const Map> stridedMap = Teuchos::rcp_dynamic_cast<const Xpetra::StridedMap<Node> >(fullMap);
+#endif
       if(!stridedMap.is_null()) fullMap = stridedMap->getMap();
 
       // Initial sanity checking for map compatibil
@@ -1072,7 +1287,11 @@ namespace MueLu {
 	throw std::runtime_error("GenerateBlockedTargetMap(): Map compatibility error");
 
       // Build an indicator vector
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       RCP<IntVector> block_ids = Xpetra::VectorFactory<int,LocalOrdinal,GlobalOrdinal,Node>::Build(fullMap);
+#else
+      RCP<IntVector> block_ids = Xpetra::VectorFactory<int,Node>::Build(fullMap);
+#endif
 
       for(size_t i=0; i<numSubMaps; i++) {
 	RCP<const Map> map = sourceBlockedMap.getMap(i);
@@ -1085,7 +1304,11 @@ namespace MueLu {
 
       // Get the block ids for the new map
       RCP<const Map> targetMap = Importer.getTargetMap();
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
       RCP<IntVector> new_block_ids = Xpetra::VectorFactory<int,LocalOrdinal,GlobalOrdinal,Node>::Build(targetMap);
+#else
+      RCP<IntVector> new_block_ids = Xpetra::VectorFactory<int,Node>::Build(targetMap);
+#endif
       new_block_ids->doImport(*block_ids,Importer,Xpetra::CombineMode::ADD);
       Teuchos::ArrayRCP<const int> dataRCP = new_block_ids->getData(0);
       Teuchos::ArrayView<const int> data = dataRCP();
@@ -1100,7 +1323,11 @@ namespace MueLu {
       // Generate the new submaps
       std::vector<RCP<const Map> > subMaps(numSubMaps);
       for(size_t i=0; i<numSubMaps; i++) {
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
 	subMaps[i] = Xpetra::MapFactory<LocalOrdinal,GlobalOrdinal,Node>::Build(lib,Teuchos::OrdinalTraits<GlobalOrdinal>::invalid(),elementsInSubMap[i](),targetMap->getIndexBase(),targetMap->getComm());
+#else
+	subMaps[i] = Xpetra::MapFactory<Node>::Build(lib,Teuchos::OrdinalTraits<GlobalOrdinal>::invalid(),elementsInSubMap[i](),targetMap->getIndexBase(),targetMap->getComm());
+#endif
       }
 
       // Build the BlockedMap
@@ -1110,7 +1337,11 @@ namespace MueLu {
 
     // Checks to see if the first chunk of the colMap is also the row map.  This simiplifies a bunch of
     // operation in coarsening
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     static bool MapsAreNested(const Xpetra::Map<LocalOrdinal,GlobalOrdinal,Node>& rowMap, const Xpetra::Map<LocalOrdinal,GlobalOrdinal,Node>& colMap) {
+#else
+    static bool MapsAreNested(const Xpetra::Map<Node>& rowMap, const Xpetra::Map<Node>& colMap) {
+#endif
       ArrayView<const GlobalOrdinal> rowElements = rowMap.getNodeElementList();
       ArrayView<const GlobalOrdinal> colElements = colMap.getNodeElementList();
       

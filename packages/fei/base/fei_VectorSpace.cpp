@@ -1484,8 +1484,13 @@ int fei::VectorSpace::getOwnedAndSharedIDs(int idType,
   if (idx < 0) return(-1);
 
   snl_fei::RecordCollection* records = recordCollections_[idx];
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>& global_to_local = records->getGlobalToLocalMap();
   std::map<int,int>::iterator
+#else
+  std::map<>& global_to_local = records->getGlobalToLocalMap();
+  std::map<>::iterator
+#endif
     it = global_to_local.begin(),
     end = global_to_local.end();
   numLocalIDs = records->getNumRecords();
@@ -1512,8 +1517,13 @@ int fei::VectorSpace::getOwnedIDs(int idType,
 
   snl_fei::RecordCollection* records = recordCollections_[idx];
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
   std::map<int,int>& global_to_local = records->getGlobalToLocalMap();
   std::map<int,int>::iterator
+#else
+  std::map<>& global_to_local = records->getGlobalToLocalMap();
+  std::map<>::iterator
+#endif
     it = global_to_local.begin(),
     end = global_to_local.end();
 
@@ -2048,8 +2058,13 @@ void fei::VectorSpace::runRecords(fei::Record_Operator<int>& record_op)
 {
   for(size_t rec=0; rec<recordCollections_.size(); ++rec) {
     snl_fei::RecordCollection* records = recordCollections_[rec];
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::map<int,int>& g2l = records->getGlobalToLocalMap();
     std::map<int,int>::iterator
+#else
+    std::map<>& g2l = records->getGlobalToLocalMap();
+    std::map<>::iterator
+#endif
       it = g2l.begin(),
       end= g2l.end();
 
@@ -2065,8 +2080,13 @@ void fei::VectorSpace::runRecords(fei::Record_Operator<int>& record_op)
 void fei::VectorSpace::runRecords(fei::Record_Operator<int>& record_op, int recordIndex)
 {
     snl_fei::RecordCollection* records = recordCollections_[recordIndex];
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     std::map<int,int>& g2l = records->getGlobalToLocalMap();
     std::map<int,int>::iterator
+#else
+    std::map<>& g2l = records->getGlobalToLocalMap();
+    std::map<>::iterator
+#endif
     it = g2l.begin(),
     end= g2l.end();
 
@@ -2123,8 +2143,13 @@ int fei::VectorSpace::setLocalEqnNumbers()
   for(size_t rec=0; rec<recordCollections_.size(); ++rec) {
     snl_fei::RecordCollection* records = recordCollections_[rec];
 
+#ifdef TPETRA_ENABLE_TEMPLATE_ORDINALS
     const std::map<int,int>& rmap = records->getGlobalToLocalMap();
     std::map<int,int>::const_iterator
+#else
+    const std::map<>& rmap = records->getGlobalToLocalMap();
+    std::map<>::const_iterator
+#endif
       it = rmap.begin(), it_end = rmap.end();
 
     int* eqnNumPtr = eqnNumbers_.empty() ? NULL : &eqnNumbers_[0];
