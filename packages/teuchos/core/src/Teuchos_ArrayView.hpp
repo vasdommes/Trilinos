@@ -74,7 +74,6 @@ template<class T> inline
 ArrayView<T>::ArrayView( T* p, size_type size_in, const ERCPNodeLookup rcpNodeLookup )
   :ptr_(size_in == 0 ? nullptr : p), size_(size_in)
 {
-  std::cout<<"in ArrayView(T* p, size_in) constructor, size_in = "<<size_in<<", size_ = "<<size_<<std::endl;
 #ifdef HAVE_TEUCHOS_ARRAY_BOUNDSCHECK
   // We comment out the one check below, as part of the fix for #4234:
   //
@@ -89,19 +88,16 @@ ArrayView<T>::ArrayView( T* p, size_type size_in, const ERCPNodeLookup rcpNodeLo
    
   TEUCHOS_TEST_FOR_EXCEPT( p == 0 && size_in != 0 );
   // This only does something if HAVE_TEUCHOS_ARRAY_BOUNDSCHECK is defined.
-  std::cout<<"Setting up iterators..."<<std::endl;
   setUpIterators(rcpNodeLookup);
 #else
   (void) rcpNodeLookup; // Silence "unused variable" compiler warning.
 #endif // HAVE_TEUCHOS_ARRAY_BOUNDSCHECK
-  std::cout<<"done ArrayView constructor"<<std::endl;
 }
 
 template<class T> inline
 ArrayView<const T>::ArrayView(const T* p, size_type size_in, const ERCPNodeLookup rcpNodeLookup )
   : ptr_(size_in == 0 ? nullptr : p), size_(size_in)
 {
-  std::cout<<"in ArrayView(T* p, size_in) CONST constructor, size_in = "<<size_in<<", size_ = "<<size_<<std::endl;
 #ifdef HAVE_TEUCHOS_ARRAY_BOUNDSCHECK
   // We comment out the one check below, as part of the fix for #4234:
   //
@@ -116,12 +112,10 @@ ArrayView<const T>::ArrayView(const T* p, size_type size_in, const ERCPNodeLooku
 
   TEUCHOS_TEST_FOR_EXCEPT( p == 0 && size_in != 0 );
   // This only does something if HAVE_TEUCHOS_ARRAY_BOUNDSCHECK is defined.
-  std::cout<<"Setting up iterators..."<<std::endl;
   setUpIterators(rcpNodeLookup);
 #else
   (void) rcpNodeLookup; // Silence "unused variable" compiler warning.
 #endif // HAVE_TEUCHOS_ARRAY_BOUNDSCHECK
-  std::cout<<"done ArrayView CONST constructor"<<std::endl;
 }
 
 
@@ -676,7 +670,6 @@ template<class T> inline
 Teuchos::ArrayView<T>
 Teuchos::arrayView( T* p, typename ArrayView<T>::size_type size )
 {
-  std::cout<<"in arrayView(), size = "<<size<<std::endl;
   if (size == 0)
     return null;
   return ArrayView<T>(p, size);

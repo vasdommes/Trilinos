@@ -641,7 +641,7 @@ int main(int narg, char** arg)
       gids.push_back(dist_graph->local_unmap[i]);
     }
     //printf("\n");
-    /*printf("--Rank %d: constructing the Tpetra rowMap\n",comm->getRank());
+    printf("--Rank %d: constructing the Tpetra rowMap\n",comm->getRank());
     Tpetra::global_size_t dummy = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid();
     RCP<map_t> rowMap = rcp(new map_t(dummy, Teuchos::arrayViewFromVector(gids), 0, comm));
 
@@ -664,7 +664,7 @@ int main(int narg, char** arg)
     crs_graph->fillComplete(); 
     printf("--Rank %d: constructing Matrix\n",comm->getRank());
     Matrix = rcp(new SparseMatrix(crs_graph));
-    Matrix->fillComplete();*/
+    Matrix->fillComplete();
     if(colorMethod == "Zoltan"){
       int error;
       float version;
@@ -717,7 +717,7 @@ int main(int narg, char** arg)
       uinput = rcp(new UserInputForTests(xdim, ydim, zdim, matrixType,
                                          comm, true, true));
     }
-    //Matrix = uinput->getUITpetraCrsMatrix();
+    Matrix = uinput->getUITpetraCrsMatrix();
   }
   /*if (me == 0)
     std::cout << "NumRows     = " << Matrix->getGlobalNumRows() << std::endl
@@ -842,13 +842,13 @@ int main(int narg, char** arg)
     std::cout << "Going to validate the soln" << std::endl;
     // Verify that checkColoring is a coloring
     if(colorAlg=="D2"){
-      //testReturn = validateDistributedDistance2Coloring(*Matrix,checkColoring,me);
+      testReturn = validateDistributedDistance2Coloring(*Matrix,checkColoring,me);
       //testReturn += validateDistributedColoring(Matrix,checkColoring,me);
     }else if(colorAlg=="2GL" ||colorAlg == "Hybrid"){
       //need to check a distributed coloring
-      //testReturn = validateDistributedColoring(Matrix, checkColoring, me);
+      testReturn = validateDistributedColoring(Matrix, checkColoring, me);
     } else if (checkLength > 0){
-      //testReturn = validateColoring(Matrix, checkColoring);
+      testReturn = validateColoring(Matrix, checkColoring);
     }
       // Check balance (not part of pass/fail for now)
     if(checkLength > 0) checkBalance((zlno_t)checkLength, checkColoring);

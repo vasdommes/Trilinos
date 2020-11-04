@@ -110,12 +110,12 @@ class AlgHybridGMB : public Algorithm<Adapter>
     
     double doOwnedToGhosts(RCP<const map_t> mapOwnedPlusGhosts,
                          size_t nVtx,
-			 Teuchos::ArrayView<const offset_t> offsets,
-			 Teuchos::ArrayView<const lno_t> adjs,
+			 //Teuchos::ArrayView<const offset_t> offsets,
+			 //Teuchos::ArrayView<const lno_t> adjs,
                          //const std::vector<lno_t>& verts_to_send,
-			 Kokkos::View<lno_t*,device_type> verts_to_send,
-			 Kokkos::View<lno_t[1],device_type> verts_to_send_size,
-                         ArrayView<int> owners,
+			 Kokkos::View<bool*,device_type> send_flags,
+			 //Kokkos::View<lno_t[1],device_type> verts_to_send_size,
+                         //ArrayView<int> owners,
                          Kokkos::View<int*, device_type>& colors,
                          gno_t& recv, gno_t& send){
       
@@ -127,7 +127,13 @@ class AlgHybridGMB : public Algorithm<Adapter>
         recvcnts[i] = 0;
       }
       
-      for(size_t i=0; i < verts_to_send_size(0); i++){
+      for(size_t i = 0; i < exportLIDs.size(); i++){
+        if(send_flags(exportLIDs[i])){
+	  sendcnts[exportPIDs[i]] += 2;
+	}
+      }
+
+      /*for(size_t i=0; i < verts_to_send_size(0); i++){
 	bool used_proc[nprocs];
 	for(int x = 0; x < nprocs; x++) used_proc[x] = false;
         for(offset_t j = offsets[verts_to_send(i)]; j < offsets[verts_to_send(i)+1]; j++){
@@ -143,7 +149,7 @@ class AlgHybridGMB : public Algorithm<Adapter>
             }
 	  }
 	}
-      }
+      }*/
       int status = MPI_Alltoall(sendcnts,1,MPI_INT,recvcnts,1,MPI_INT,MPI_COMM_WORLD);
       
       int* sdispls = new int[nprocs+1];
@@ -168,7 +174,16 @@ class AlgHybridGMB : public Algorithm<Adapter>
       int* sendbuf = new int[sendsize];
       int* recvbuf = new int[recvsize];
       
-      for(size_t i = 0; i < verts_to_send_size(0); i++){
+      for(size_t i = 0; i < exportLIDs.size(); i++){
+        if(send_flags(exportLIDs[i])){
+	  size_t idx = sdispls[exportPIDs[i]] + sentcount[exportPIDs[i]];
+	  sentcount[exportPIDs[i]] += 2;
+	  sendbuf[idx++] = mapOwnedPlusGhosts->getGlobalElement(exportLIDs[i]);
+	  sendbuf[idx] = colors(exportLIDs[i]);
+	}
+      }
+
+      /*for(size_t i = 0; i < verts_to_send_size(0); i++){
 	bool used_proc[nprocs];
 	for(int x = 0; x < nprocs; x++) used_proc[x] = false;
 	lno_t curr_vert = verts_to_send(i);
@@ -188,7 +203,7 @@ class AlgHybridGMB : public Algorithm<Adapter>
 	    }
 	  }
 	}
-      }
+      }*/
       comm->barrier();
       double comm_total = 0.0;
       double comm_temp = timer();
@@ -213,7 +228,8 @@ class AlgHybridGMB : public Algorithm<Adapter>
     RCP<Environment> env;
     RCP<const Teuchos::Comm<int> > comm;
     int numColors;
-    
+    Teuchos::ArrayView<const lno_t> exportLIDs;
+    Teuchos::ArrayView<const int> exportPIDs; 
   public:
     //constructor for the  hybrid distributed distance-1 algorithm
     AlgHybridGMB(
@@ -350,6 +366,26 @@ class AlgHybridGMB : public Algorithm<Adapter>
         std::cout<<comm->getRank()<<": Comm "<<i<<" time: "<<comm_time<<"\n";
       }*/
       
+      exportLIDs = importer->getExportLIDs();
+      exportPIDs = importer->getExportPIDs();
+
+      for(int i = 0; i < comm->getSize(); i++){
+	if(comm->getRank() == i){
+	  for(int j = 0; j < exportLIDs.size(); j++){
+	    std::cout<<i<<": send lid "<<exportLIDs[j]<<" to proc "<<exportPIDs[j]<<"\n";
+	  }
+	}
+        comm->barrier();
+      }
+
+      /*for(int i = 0; i < comm->getSize(); i++){
+	if(comm->getRank() == i){
+	  for(int j = 0; j < exportPIDs.size(); j++){
+	    std::cout<<i<<": "<<exportPIDs[j]<<"\n";
+	  }
+	}
+        comm->barrier();
+      }*/
       // call coloring function
       hybridGMB(nVtx, nInterior, finalAdjs, finalOffsets,colors,femv,finalGIDs,rand,owners,mapWithCopies);
       
@@ -515,6 +551,10 @@ class AlgHybridGMB : public Algorithm<Adapter>
         }
       }
       std::cout<<comm->getRank()<<": creating send views\n";
+      Kokkos::View<bool*, device_type> send_flags("send flags",nVtx);
+      Kokkos::parallel_for(nVtx, KOKKOS_LAMBDA(const int& i){
+	send_flags(i) = false;	      
+      });
       Kokkos::View<lno_t*, device_type> verts_to_send_view("verts to send",boundary_size);
       Kokkos::parallel_for(boundary_size, KOKKOS_LAMBDA(const int& i){
         verts_to_send_view(i) = -1;
@@ -530,6 +570,7 @@ class AlgHybridGMB : public Algorithm<Adapter>
         for(offset_t j = dist_offsets(i); j < dist_offsets(i+1); j++){
 	  if(dist_adjs(j) >= nVtx){
 	    verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+	    send_flags(i) = true;
 	    break;
 	  }
 	} 
@@ -553,7 +594,7 @@ class AlgHybridGMB : public Algorithm<Adapter>
         }
         std::cout<<comm->getRank()<<": going to communicate\n";
         gno_t recv, sent;
-        comm_time = doOwnedToGhosts(mapOwnedPlusGhosts,nVtx,offsets,adjs,verts_to_send_view,verts_to_send_size, owners,femv_colors,recv,sent);
+        comm_time = doOwnedToGhosts(mapOwnedPlusGhosts,nVtx,/*offsets,adjs,verts_to_send_view,verts_to_send_size, owners*/send_flags,femv_colors,recv,sent);
         sentPerRound[0] = sent;
         recvPerRound[0] = recv;
         std::cout<<comm->getRank()<<": done communicating\n";
@@ -644,7 +685,10 @@ class AlgHybridGMB : public Algorithm<Adapter>
           if(femv_colors(i) == 0){
             //boolean_checks()++;
             verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
-          }
+	    send_flags(i) = true;
+          } else {
+	    send_flags(i) = false;
+	  }
         });
         //ensure the parallel_for has completed before continuing.
         Kokkos::fence();
@@ -772,7 +816,7 @@ class AlgHybridGMB : public Algorithm<Adapter>
         //femv->doOwnedToOwnedPlusShared(Tpetra::REPLACE);
 	//comm_time = doGhostUpdate(mapOwnedPlusGhosts,nVtx,inst_to_req,owners,femv_colors);
 	gno_t sent,recv;
-        commPerRound[distributedRounds] = doOwnedToGhosts(mapOwnedPlusGhosts,nVtx,offsets,adjs,verts_to_send_host, verts_to_send_size, owners,femv_colors,recv,sent); 	
+        commPerRound[distributedRounds] = doOwnedToGhosts(mapOwnedPlusGhosts,nVtx,/*offsets,adjs,verts_to_send_host, verts_to_send_size, owners*/send_flags,femv_colors,recv,sent); 	
         std::cout<<comm->getRank()<<": total sent in round "<<distributedRounds<<" = "<<sent<<"\n";
         std::cout<<comm->getRank()<<": total recv in round "<<distributedRounds<<" = "<<recv<<"\n";
         sentPerRound[distributedRounds] = sent;

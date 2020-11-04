@@ -71,6 +71,8 @@ class AlgDistance2 : public Algorithm<Adapter> {
     RCP<Teuchos::ParameterList> pl;
     RCP<Environment> env;
     RCP<const Teuchos::Comm<int> > comm;
+    Teuchos::ArrayView<const lno_t> exportLIDs;
+    Teuchos::ArrayView<const int> exportPIDs;
     int numColors;
 
   public:
@@ -341,11 +343,12 @@ class AlgDistance2 : public Algorithm<Adapter> {
     }
     double doOwnedToGhosts(RCP<const map_t> mapOwnedPlusGhosts,
                          size_t nVtx,
-			 typename Kokkos::View<offset_t*, device_type>::HostMirror dist_offsets,
-			 typename Kokkos::View<lno_t*, device_type>::HostMirror dist_adjs,
-			 Kokkos::View<lno_t*,device_type> verts_to_send,
-			 Kokkos::View<lno_t[1], device_type> verts_to_send_size,
-                         ArrayView<int> owners,
+			 //typename Kokkos::View<offset_t*, device_type>::HostMirror dist_offsets,
+			 //typename Kokkos::View<lno_t*, device_type>::HostMirror dist_adjs,
+			 //Kokkos::View<lno_t*,device_type> verts_to_send,
+			 //Kokkos::View<lno_t[1], device_type> verts_to_send_size,
+                         //ArrayView<int> owners,
+			 Kokkos::View<bool*, device_type>& send_flags,
                          Kokkos::View<int*, device_type>& colors){
       int nprocs = comm->getSize();
       int* sendcnts = new int[nprocs];
@@ -358,7 +361,12 @@ class AlgDistance2 : public Algorithm<Adapter> {
       /*for(size_t i=0; i < owners.size(); i++){
         if(owners[i] != comm->getRank() && owners[i] != -1) sendcnts[owners[i]]++;
       }*/
-      for(size_t i=0; i < verts_to_send_size(0); i++){
+      for(size_t i = 0; i < exportLIDs.size(); i++){
+        if(send_flags(exportLIDs[i])){
+	  sendcnts[exportPIDs[i]] += 2;
+	}
+      }
+      /*for(size_t i=0; i < verts_to_send_size(0); i++){
         bool used_proc[nprocs];
         for(int x = 0; x < nprocs; x++) used_proc[x] = false;
         for(offset_t j = dist_offsets(verts_to_send(i)); j < dist_offsets(verts_to_send(i)+1); j++){
@@ -386,7 +394,7 @@ class AlgDistance2 : public Algorithm<Adapter> {
             }
           }
         }
-      }
+      }*/
 
       int status = MPI_Alltoall(sendcnts,1,MPI_INT,recvcnts,1,MPI_INT,MPI_COMM_WORLD);
 
@@ -409,7 +417,15 @@ class AlgDistance2 : public Algorithm<Adapter> {
       int* sendbuf = new int[sendsize];
       int* recvbuf = new int[recvsize];
 
-      for(size_t i = 0; i < verts_to_send_size(0); i++){
+      for(size_t i = 0; i < exportLIDs.size(); i++){
+        if(send_flags(exportLIDs[i])){
+	  size_t idx = sdispls[exportPIDs[i]] + sentcount[exportPIDs[i]];
+	  sentcount[exportPIDs[i]] += 2;
+	  sendbuf[idx++] = mapOwnedPlusGhosts->getGlobalElement(exportLIDs[i]);
+	  sendbuf[idx] = colors(exportLIDs[i]);
+	}
+      }
+      /*for(size_t i = 0; i < verts_to_send_size(0); i++){
         bool used_proc[nprocs];
         for(int x = 0; x < nprocs; x++) used_proc[x] = false;
         lno_t curr_vert = verts_to_send(i);
@@ -443,7 +459,7 @@ class AlgDistance2 : public Algorithm<Adapter> {
             }
           }
         }
-      }
+      }*/
 
       /*for(size_t i = 0; i < owners.size(); i++){
         if(owners[i] != comm->getRank() && owners[i] != -1){
@@ -661,6 +677,9 @@ class AlgDistance2 : public Algorithm<Adapter> {
       ArrayView<int> ghostOwners_view = Teuchos::arrayViewFromVector(ghostOwners);
       ArrayView<const gno_t> ghostGIDs = Teuchos::arrayViewFromVector(ghosts_vec);
       Tpetra::LookupStatus ls2 = mapOwned->getRemoteIndexList(ghostGIDs, ghostOwners_view);
+
+      exportLIDs = importer->getExportLIDs();
+      exportPIDs = importer->getExportPIDs();
       //test communication consistency:
       /*for(int i = 0; i < 100; i++){
         comm->barrier();
@@ -820,6 +839,12 @@ class AlgDistance2 : public Algorithm<Adapter> {
         }
       }
       std::cout<<comm->getRank()<<": constructing communication and recoloring lists\n";
+
+      Kokkos::View<bool*, device_type> send_flags("send flags", n_local);
+      Kokkos::parallel_for(n_local, KOKKOS_LAMBDA(const int& i){
+        send_flags(i) = false;		      
+      });
+
       Kokkos::View<lno_t*, device_type> verts_to_recolor_view("verts to recolor", n_total);
       Kokkos::parallel_for(boundary_size, KOKKOS_LAMBDA(const int& i){
         verts_to_recolor_view(i) = -1;
@@ -844,12 +869,14 @@ class AlgDistance2 : public Algorithm<Adapter> {
         for(offset_t j = dist_offsets_dev(i); j < dist_offsets_dev(i+1); j++){
           if(dist_adjs_dev(j) >= n_local){
             verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+	    send_flags(i) = true;
             break;
           }
           bool found = false;
           for(offset_t k = dist_offsets_dev(dist_adjs_dev(j)); k < dist_offsets_dev(dist_adjs_dev(j)+1); k++){
             if(dist_adjs_dev(k) >= n_local){
               verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+	      send_flags(i) = true;
               found = true;
               break;
             }
@@ -874,7 +901,7 @@ class AlgDistance2 : public Algorithm<Adapter> {
       //femv->switchActiveMultiVector();
       //double comm_temp = timer();
       //femv->doOwnedToOwnedPlusShared(Tpetra::REPLACE);
-      comm_time = doOwnedToGhosts(mapWithCopies, n_local,dist_offsets_host, dist_adjs_host, verts_to_send_view, verts_to_send_size, owners, femv_colors);
+      comm_time = doOwnedToGhosts(mapWithCopies, n_local,/*dist_offsets_host, dist_adjs_host, verts_to_send_view, verts_to_send_size, owners*/send_flags, femv_colors);
       //comm_time = timer() - comm_temp;
       total_time += comm_time;
       //femv->switchActiveMultiVector();
@@ -887,6 +914,7 @@ class AlgDistance2 : public Algorithm<Adapter> {
       double temp = timer();
       Kokkos::parallel_for(offsets.size()-1, KOKKOS_LAMBDA(const uint64_t& i){
         const lno_t curr_lid = i;
+	send_flags(i) = false;
         const int curr_color = femv_colors(curr_lid);
         const size_t vid_d1_adj_begin = dist_offsets_dev(i);
         const size_t vid_d1_adj_end   = dist_offsets_dev(i+1);
@@ -899,6 +927,7 @@ class AlgDistance2 : public Algorithm<Adapter> {
 	      //add to recolor list/send list
 	      verts_to_recolor_atomic(verts_to_recolor_size_atomic(0)++) = i;
 	      verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+	      send_flags(i) = true;
               break;
             } else if(rand_dev(vid_d1) < rand_dev(curr_lid)){
               if(vid_d1 >= n_local){
@@ -912,6 +941,7 @@ class AlgDistance2 : public Algorithm<Adapter> {
 		//add to recolor/send list
 		verts_to_recolor_atomic(verts_to_recolor_size_atomic(0)++) = i;
 		verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+		send_flags(i) = true;
                 break;
               } else {
                 if(vid_d1 >= n_local){
@@ -936,6 +966,7 @@ class AlgDistance2 : public Algorithm<Adapter> {
 		//add to recolor/send list
 		verts_to_recolor_atomic(verts_to_recolor_size_atomic(0)++) = i;
 		verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+		send_flags(i) = true;
                 break;
               } else if(rand_dev(vid_d2) < rand_dev(curr_lid)){
                 if(vid_d2 >= n_local){
@@ -950,6 +981,7 @@ class AlgDistance2 : public Algorithm<Adapter> {
 		  //add to recolor/send list
 		  verts_to_recolor_atomic(verts_to_recolor_size_atomic(0)++) = i;
 		  verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+		  send_flags(i) = true;
                   break;
                 } else {
                   if(vid_d2 >= n_local){
@@ -1031,7 +1063,7 @@ class AlgDistance2 : public Algorithm<Adapter> {
         //double comm_loop_temp = timer();
         //femv->doOwnedToOwnedPlusShared(Tpetra::REPLACE);
 	std::cout<<comm->getRank()<<":verts_to_send_size(0) = "<<verts_to_send_size(0)<<"\n";
-        commPerRound[distributedRounds] = doOwnedToGhosts(mapWithCopies,n_local,dist_offsets_host, dist_adjs_host, verts_to_send_view, verts_to_send_size, owners, femv_colors);
+        commPerRound[distributedRounds] = doOwnedToGhosts(mapWithCopies,n_local,/*dist_offsets_host, dist_adjs_host, verts_to_send_view, verts_to_send_size, owners*/send_flags, femv_colors);
         //commPerRound[distributedRounds] = timer() - comm_loop_temp;
         comm_time += commPerRound[distributedRounds];
         totalPerRound[distributedRounds] += commPerRound[distributedRounds];
@@ -1107,6 +1139,7 @@ class AlgDistance2 : public Algorithm<Adapter> {
         });*/
         Kokkos::parallel_for(offsets.size()-1, KOKKOS_LAMBDA(const uint64_t& i){
           const lno_t curr_lid = i;
+	  send_flags(i) = false;
           const int curr_color = femv_colors(curr_lid);
           const size_t vid_d1_adj_begin = dist_offsets_dev(i);
           const size_t vid_d1_adj_end   = dist_offsets_dev(i+1);
@@ -1119,6 +1152,7 @@ class AlgDistance2 : public Algorithm<Adapter> {
   	        //add to recolor list/send list
   	        verts_to_recolor_atomic(verts_to_recolor_size_atomic(0)++) = i;
 	        verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+		send_flags(i) = true;
                 break;
               } else{
                 if(gid_dev(curr_lid) >= gid_dev(vid_d1) && rand_dev(vid_d1) == rand_dev(curr_lid)){
@@ -1127,6 +1161,7 @@ class AlgDistance2 : public Algorithm<Adapter> {
   	  	  //add to recolor/send list
 		  verts_to_recolor_atomic(verts_to_recolor_size_atomic(0)++) = i;
 		  verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+		  send_flags(i) = true;
                   break;
                 }
               }
@@ -1146,6 +1181,7 @@ class AlgDistance2 : public Algorithm<Adapter> {
 		  //add to recolor/send list
 		  verts_to_recolor_atomic(verts_to_recolor_size_atomic(0)++) = i;
 		  verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+		  send_flags(i) = true;
                   break;
                 } else {
                   if(gid_dev(curr_lid) >= gid_dev(vid_d2) && rand_dev(vid_d2) == rand_dev(curr_lid)){
@@ -1155,6 +1191,7 @@ class AlgDistance2 : public Algorithm<Adapter> {
 		    //add to recolor/send list
 		    verts_to_recolor_atomic(verts_to_recolor_size_atomic(0)++) = i;
 		    verts_to_send_atomic(verts_to_send_size_atomic(0)++) = i;
+		    send_flags(i) = true;
                     break;
                   }
                 }
