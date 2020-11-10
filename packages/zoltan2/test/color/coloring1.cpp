@@ -778,6 +778,7 @@ int main(int narg, char** arg)
   params.set("color_method", colorAlg);
   params.set("Hybrid_batch_size",batchSize);
   params.set("Kokkos_only_interior",kokkosOnlyInterior);
+  params.set("verbose",verbose);
   std::cout<<comm->getRank()<<": done creating params\n";
   //params.set("balance_colors", balanceColors); // TODO
 
