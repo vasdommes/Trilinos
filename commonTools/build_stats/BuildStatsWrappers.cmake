@@ -24,14 +24,12 @@ function(generate_build_stats_wrappers)
     # No default was set, so make it OFF by default
     set(${PROJECT_NAME}_ENABLE_BUILD_STATS_DEFAULT OFF)
   endif()
-  #print_var(${PROJECT_NAME}_ENABLE_BUILD_STATS_DEFAULT)
 
   # Set cache var ${PROJECT_NAME}_ENABLE_BUILD_STATS
   advanced_set(${PROJECT_NAME}_ENABLE_BUILD_STATS
     ${${PROJECT_NAME}_ENABLE_BUILD_STATS_DEFAULT} CACHE BOOL
     "If set to 'ON', then compiler wrappers will be created and used to gather build stats."
     )
-  #print_var(${PROJECT_NAME}_ENABLE_BUILD_STATS)
 
   # Generate the build-stats compiler wrappers
   get_base_build_dir_for_python()
@@ -107,26 +105,10 @@ endfunction()
 #
 function(remove_build_stats_file_on_configure)
 
-  # Set default for cache var ${PROJECT_NAME}_REMOVE_BUILD_STATS_ON_CONFIGURE
-  if (NOT "$ENV{${PROJECT_NAME}_REMOVE_BUILD_STATS_ON_CONFIGURE}" STREQUAL "")
-    # Use the default set in the env (overrides any local default set)
-    set(${PROJECT_NAME}_REMOVE_BUILD_STATS_ON_CONFIGURE_DEFAULT
-      "$ENV{${PROJECT_NAME}_REMOVE_BUILD_STATS_ON_CONFIGURE}")
-  elseif(NOT "${${PROJECT_NAME}_REMOVE_BUILD_STATS_ON_CONFIGURE_DEFAULT}" STREQUAL "")
-    # ${PROJECT_NAME}_REMOVE_BUILD_STATS_ON_CONFIGURE_DEFAULT was already set, so use it as
-    # the default.
-  else()
-    # No default was set, so make it OFF by default
-    set(${PROJECT_NAME}_REMOVE_BUILD_STATS_ON_CONFIGURE_DEFAULT OFF)
-  endif()
-  #print_var(${PROJECT_NAME}_REMOVE_BUILD_STATS_ON_CONFIGURE_DEFAULT)
-
-  # Set cache var ${PROJECT_NAME}_REMOVE_BUILD_STATS_ON_CONFIGURE
-  advanced_set(${PROJECT_NAME}_REMOVE_BUILD_STATS_ON_CONFIGURE
+  advanced_set(${PROJECT_NAME}_REMOVE_BUILD_STATS_ON_CONFIGURE OFF
     ${${PROJECT_NAME}_REMOVE_BUILD_STATS_ON_CONFIGURE_DEFAULT} CACHE BOOL
-    "If set to 'ON', then compiler wrappers will be created and used to gather build stats."
+    "If set to 'ON', then the build_stats.csv file will be removed on each configure."
     )
-  #print_var(${PROJECT_NAME}_REMOVE_BUILD_STATS_ON_CONFIGURE)
 
   if (
       (${PROJECT_NAME}_REMOVE_BUILD_STATS_ON_CONFIGURE)
@@ -135,6 +117,34 @@ function(remove_build_stats_file_on_configure)
     )
     MESSAGE("-- " "Removing existing file '${BUILD_STATS_CSV_FILE}'")
     file(REMOVE "${BUILD_STATS_CSV_FILE}")
+  endif()
+
+endfunction()
+
+
+# Remove the <target>.timing files on a fresh configure if asked to do so.
+#
+function(remove_build_stats_timing_files_on_fresh_configure)
+
+  advanced_set(${PROJECT_NAME}_REMOVE_BUILD_STATS_TIMING_FILES_ON_FRESH_CONFIGURE OFF
+    CACHE BOOL
+    "If set to 'ON', then all <target>.timing files will be removed on a freash configure."
+    )
+
+  if (
+    ${PROJECT_NAME}_REMOVE_BUILD_STATS_TIMING_FILES_ON_FRESH_CONFIGURE
+    AND
+    (NOT "${${PROJECT_NAME}_BUILD_STATS_INIT_CONFIG_WAS_DONE}")
+    )
+
+    message("-- " "Removing all <target>.timing files on fresh configure")
+
+    execute_process(
+      COMMAND "${BUILD_STATS_SRC_DIR}/remove_all_target_timing_files.sh"
+        ${PROJECT_BINARY_DIR} )
+
+    set(${PROJECT_NAME}_BUILD_STATS_INIT_CONFIG_WAS_DONE ON CACHE INTERNAL "")
+
   endif()
 
 endfunction()
