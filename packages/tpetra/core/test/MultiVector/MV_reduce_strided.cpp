@@ -46,6 +46,7 @@
 #include "Tpetra_MultiVector.hpp"
 #include "Tpetra_Vector.hpp"
 #include "Teuchos_CommHelpers.hpp"
+#include "Tpetra_Details_allReduceView.hpp"
 //#include <type_traits>
 
 namespace { // (anonymous)
@@ -197,8 +198,7 @@ void reduceMultiVector2 (MV& Z)
     auto Z2_j_lcl_2d = Z2_j->getLocalViewHost ();
     auto Z2_j_lcl = Kokkos::subview (Z2_j_lcl_2d, Kokkos::ALL (), 0);
 
-    reduceAll (comm, REDUCE_SUM, static_cast<int> (numRows),
-               Z_j_lcl.data (), Z2_j_lcl.data ());
+    Tpetra::Details::allReduceView(Z2_j_lcl, Z_j_lcl, comm);
     Kokkos::deep_copy (Z_j_lcl, Z2_j_lcl);
   }
   Z.sync_device ();
