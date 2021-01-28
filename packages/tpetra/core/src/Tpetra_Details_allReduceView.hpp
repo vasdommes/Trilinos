@@ -191,12 +191,11 @@ allReduceView (const OutputViewType& output,
   // otherwise, if the views use Cuda, then we should copy them
   const bool mpiCannotAccessBuffers =
     // if assumeMpiIsCudaAware, then we can access cuda buffers
-    ! ::Tpetra::Details::Behavior::assumeMpiIsCudaAware ()
-    && (
-         view_uses_cuda_spaces<OutputViewType>::value
-         ||
-         view_uses_cuda_spaces<InputViewType>::value 
-        );
+    // ! ::Tpetra::Details::Behavior::assumeMpiIsCudaAware () &&
+    (
+      view_uses_cuda_spaces<OutputViewType>::value ||
+      view_uses_cuda_spaces<InputViewType>::value
+    );
 
   const bool needContiguousTemporaryBuffers =
     // we must alloc/copy if MPI cannot access the buffers
