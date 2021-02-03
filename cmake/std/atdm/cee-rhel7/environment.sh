@@ -193,7 +193,7 @@ fi
 
 # Use updated Ninja and CMake
 module load sems-env
-module load sems-cmake/3.12.2
+module load sems-cmake/3.19.1
 module load sems-ninja_fortran/1.8.2
 
 export ATDM_CONFIG_USE_HWLOC=OFF
@@ -261,6 +261,9 @@ if [[ "${ATDM_CONFIG_SUPERLUDIST_INCLUDE_DIRS}" == "" ]] ; then
   export ATDM_CONFIG_SUPERLUDIST_INCLUDE_DIRS=${SUPERLUDIST_ROOT}/include
   export ATDM_CONFIG_SUPERLUDIST_LIBS=${SUPERLUDIST_ROOT}/lib64/libsuperlu_dist.a
 fi
+
+# Point CMake 3.19 compiler checks to missing symbols
+export LDFLAGS="$LDFLAGS -lifcore"
 
 # Finished!
 export ATDM_CONFIG_COMPLETED_ENV_SETUP=TRUE
