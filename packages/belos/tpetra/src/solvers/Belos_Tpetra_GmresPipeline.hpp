@@ -193,8 +193,12 @@ private:
           restart = input.maxNumIters-output.numIters;
         }
 
+#ifndef HAVE_BELOS_QUADMATH
         // Normalize initial vector
         MVT::MvScale (Z, one/std::sqrt(G(0, 0)));
+#else
+        MVT::MvScale (Z, one/sqrtq(G(0, 0)));
+#endif
 
         // Copy initial vector
         vec_type AP = * (Q.getVectorNonConst (0));
@@ -272,7 +276,11 @@ private:
               (STS::real (H(k, k-1)) < STM::zero (), std::runtime_error,
                "At iteration " << iter << ", H(" << k << ", "
                << k-1 << ") = " << H(k, k-1) << " < 0.");
+#ifndef HAVE_BELOS_QUADMATH
             H(k, k-1) = std::sqrt( H(k, k-1) );
+#else
+            H(k, k-1) = sqrtq( H(k, k-1) );
+#endif
           }
 
           if (k > 0) {

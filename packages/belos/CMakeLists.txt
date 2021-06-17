@@ -31,16 +31,24 @@ TRIBITS_ADD_SHOW_DEPRECATED_WARNINGS_OPTION()
 # unless you enable both Epetra and Tpetra in your Trilinos build.
 # HAVE_BELOS_TSQR will correctly reflect this: it won't be defined 
 # unless both Epetra and Tpetra are enabled in your Trilinos build.
+
 IF (${PACKAGE_NAME}_ENABLE_Epetra AND ${PACKAGE_NAME}_ENABLE_Tpetra AND Tpetra_ENABLE_TSQR)
   GLOBAL_SET(${PACKAGE_NAME}_ENABLE_TSQR_DEFAULT ON)
 ELSE()
   GLOBAL_SET(${PACKAGE_NAME}_ENABLE_TSQR_DEFAULT OFF)
 ENDIF()
+
 TRIBITS_ADD_OPTION_AND_DEFINE(
   ${PACKAGE_NAME}_ENABLE_TSQR
   HAVE_BELOS_TSQR
   "Enable TSQR (Tall Skinny QR factorization) as an orthogonalization method in Belos.  You must build Trilinos with both Epetra _and_ Tpetra enabled in order to use TSQR with Epetra objects."
   "${${PACKAGE_NAME}_ENABLE_TSQR_DEFAULT}")
+
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  Tpetra_ENABLE_quadmath
+  HAVE_BELOS_QUADMATH
+  "Enable quadmath in Belos."
+  NO)
 
 TRIBITS_ADD_OPTION_AND_DEFINE(
   ${PACKAGE_NAME}_ENABLE_TEUCHOS_TIME_MONITOR

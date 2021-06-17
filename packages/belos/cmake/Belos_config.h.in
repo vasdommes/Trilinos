@@ -28,6 +28,9 @@
 /* Define if want to build with thyra enabled */
 #cmakedefine HAVE_BELOS_THYRA
 
+/* Define if want to build with quadmath enabled */
+#cmakedefine HAVE_BELOS_QUADMATH
+
 /* Define if want to build with triutils enabled */
 #cmakedefine HAVE_BELOS_TRIUTILS
 

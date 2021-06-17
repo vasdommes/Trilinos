@@ -116,6 +116,7 @@ public:
     // triangular.
     int info = 0;
     {
+#ifndef HAVE_BELOS_QUADMATH
       auto R_h = R_mv.getLocalViewHost (Tpetra::Access::ReadWrite);
       int ldr = int (R_h.extent (0));
       SC *Rdata = reinterpret_cast<SC*> (R_h.data ());
@@ -132,6 +133,10 @@ public:
           }
         }
       }
+#else
+     TEUCHOS_TEST_FOR_EXCEPTION(true,
+               std::runtime_error, "Error in BelosTpetra: factor() routine is not implemented for __float128 ScalarType!\n");
+#endif
     }
     // Copy to the output R
     Tpetra::deep_copy (R, R_mv);

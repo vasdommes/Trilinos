@@ -82,6 +82,7 @@ struct ComputeRitzValues<LO, SC, false> {
        Teuchos::SerialDenseMatrix<LO, SC>& G,
        std::vector<complex_type>& ritzValues)
   {
+#ifndef HAVE_BELOS_QUADMATH
     if (ritzValues.size () < std::size_t (iter)) {
       ritzValues.resize (iter);
     }
@@ -112,6 +113,10 @@ struct ComputeRitzValues<LO, SC, false> {
     for (int i = 0; i < iter; ++i) {
       ritzValues[i] = complex_type { WR[i], WI[i] };
     }
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION
+      (true, std::runtime_error, "LAPACK {D,S}SEQR routine not defined for __float128 ScalarType!\n"); 
+#endif
   }
 };
 

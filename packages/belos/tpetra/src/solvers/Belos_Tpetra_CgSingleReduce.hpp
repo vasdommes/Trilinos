@@ -93,7 +93,11 @@ protected:
       M.apply (B, MR);
       beta_old = STS::real (B.dot (MR));
     }
+#ifndef HAVE_BELOS_QUADMATH
     mag_type r_norm = std::sqrt (beta_old);
+#else
+    mag_type r_norm = sqrtq (beta_old);
+#endif
     mag_type r_norm_orig = r_norm;
 
     // quick return
@@ -143,7 +147,11 @@ protected:
       beta_old = STS::real (RR_RAR_host(0));
       PAP = STS::real (RR_RAR_host(1));
 
+#ifndef HAVE_BELOS_QUADMATH
       r_norm = std::sqrt (beta_old);
+#else
+      r_norm = sqrtq (beta_old);
+#endif
     }
     mag_type alpha      = beta_old / PAP;
     mag_type beta       = STM::zero ();
@@ -195,7 +203,11 @@ protected:
       RAR = STS::real (RR_RAR_host(1));
 
       // convergence check
+#ifndef HAVE_BELOS_QUADMATH
       r_norm = std::sqrt( beta_new );
+#else
+      r_norm = sqrtq( beta_new );
+#endif
       metric = this->getConvergenceMetric (r_norm, r_norm_orig, input);
       if (outPtr != nullptr) {
         *outPtr << ", r_norm: " << r_norm << ", RAR: " << RAR << ", metric: " << metric;

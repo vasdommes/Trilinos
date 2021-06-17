@@ -162,7 +162,11 @@ protected:
       Kokkos::deep_copy (RR_RAR_host, RR_RAR);
       RAR = RR_RAR_host(1);
       beta_new = STS::real (RR_RAR_host(0));
+#ifndef HAVE_BELOS_QUADMATH
       r_norm = std::sqrt( beta_new );
+#else
+      r_norm = sqrtq( beta_new );
+#endif
       if (iter == 0) {
         r_norm_orig = r_norm;
       }

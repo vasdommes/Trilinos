@@ -120,7 +120,11 @@ protected:
       r_norm = STS::real (r_beta(0));
       beta_old = STS::real (r_beta(1));
     }
+#ifndef HAVE_BELOS_QUADMATH
     r_norm = std::sqrt (r_norm);
+#else
+    r_norm = sqrtq (r_norm);
+#endif
     r_norm_orig = r_norm;
 
     // quick-return
@@ -179,7 +183,11 @@ protected:
         r_norm = STS::real (r_beta(0));
         beta_new = STS::real (r_beta(1));
       }
+#ifndef HAVE_BELOS_QUADMATH
       r_norm = std::sqrt (r_norm);
+#else
+      r_norm = sqrtq (r_norm);
+#endif
       metric = this->getConvergenceMetric (r_norm, r_norm_orig, input);
       if (outPtr != nullptr) {
         *outPtr << "r_norm: " << r_norm << endl;

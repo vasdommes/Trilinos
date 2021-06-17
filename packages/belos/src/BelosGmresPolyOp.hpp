@@ -76,6 +76,8 @@
 #include "Teuchos_SerialDenseSolver.hpp"
 #include "Teuchos_ParameterList.hpp"
 
+#include<complex>
+
 #ifdef BELOS_TEUCHOS_TIME_MONITOR
   #include "Teuchos_TimeMonitor.hpp"
 #endif // BELOS_TEUCHOS_TIME_MONITOR
@@ -423,6 +425,7 @@ namespace Belos {
   template <class ScalarType, class MV, class OP>
   void GmresPolyOp<ScalarType, MV, OP>::generateGmresPoly()
   {
+#ifndef HAVE_BELOS_QUADMATH
     Teuchos::RCP< MV > V = MVT::Clone( *problem_->getRHS(), maxDegree_+1 );   
 
     //Make power basis:
@@ -517,7 +520,10 @@ namespace Belos {
         std::cout << "BelosGmresPolyOp.hpp: LAPACK POTRS was not successful!!" << std::endl;
         std::cout << "Error code: " << infoInt << std::endl; 
       } 
-    } 
+    }
+#else
+   TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "BelosGmresPolyOp Error: generateGmresPoly() not implemented for __float128 ScalarType!\n");
+#endif 
   }
 
   template <class ScalarType, class MV, class OP>
@@ -525,6 +531,7 @@ namespace Belos {
   {
     std::string polyLabel = label_ + ": GmresPolyOp creation";
 
+#ifndef HAVE_BELOS_QUADMATH
     // Create a copy of the linear problem that has a zero initial guess and random RHS.
     std::vector<int> idx(1,0);
     Teuchos::RCP<MV> newX  = MVT::Clone( *(problem_->getLHS()), 1 );
@@ -730,6 +737,9 @@ namespace Belos {
     ComputeAddedRoots();
 
    }
+#else
+   TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, "BelosGmresPolyOp Error: generateArnoldiPoly() not implemented for __float128 ScalarType!\n");
+#endif
   }
   
   //Function determines whether added roots are needed and adds them if option is turned on.
