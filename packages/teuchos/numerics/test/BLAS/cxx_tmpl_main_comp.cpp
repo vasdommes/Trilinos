@@ -117,8 +117,10 @@ int GetRandom(int, int);
 template<>
 double GetRandom(double, double);
 
+#ifdef HAVE_TEUCHOS_COMPLEX
 template<typename T>
 std::complex<T> GetRandom( std::complex<T>, std::complex<T> );
+#endif
 
 template<typename TYPE, typename OTYPE>
 void PrintVector(TYPE* Vector, OTYPE Size, std::string Name, bool Matlab = 0);
@@ -1891,6 +1893,7 @@ TYPE GetRandom(TYPE Low, TYPE High)
   return ((TYPE)((double)((1.0 * ScalarTraits<int>::random()) / RAND_MAX) * (High - Low + 1)) + Low);
 }
 
+#ifdef HAVE_TEUCHOS_COMPLEX
 template<typename T>
 std::complex<T> GetRandom( std::complex<T> Low, std::complex<T> High)
 {
@@ -1900,6 +1903,7 @@ std::complex<T> GetRandom( std::complex<T> Low, std::complex<T> High)
   T imag = (T)(((1.0 * ScalarTraits<int>::random()) / RAND_MAX) * (highMag - lowMag + ScalarTraits<T>::one())) + lowMag;
   return std::complex<T>( real, imag );
 }
+#endif
 
 template<>
 int GetRandom(int Low, int High)

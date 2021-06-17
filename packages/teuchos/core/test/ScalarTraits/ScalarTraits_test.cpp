@@ -348,11 +348,13 @@ int main( int argc, char* argv[] ) {
 #endif // HAVE_TEUCHOS_COMPLEX
 
 #ifdef HAVE_TEUCHOSCORE_KOKKOSCORE
+#ifdef HAVE_TEUCHOS_COMPLEX
     result = testScalarTraits<Kokkos::complex<double> >(*out);
     if(!result) success = false;
 
     result = testScalarTraits<Kokkos::complex<float> >(*out);
     if(!result) success = false;
+#endif
 #endif // HAVE_TEUCHOSCORE_KOKKOSCORE
 
 #ifdef HAVE_TEUCHOSCORE_QUADMATH

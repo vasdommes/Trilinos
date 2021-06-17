@@ -89,8 +89,10 @@ int GetRandom(int, int);
 template<>
 double GetRandom(double, double);
 
+#ifdef HAVE_TEUCHOS_COMPLEX
 template<typename T>
 std::complex<T> GetRandom( std::complex<T>, std::complex<T> );
+#endif
 
 // Generates random matrices and vectors using GetRandom()
 Teuchos::RCP<DMatrix> GetRandomBandedMatrix(int m, int n, int kl, int ku);
@@ -424,6 +426,7 @@ TYPE GetRandom(TYPE Low, TYPE High)
   return ((TYPE)((double)((1.0 * ScalarTraits<int>::random()) / RAND_MAX) * (High - Low + 1)) + Low);
 }
 
+#if HAVE_TEUCHOS_COMPLEX
 template<typename T>
 std::complex<T> GetRandom( std::complex<T> Low, std::complex<T> High)
 {
@@ -433,6 +436,7 @@ std::complex<T> GetRandom( std::complex<T> Low, std::complex<T> High)
   T imag = (T)(((1.0 * ScalarTraits<int>::random()) / RAND_MAX) * (highMag - lowMag + ScalarTraits<T>::one())) + lowMag;
   return std::complex<T>( real, imag );
 }
+#endif
 
 template<>
 int GetRandom(int Low, int High)

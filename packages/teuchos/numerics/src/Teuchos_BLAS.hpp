@@ -2309,8 +2309,8 @@ namespace Teuchos
     void TRSM(ESide side, EUplo uplo, ETransp transa, EDiag diag, const int& m, const int& n, const double& alpha, const double* A, const int& lda, double* B, const int& ldb) const;
   };
 
+#ifdef HAVE_TEUCHOS_COMPLEX
   // Explicit instantiation for template<int,complex<float> >
-
   template<>
   class TEUCHOSNUMERICS_LIB_DLL_EXPORT BLAS<int, std::complex<float> >
   {
@@ -2368,7 +2368,7 @@ namespace Teuchos
     void TRMM(ESide side, EUplo uplo, ETransp transa, EDiag diag, const int& m, const int& n, const std::complex<double> alpha, const std::complex<double>* A, const int& lda, std::complex<double>* B, const int& ldb) const;
     void TRSM(ESide side, EUplo uplo, ETransp transa, EDiag diag, const int& m, const int& n, const std::complex<double> alpha, const std::complex<double>* A, const int& lda, std::complex<double>* B, const int& ldb) const;
   };
-
+#endif
 } // namespace Teuchos
 
 #endif // _TEUCHOS_BLAS_HPP_

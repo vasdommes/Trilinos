@@ -91,7 +91,9 @@
 #include <sstream>
 #include <stdexcept>
 #include <cassert>
+#ifdef HAVE_TEUCHOS_COMPLEX
 #include <complex>
+#endif
 // #include <map>
 // #include <vector>
 // #include <deque>

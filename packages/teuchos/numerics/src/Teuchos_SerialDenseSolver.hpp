@@ -441,12 +441,13 @@ namespace Teuchos {
     struct lapack_traits {
       typedef int iwork_type;
     };
-
+#if HAVE_TEUCHOS_COMPLEX
     // Complex-valued specialization
     template<typename T>
     struct lapack_traits<std::complex<T> > {
       typedef typename ScalarTraits<T>::magnitudeType iwork_type;
     };
+#endif
 
   } // end namespace details
 

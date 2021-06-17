@@ -423,9 +423,10 @@ int main( int argc, char* argv[] )
 
     result = testArrayView<double>(n,*out);
     if (!result) success = false;
-
+#ifdef HAVE_TEUCHOS_COMPLEX
     result = testArrayView<std::complex<double> >(n,*out);
     if (!result) success = false;
+#endif
 
         }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true,std::cerr,success);
