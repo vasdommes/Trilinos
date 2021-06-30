@@ -72,6 +72,27 @@ namespace Teuchos {
 
 
 namespace Tpetra {
+namespace Details {
+template<class T>
+struct rand_scalar_type {
+  using type = T;
+};
+#ifdef HAVE_TPETRA_INST_LONG_DOUBLE
+template<>
+struct rand_scalar_type<long double> {
+  using type = double;
+};
+#endif
+#ifdef HAVE_TPETRA_INST_FLOAT128
+template<>
+struct rand_scalar_type<__float128> {
+  using type = double;
+};
+#endif
+}
+}
+
+namespace Tpetra {
 
 
   /// \brief Copy the contents of the MultiVector \c src into \c dst.

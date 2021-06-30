@@ -2469,12 +2469,13 @@ namespace Tpetra {
   randomize ()
   {
     typedef impl_scalar_type IST;
-    typedef Kokkos::Details::ArithTraits<IST> ATS;
+    typedef typename Tpetra::Details::rand_scalar_type<IST>::type RST; 
+    typedef Kokkos::Details::ArithTraits<RST> ATS;
     typedef Kokkos::Random_XorShift64_Pool<typename device_type::execution_space> pool_type;
     typedef typename pool_type::generator_type generator_type;
 
-    const IST max = Kokkos::rand<generator_type, IST>::max ();
-    const IST min = ATS::is_signed ? IST (-max) : ATS::zero ();
+    const RST max = Kokkos::rand<generator_type, RST>::max ();
+    const RST min = ATS::is_signed ? RST (-max) : ATS::zero ();
 
     this->randomize (static_cast<Scalar> (min), static_cast<Scalar> (max));
   }
@@ -2486,6 +2487,7 @@ namespace Tpetra {
   randomize (const Scalar& minVal, const Scalar& maxVal)
   {
     typedef impl_scalar_type IST;
+    typedef typename Tpetra::Details::rand_scalar_type<IST>::type RST; 
     typedef Kokkos::Random_XorShift64_Pool<typename device_type::execution_space> pool_type;
 
     // Seed the pseudorandom number generator using the calling
@@ -2503,8 +2505,8 @@ namespace Tpetra {
     unsigned int seed = static_cast<unsigned int> (seed64&0xffffffff);
 
     pool_type rand_pool (seed);
-    const IST max = static_cast<IST> (maxVal);
-    const IST min = static_cast<IST> (minVal);
+    const RST max = static_cast<RST> (maxVal);
+    const RST min = static_cast<RST> (minVal);
 
     auto thisView = this->getLocalViewDevice(Access::OverwriteAll);
 
