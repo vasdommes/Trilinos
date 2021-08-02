@@ -39,6 +39,7 @@
 // ***********************************************************************
 // @HEADER
 
+/* trivial change to trigger framework subprojects THIS IS FOR TESTING DO-NOT-MERGE */
 #ifndef TEUCHOS_TO_STRING_HPP
 #define TEUCHOS_TO_STRING_HPP
 
