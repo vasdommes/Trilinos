@@ -83,15 +83,20 @@ public:
     return dualView;
   }
 
-  HostViewType readOnlyDualView() {
+  typename HostViewType::const_type readOnlyHostView() {
+    dualView.sync_host();
     return dualView.view_host();
   }
 
-  HostViewType overwriteAllDualView() {
+  HostViewType overwriteAllHostView() {
+    dualView.clear_sync_state();
+    dualView.modify_host();
     return dualView.view_host();
   }
 
-  HostViewType readWriteDualView() {
+  HostViewType readWriteHostView() {
+    dualView.sync_host();
+    dualView.modify_host();
     return dualView.view_host();
   }
 private:
@@ -144,28 +149,28 @@ TEUCHOS_UNIT_TEST(WrappedDualView, hostViewMicrobench) {
 
   //ReadOnly
   {
-    auto warmUp = dView.readOnlyDualView();
+    auto warmUp = dView.readOnlyHostView();
     TimeMonitor t(*TimeMonitor::getNewTimer(roTimer));
     for (size_t i = 0; i < iterations; i++) {
-      auto tmp = dView.readOnlyDualView();
+      auto tmp = dView.readOnlyHostView();
     }
   }
 
   //OverwriteAll
   {
-    auto warmUp = dView.overwriteAllDualView();
+    auto warmUp = dView.overwriteAllHostView();
     TimeMonitor t(*TimeMonitor::getNewTimer(oaTimer));
     for (size_t i = 0; i < iterations; i++) {
-      auto tmp = dView.overwriteAllDualView();
+      auto tmp = dView.overwriteAllHostView();
     }
   }
 
   //ReadWrite
   {
-    auto warmUp = dView.readWriteDualView();
+    auto warmUp = dView.readWriteHostView();
     TimeMonitor t(*TimeMonitor::getNewTimer(rwTimer));
     for (size_t i = 0; i < iterations; i++) {
-      auto tmp = dView.readWriteDualView();
+      auto tmp = dView.readWriteHostView();
     }
   }
   StackedTimer::OutputOptions options;
