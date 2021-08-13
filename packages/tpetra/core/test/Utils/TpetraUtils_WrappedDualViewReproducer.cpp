@@ -70,11 +70,21 @@ class fakeDualView {
 public:
   fakeDualView() 
     : viewSize(16),
-      dualView("dualView", viewSize)
+      dualView("dualView", viewSize),
+      a("a", 50),
+      b("b", 50)
   {
     for (int i = 0; i < viewSize; i++) {
       dualView.view_host()(i) = 0;
     }
+    for (int i = 0; i < 50; i++) {
+      a.view_host()(i) = i;
+      b.view_host()(i) = 2*1;
+    }
+    a.modify_host();
+    a.sync_device();
+    b.modify_host();
+    b.sync_device();
     dualView.modify_host();
     dualView.sync_device();
   }
@@ -99,9 +109,15 @@ public:
     dualView.modify_host();
     return dualView.view_host();
   }
+
+  void a_b(size_t iterations) {
+    for (size_t i = 0; i < iterations; i++) {
+      a.view_host()(i%50) += b.view_host()(i%50);
+    }
+  }    
 private:
   int viewSize;
-  DualViewType dualView;
+  DualViewType dualView, a, b;
 };
 
 TEUCHOS_UNIT_TEST(WrappedDualView, hostViewMicrobench) {
@@ -131,6 +147,7 @@ TEUCHOS_UNIT_TEST(WrappedDualView, hostViewMicrobench) {
   std::string roTimer = "hostView: ReadOnly";
   std::string oaTimer = "hostView: OverwriteAll";
   std::string rwTimer = "hostView: ReadWrite";
+  std::string abTimer = "hostView: a += b";
   
   //get communicator
   RCP<const Teuchos::Comm<int> > comm = Tpetra::getDefaultComm();
@@ -173,6 +190,13 @@ TEUCHOS_UNIT_TEST(WrappedDualView, hostViewMicrobench) {
       auto tmp = dView.readWriteHostView();
     }
   }
+
+  // a += b
+  {
+    TimeMonitor t(*TimeMonitor::getNewTimer(abTimer));
+    dView.a_b(iterations);
+  }
+
   StackedTimer::OutputOptions options;
   options.print_warnings = false;
   timer->report(std::cout, comm, options);
