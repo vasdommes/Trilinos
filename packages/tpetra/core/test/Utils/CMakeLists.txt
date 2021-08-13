@@ -9,6 +9,15 @@ TRIBITS_ADD_EXECUTABLE_AND_TEST(
   )
 
 TRIBITS_ADD_EXECUTABLE_AND_TEST(
+  TpetraUtils_WrappedDualViewReproducer
+  SOURCES
+    TpetraUtils_WrappedDualViewReproducer
+  ARGS ${ARGS}
+  COMM serial mpi
+  STANDARD_PASS_OUTPUT
+  )
+
+TRIBITS_ADD_EXECUTABLE_AND_TEST(
   TpetraUtils_WrappedDualViewMicrobench
   SOURCES
     TpetraUtils_WrappedDualViewMicrobench

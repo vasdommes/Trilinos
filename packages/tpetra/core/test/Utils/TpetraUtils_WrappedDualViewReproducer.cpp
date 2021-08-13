@@ -66,17 +66,38 @@ using ConstDeviceViewType = typename DualViewType::t_dev::const_type;
 
 using ConstDualViewType = Kokkos::DualView<const int*, DeviceType>;
 
-HostViewType readOnlyDualView(DualViewType dualV) {
-  return dualV.view_host();
-}
+class fakeDualView {
+public:
+  fakeDualView() 
+    : viewSize(16),
+      dualView("dualView", viewSize)
+  {
+    for (int i = 0; i < viewSize; i++) {
+      dualView.view_host()(i) = 0;
+    }
+    dualView.modify_host();
+    dualView.sync_device();
+  }
 
-HostViewType overwriteAllDualView(DualViewType dualV) {
-  return dualV.view_host();
-}
+  DualViewType getDualView() {
+    return dualView;
+  }
 
-HostViewType readWriteDualView(DualViewType dualV) {
-  return dualV.view_host();
-}
+  HostViewType readOnlyDualView() {
+    return dualView.view_host();
+  }
+
+  HostViewType overwriteAllDualView() {
+    return dualView.view_host();
+  }
+
+  HostViewType readWriteDualView() {
+    return dualView.view_host();
+  }
+private:
+  int viewSize;
+  DualViewType dualView;
+};
 
 TEUCHOS_UNIT_TEST(WrappedDualView, hostViewMicrobench) {
   using Teuchos::RCP;
@@ -109,19 +130,11 @@ TEUCHOS_UNIT_TEST(WrappedDualView, hostViewMicrobench) {
   //get communicator
   RCP<const Teuchos::Comm<int> > comm = Tpetra::getDefaultComm();
 
-  int viewSize = 16;
-  DualViewType dualV("dualView", viewSize);
-
-  //initialize dual view
-  for (int i = 0; i < viewSize; i++) {
-    dualV.view_host()(i) = 0;
-  }
-
-  dualV.modify_host();
-  dualV.sync_device();
+  fakeDualView dView;
 
   //raw dualView
   {
+    DualViewType dualV = dView.getDualView();
     auto warmUp = dualV.view_host();
     TimeMonitor t(*TimeMonitor::getNewTimer(dvTimer));
     for (size_t i = 0; i < iterations; i++) {
@@ -131,28 +144,28 @@ TEUCHOS_UNIT_TEST(WrappedDualView, hostViewMicrobench) {
 
   //ReadOnly
   {
-    auto warmUp = dualV.view_host();
+    auto warmUp = dView.readOnlyDualView();
     TimeMonitor t(*TimeMonitor::getNewTimer(roTimer));
     for (size_t i = 0; i < iterations; i++) {
-      auto tmp = readOnlyDualView(dualV);
+      auto tmp = dView.readOnlyDualView();
     }
   }
 
   //OverwriteAll
   {
-    auto warmUp = dualV.view_host();
+    auto warmUp = dView.overwriteAllDualView();
     TimeMonitor t(*TimeMonitor::getNewTimer(oaTimer));
     for (size_t i = 0; i < iterations; i++) {
-      auto tmp = overwriteAllDualView(dualV);
+      auto tmp = dView.overwriteAllDualView();
     }
   }
 
   //ReadWrite
   {
-    auto warmUp = dualV.view_host();
+    auto warmUp = dView.readWriteDualView();
     TimeMonitor t(*TimeMonitor::getNewTimer(rwTimer));
     for (size_t i = 0; i < iterations; i++) {
-      auto tmp = readWriteDualView(dualV);
+      auto tmp = dView.readWriteDualView();
     }
   }
   StackedTimer::OutputOptions options;
