@@ -61,6 +61,7 @@ public:
 
   // Constructor
   ObserverToTempusIntegrationObserverAdapter(
+    const Teuchos::RCP<const Piro::TempusIntegrator<Scalar>>& piroTempusIntegrator, 
     const Teuchos::RCP<const Tempus::SolutionHistory<Scalar> >& solutionHistory,
     const Teuchos::RCP<const Tempus::TimeStepControl<Scalar> >& timeStepControl,
     const Teuchos::RCP<Piro::ObserverBase<Scalar> > &wrappedObserver,
@@ -103,6 +104,7 @@ public:
 private:
 
   void observeTimeStep();
+  Teuchos::RCP<const Piro::TempusIntegrator<Scalar>> piroTempusIntegrator_; 
   Teuchos::RCP<const Tempus::SolutionHistory<Scalar> > solutionHistory_;
   Teuchos::RCP<const Tempus::TimeStepControl<Scalar> > timeStepControl_;
   Teuchos::RCP<Teuchos::FancyOStream> out_;
