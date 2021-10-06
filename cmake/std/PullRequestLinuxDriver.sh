@@ -30,6 +30,9 @@ function bootstrap_modules() {
             module load python/3.7.2
             get_python_packages pip3
             export PYTHON_EXE=python3
+	    export https_proxy=''
+	    export http_proxy=''
+	    export no_proxy=*
         else
             message_std "PRDriver> " "ERROR: Unable to find matching environment for CUDA job not on Ride."
             exit -1
