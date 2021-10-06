@@ -6,4 +6,4 @@ fi
 
 set -x
 
-sbatch -N1 ${WORKSPACE}/Trilinos/cmake/std/PullRequestLinuxDriver.sh
+srun -N1 -p MI100 ${WORKSPACE}/Trilinos/cmake/std/PullRequestLinuxDriver.sh
