@@ -14,6 +14,7 @@ function bootstrap_modules() {
     cuda_regex=".*(_cuda_).*"
     weaver_regex=".*(weaver).*"
     vortex_regex=".*(vortex).*"
+    caraway_regex=".*(caraway).*"
     if [[ ${JOB_BASE_NAME:?} =~ ${cuda_regex} ]]; then
         if [[ ${NODE_NAME:?} =~ ${weaver_regex} ]]; then
             message_std "PRDriver> " "Job is CUDA"
@@ -33,6 +34,13 @@ function bootstrap_modules() {
             message_std "PRDriver> " "ERROR: Unable to find matching environment for CUDA job not on Ride."
             exit -1
         fi
+    elif [[ ${JOB_BASE_NAME:?} =~ ${caraway_regex} ]]; then
+        module unload git
+        module unload python
+        module load git/2.9.4
+	module load python/3.7.3
+        get_python_packages pip3
+        export PYTHON_EXE=python3	
     else
         source /projects/sems/modulefiles/utils/sems-archive-modules-init.sh
         module unload sems-archive-git
