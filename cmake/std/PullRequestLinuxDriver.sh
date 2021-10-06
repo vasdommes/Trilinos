@@ -85,7 +85,6 @@ if [[ "${TRILINOS_PR_DO_NOT_SET_PROXY}}" == "" ]] ; then
   export no_proxy='localhost,.sandia.gov,localnets,127.0.0.1,169.254.0.0/16,forge.sandia.gov'
 fi
 
-
 # bootstrap the python and git modules for this system
 bootstrap_modules
 
