@@ -42,6 +42,8 @@ function bootstrap_modules() {
         module unload python
         module load git/2.9.4
 	module load python/3.7.3
+	module load cmake/3.19.3
+	module laod rocm/4.3.0
         get_python_packages pip3
         export PYTHON_EXE=python3	
     else
