@@ -6,4 +6,4 @@ fi
 
 set -x
 
-srun -N1 -p -n 4 MI100 ${WORKSPACE}/Trilinos/cmake/std/PullRequestLinuxDriver.sh
+srun -N1 -n 4 -p MI100 ${WORKSPACE}/Trilinos/cmake/std/PullRequestLinuxDriver.sh
