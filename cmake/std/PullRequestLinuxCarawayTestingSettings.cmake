@@ -62,14 +62,9 @@ set (Trilinos_ENABLE_SEACAS OFF CACHE BOOL "Set by default for caraway PR testin
 set (Trilinos_ENABLE_STK OFF CACHE BOOL "Set by default for caraway PR testing")
 set (Trilinos_ENABLE_ShyLU OFF CACHE BOOL "Set by default for caraway PR testing")
 set (Trilinos_ENABLE_ShyLU_Node OFF CACHE BOOL "Set by default for caraway PR testing")
-set (Trilinos_ENABLE_MiniTensor OFF CACHE BOOL "Set by default for caraway PR testing")
-set (Trilinos_ENABLE_Stokhos OFF CACHE BOOL "Set by default for caraway PR testing")
-set (Trilinos_ENABLE_Intrepid2 OFF CACHE BOOL "Set by default for caraway PR testing")
-set (Trilinos_ENABLE_Phalanx OFF CACHE BOOL "Set by default for caraway PR testing")
-set (Trilinos_ENABLE_ROL OFF CACHE BOOL "Set by default for caraway PR testing")
-set (Trilinos_ENABLE_Panzer OFF CACHE BOOL "Set by default for caraway PR testing")
-set (Trilinos_ENABLE_Moertel OFF CACHE BOOL "Set by default for caraway PR testing")
-set (Trilinos_ENABLE_TrilinosCouplings OFF CACHE BOOL "Set by default for caraway PR testing")
+
+
+
 
 
 set (TPL_ENABLE_LAPACK ON CACHE BOOL "Set by default for PR testing")
@@ -116,5 +111,3 @@ SET(Netcdf_LIBRARY_DIRS "$ENV{NETCDF_LIB_DIR}" CACHE PATH "Set by default for PR
 
 #set (TPL_Scotch_INCLUDE_DIRS "$ENV{SCOTCH_INC_DIR}" CACHE PATH "Set by default for PR testing")
 #set (Scotch_LIBRARY_DIRS "$ENV{SCOTCH_LIB_DIR}" CACHE PATH "Set by default for PR testing")
-
-#include("${CMAKE_CURRENT_LIST_DIR}/PullRequestLinuxCommonTestingSettings.cmake")
