@@ -61,7 +61,6 @@ set (Trilinos_ENABLE_ALL_FORWARD_DEP_PACKAGES ON CACHE BOOL "Set by default for 
 set (Trilinos_ENABLE_SEACAS OFF CACHE BOOL "Set by default for caraway PR testing")
 set (Trilinos_ENABLE_STK OFF CACHE BOOL "Set by default for caraway PR testing")
 set (Trilinos_ENABLE_ShyLU OFF CACHE BOOL "Set by default for caraway PR testing")
-set (Trilinos_ENABLE_ShyLU_DD OFF CACHE BOOL "Set by default for caraway PR testing")
 set (Trilinos_ENABLE_ShyLU_Node OFF CACHE BOOL "Set by default for caraway PR testing")
 set (Trilinos_ENABLE_MiniTensor OFF CACHE BOOL "Set by default for caraway PR testing")
 set (Trilinos_ENABLE_Stokhos OFF CACHE BOOL "Set by default for caraway PR testing")
