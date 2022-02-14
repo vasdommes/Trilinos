@@ -49,6 +49,10 @@
 #include "Tpetra_BlockMultiVector.hpp"
 #include "Tpetra_BlockView.hpp"
 
+#include "Tpetra_BlockCrsMatrix_decl.hpp"
+
+#include "KokkosSparse.hpp"
+
 #include "Teuchos_TimeMonitor.hpp"
 #ifdef HAVE_TPETRA_DEBUG
 #  include <set>
@@ -548,7 +552,7 @@ namespace Impl {
       } else {
         policy = policy_type(numLocalMeshRows, 1, 1);
       }
-      Kokkos::parallel_for (policy, functor);
+      Kokkos::parallel_for ("tpetra local apply internal 1", policy, functor);
       
       // Compute the remaining columns of Y.
       for (LO j = 1; j < numVecs; ++j) {
@@ -556,7 +560,7 @@ namespace Impl {
         auto Y_j = Kokkos::subview (Y_out, Kokkos::ALL (), j);
         functor.setX (X_j);
         functor.setY (Y_j);
-        Kokkos::parallel_for (policy, functor);
+        Kokkos::parallel_for ("tpetra local apply internal 2", policy, functor);
       }
     } else {
       functor_type functor (alpha, graph, val, blockSize, X_0, beta, Y_0);
@@ -567,7 +571,7 @@ namespace Impl {
         auto Y_j = Kokkos::subview (Y_out, Kokkos::ALL (), j);
         functor.setX (X_j);
         functor.setY (Y_j);
-        Kokkos::parallel_for (policy, functor);
+        Kokkos::parallel_for ("tpetra local apply internal 3", policy, functor);
       }
     }
   }
@@ -663,7 +667,8 @@ public:
     pointImporter_ (new Teuchos::RCP<typename crs_graph_type::import_type> ()),
     offsetPerBlock_ (0),
     localError_ (new bool (false)),
-    errs_ (new Teuchos::RCP<std::ostringstream> ()) // ptr to a null ptr
+    errs_ (new Teuchos::RCP<std::ostringstream> ()), // ptr to a null ptr
+    use_kokkos_kernels_spmv_impl(false)
   {
   }
 
@@ -680,7 +685,8 @@ public:
     pointImporter_ (new Teuchos::RCP<typename crs_graph_type::import_type> ()),
     offsetPerBlock_ (blockSize * blockSize),
     localError_ (new bool (false)),
-    errs_ (new Teuchos::RCP<std::ostringstream> ()) // ptr to a null ptr
+    errs_ (new Teuchos::RCP<std::ostringstream> ()), // ptr to a null ptr
+    use_kokkos_kernels_spmv_impl(false)
   {
 
     /// KK : additional check is needed that graph is fill complete.
@@ -732,7 +738,8 @@ public:
   BlockCrsMatrix<Scalar, LO, GO, Node>::
   BlockCrsMatrix (const crs_graph_type& graph,
                   const typename local_matrix_device_type::values_type& values,
-                  const LO blockSize) :
+                  const LO blockSize,
+                  const bool use_kokkos_kernels) :
     dist_object_type (graph.getMap ()),
     graph_ (graph),
     rowMeshMap_ (* (graph.getRowMap ())),
@@ -742,7 +749,8 @@ public:
     pointImporter_ (new Teuchos::RCP<typename crs_graph_type::import_type> ()),
     offsetPerBlock_ (blockSize * blockSize),
     localError_ (new bool (false)),
-    errs_ (new Teuchos::RCP<std::ostringstream> ()) // ptr to a null ptr
+    errs_ (new Teuchos::RCP<std::ostringstream> ()), // ptr to a null ptr
+    use_kokkos_kernels_spmv_impl(use_kokkos_kernels)
   {
     /// KK : additional check is needed that graph is fill complete.
     TEUCHOS_TEST_FOR_EXCEPTION(
@@ -1515,9 +1523,18 @@ public:
           *X_colMap_ = rcp (new BMV (* (graph_.getColMap ()), getBlockSize (),
                                      static_cast<LO> (X.getNumVectors ())));
         }
-        (*X_colMap_)->getMultiVectorView().doImport (X.getMultiVectorView (),
-                                                     **pointImporter_,
-                                                     ::Tpetra::REPLACE);
+
+        if (time_stuff){
+          Teuchos::TimeMonitor timer51(*Teuchos::TimeMonitor::getNewTimer("5.1)   BlockCrs doImport"));
+          (*X_colMap_)->getMultiVectorView().doImport (X.getMultiVectorView (),
+                                                       **pointImporter_,
+                                                       ::Tpetra::REPLACE);
+        } else {
+          (*X_colMap_)->getMultiVectorView().doImport (X.getMultiVectorView (),
+                                                       **pointImporter_,
+                                                       ::Tpetra::REPLACE);
+        }
+
         try {
           X_colMap = &(**X_colMap_);
         }
@@ -1590,9 +1607,31 @@ public:
     auto X_lcl = X_mv.getLocalViewDevice (Access::ReadOnly);
     auto Y_lcl = Y_mv.getLocalViewDevice (Access::ReadWrite);
     auto val = val_.getDeviceView(Access::ReadWrite);
-    
-    bcrsLocalApplyNoTrans (alpha_impl, graph, val, blockSize, X_lcl,
-                           beta_impl, Y_lcl);
+    {
+      if (use_kokkos_kernels_spmv_impl) {
+        if (time_stuff){
+          Teuchos::TimeMonitor timer52(*Teuchos::TimeMonitor::getNewTimer("5.2)   BlockCrs local apply (kokkoskernels))"));
+
+          auto A_lcl = getLocalMatrixDevice();
+          KokkosSparse::spmv (KokkosSparse::NoTranspose, alpha_impl, A_lcl, X_lcl, beta, Y_lcl);
+        }
+        else {
+          auto A_lcl = getLocalMatrixDevice();
+          KokkosSparse::spmv (KokkosSparse::NoTranspose, alpha_impl, A_lcl, X_lcl, beta, Y_lcl);
+        }
+
+      } else {
+        if (time_stuff){
+          Teuchos::TimeMonitor timer52(*Teuchos::TimeMonitor::getNewTimer("5.2)   BlockCrs local apply (tpetra))"));
+
+          bcrsLocalApplyNoTrans (alpha_impl, graph, val, blockSize, X_lcl,
+                                 beta_impl, Y_lcl);
+        } else {
+          bcrsLocalApplyNoTrans (alpha_impl, graph, val, blockSize, X_lcl,
+                                 beta_impl, Y_lcl);
+        }
+      }
+    }
   }
 
   template<class Scalar, class LO, class GO, class Node>

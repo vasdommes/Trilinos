@@ -45,8 +45,12 @@
 
 #include "Tpetra_CrsGraph.hpp"
 #include "Tpetra_RowMatrix.hpp"
+#include "Tpetra_Vector.hpp"
 #include "Tpetra_BlockMultiVector_decl.hpp"
 #include "Tpetra_CrsMatrix_decl.hpp"
+#include "Tpetra_BlockCrsMatrix_decl.hpp"
+
+#include "KokkosSparse_BsrMatrix.hpp"
 
 #include "KokkosSparse_BsrMatrix.hpp"
 
@@ -283,7 +287,8 @@ public:
 
   BlockCrsMatrix (const crs_graph_type& graph,
                   const typename local_matrix_device_type::values_type& values,
-                  const LO blockSize);
+                  const LO blockSize,
+                  const bool use_kokkos_kernels = false);
 
   /// \brief Constructor that takes a graph, domain and range point
   ///   Maps, and a block size.
@@ -299,6 +304,8 @@ public:
 
   //! Destructor (declared virtual for memory safety).
   virtual ~BlockCrsMatrix () {}
+
+  void set_timer_on_off (const bool timer_on_off) { time_stuff = timer_on_off; }
 
   //@}
   //! \name Implementation of Tpetra::Operator
@@ -899,6 +906,9 @@ private:
   /// error stream, because all views have the same (nonnull at
   /// construction) outer pointer.
   Teuchos::RCP<Teuchos::RCP<std::ostringstream> > errs_;
+
+  bool use_kokkos_kernels_spmv_impl;
+  bool time_stuff = true;
 
   //! Mark that a local error occurred, and get a stream for reporting it.
   std::ostream& markLocalErrorAndGetStream ();

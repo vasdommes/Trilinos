@@ -160,6 +160,7 @@ int main (int argc, char *argv[])
 
     LO blocksize = 5, nrhs = 1, repeat = 100;
     bool dump_sparse_matrix = false;
+    bool use_kokkos_kernels = false;
 
     Teuchos::CommandLineProcessor clp (false);
     clp.setDocString ("Tpetra::BlockCrsMatrix performance test using 3-D 7-point stencil.\n");
@@ -182,6 +183,9 @@ int main (int argc, char *argv[])
                    "If true, dump the test sparse matrix to a MatrixMarket file "
                    "in the current directory.  This is a debugging option and may "
                    "take a lot of disk space and time.");
+    clp.setOption ("use-kokkos-kernels-impl", "use-tpetra-impl", &use_kokkos_kernels,
+                   "If true, use the Kokkos-Kernels Bsr matrix local apply inside "
+                   "tpetra BlockCrs. If false, use the inernal tpetra implementation.");
 
     {
       bool returnEarly = false;
@@ -388,7 +392,7 @@ int main (int argc, char *argv[])
         std::cerr << os.str ();
       }
       // Create BlockCrsMatrix
-      RCP<tpetra_blockcrs_matrix_type> A_bcrs (new tpetra_blockcrs_matrix_type (*bcrs_graph, blocksize));
+      RCP<tpetra_blockcrs_matrix_type> A_bcrs_old (new tpetra_blockcrs_matrix_type (*bcrs_graph, blocksize));
 
       if (debug) {
         std::ostringstream os;
@@ -398,7 +402,7 @@ int main (int argc, char *argv[])
       typedef tpetra_blockcrs_matrix_type::little_block_type block_type;
       Kokkos::View<block_type*, device_type> blocks;
       {
-        TimeMonitor timerLocalBlockCrsFill(*TimeMonitor::getNewTimer("2) LocalBlockCrsFill"));
+        TimeMonitor timerLocalBlockCrsFill(*TimeMonitor::getNewTimer("2) LocalBlockCrsFillOld"));
 
         // Tpetra BlockCrsMatrix only has high level access functions
         // To fill this on device, we need an access to the meta data of blocks
@@ -423,7 +427,7 @@ int main (int argc, char *argv[])
           const auto end = rowptr_host(row+1);
           typedef typename std::remove_const<decltype (beg) >::type offset_type;
           for (offset_type loc = beg; loc < end; ++loc) {
-            blocks_host(loc) = A_bcrs->getLocalBlockDeviceNonConst(row, colidx_host(loc));
+            blocks_host(loc) = A_bcrs_old->getLocalBlockDeviceNonConst(row, colidx_host(loc));
           }
         }
         //   });
@@ -431,7 +435,8 @@ int main (int argc, char *argv[])
         Kokkos::deep_copy(blocks, blocks_host);
 
         Kokkos::parallel_for
-          (Kokkos::RangePolicy<exec_space, LO> (0, num_owned_elements),
+          ("Old Block Fill",
+           Kokkos::RangePolicy<exec_space, LO> (0, num_owned_elements),
            KOKKOS_LAMBDA (const LO row) {
             const auto beg = rowptr(row);
             const auto end = rowptr(row+1);
@@ -456,7 +461,53 @@ int main (int argc, char *argv[])
                                                                   l0, l1);
             }
           });
+      }     
+
+      // Create device data views for BlockCrsMatrix
+      typename Kokkos::View<value_type*, device_type>
+        bcrs_values("bcrs_values", colidx.extent(0)*blocksize*blocksize);
+      {
+        TimeMonitor timerLocalBlockCrsFill(*TimeMonitor::getNewTimer("2) LocalBlockCrsFillNew"));
+
+        Kokkos::parallel_for
+          ("BlockFill",
+           Kokkos::RangePolicy<exec_space, LO> (0, num_owned_elements),
+           KOKKOS_LAMBDA (const LO row) {
+
+            GO indx = rowptr(row)*blocksize*blocksize;
+
+            const auto beg = rowptr(row);
+            const auto end = rowptr(row+1);
+            typedef typename std::remove_const<decltype (beg) >::type offset_type;
+            for (offset_type loc = beg; loc < end; ++loc) {
+              const GO gid_row = mesh_gids(row);
+              const GO gid_col = mesh_gids(colidx(loc));
+
+              LO i0, j0, k0, i1, j1, k1;
+              sb.idx_to_ijk(gid_row, i0, j0, k0);
+              sb.idx_to_ijk(gid_col, i1, j1, k1);
+
+              const LO diff_i = i0 - i1;
+              const LO diff_j = j0 - j1;
+              const LO diff_k = j0 - k1;
+
+              for (LO l0=0;l0<blocksize;++l0)
+                for (LO l1=0;l1<blocksize;++l1) {
+
+                  bcrs_values(indx)
+                      = get_block_crs_entry<value_type>(i0, j0, k0,
+                                                        diff_i, diff_j, diff_k,
+                                                        l0, l1);
+                  ++indx;
+               }
+            }
+          });
       }
+
+      RCP<tpetra_blockcrs_matrix_type> A_bcrs (new tpetra_blockcrs_matrix_type (*bcrs_graph,
+                                                                                bcrs_values,
+                                                                                blocksize,
+                                                                                use_kokkos_kernels));
 
       {
         TimeMonitor timerBlockCrsFillComplete(*TimeMonitor::getNewTimer("3) BlockCrsMatrix FillComplete - currently do nothing"));
@@ -505,6 +556,9 @@ int main (int argc, char *argv[])
         std::cerr << os.str ();
       }
       // matrix vector multiplication
+      A_bcrs->set_timer_on_off(false);
+      A_bcrs->apply(*X, *B_bcrs);
+      A_bcrs->set_timer_on_off(true);
       {
         for (LO iter=0;iter<repeat;++iter) {
           TimeMonitor timerBlockCrsApply(*TimeMonitor::getNewTimer("5) BlockCrs Apply"));
@@ -517,7 +571,11 @@ int main (int argc, char *argv[])
         os << *debugPrefix << "Convert BlockCrsMatrix to CrsMatrix" << endl;
         std::cerr << os.str ();
       }
+
       // direct conversion: block crs -> point crs
+      typename tpetra_crs_matrix_type::local_matrix_device_type::values_type
+        crs_values("crs_values", colidx.extent(0)*blocksize*blocksize);
+
       RCP<tpetra_crs_matrix_type> A_crs;
       {
         TimeMonitor timerConvertBlockCrsToPointCrs(*TimeMonitor::getNewTimer("6) Conversion from BlockCrs to PointCrs"));
@@ -538,7 +596,7 @@ int main (int argc, char *argv[])
         // here, we create pointwise row and column maps manually.
         decltype(mesh_gids) crs_gids("crs_gids", mesh_gids.extent(0)*blocksize);
         Kokkos::parallel_for
-          (num_owned_and_remote_elements,
+          ("store gids", num_owned_and_remote_elements,
            KOKKOS_LAMBDA(const LO idx) {
             for (LO l=0;l<blocksize;++l)
               crs_gids(idx*blocksize+l) = mesh_gids(idx)*blocksize+l;
@@ -552,11 +610,10 @@ int main (int argc, char *argv[])
 
         rowptr_view_type crs_rowptr = rowptr_view_type("crs_rowptr", num_owned_elements*blocksize+1);
         colidx_view_type crs_colidx = colidx_view_type("crs_colidx", colidx.extent(0)*blocksize*blocksize);
-        typename tpetra_crs_matrix_type::local_matrix_device_type::values_type
-          crs_values("crs_values", colidx.extent(0)*blocksize*blocksize);
 
         Kokkos::parallel_for
-          (Kokkos::RangePolicy<exec_space, LO> (0, num_owned_elements),
+          ("Fill CRS",
+           Kokkos::RangePolicy<exec_space, LO> (0, num_owned_elements),
            KOKKOS_LAMBDA (const LO &idx) {
             const GO nnz_per_block_row = rowptr(idx+1)-rowptr(idx); // FIXME could be LO if no duplicates
             const GO nnz_per_point_row = nnz_per_block_row*blocksize;
@@ -567,20 +624,22 @@ int main (int argc, char *argv[])
               crs_rowptr(crs_rowptr_begin+i) = crs_colidx_begin + i*nnz_per_point_row;
             }
 
-            GO loc = crs_colidx_begin;
+            GO indx = crs_colidx_begin;
             // loop over the rows in a block
             for (LO l0=0;l0<blocksize;++l0) {
               // loop over the block row
               typedef typename std::decay<decltype (rowptr(idx)) >::type offset_type;
 
-              for (offset_type jj = rowptr(idx); jj < rowptr(idx+1); ++jj) {
-                const auto block = blocks(jj);
+              for (offset_type loc = rowptr(idx); loc < rowptr(idx+1); ++loc) {
                 // loop over the cols in a block
-                const GO offset = colidx(jj)*blocksize;
+                const GO offset = colidx(loc)*blocksize;
                 for (LO l1=0;l1<blocksize;++l1) {
-                  crs_colidx(loc) = offset+l1;
-                  crs_values(loc) = block(l0,l1);
-                  ++loc;
+                  crs_colidx(indx) = offset+l1;
+
+                   const LO bcrs_indx = loc*blocksize*blocksize + l0*blocksize +l1;
+                   crs_values(indx) = bcrs_values(bcrs_indx);
+
+                   ++indx;
                 }
               }
             }
@@ -616,6 +675,9 @@ int main (int argc, char *argv[])
         std::cerr << os.str ();
       }
       // perform on point crs matrix
+      A_crs->set_timer_on_off(false);
+      A_crs->apply(*X, *B_crs);
+      A_crs->set_timer_on_off(true);
       {
         for (LO iter=0;iter<repeat;++iter) {
           TimeMonitor timerPointCrsApply(*TimeMonitor::getNewTimer("7) PointCrs Apply"));
