@@ -49,6 +49,10 @@
 #include "Tpetra_BlockMultiVector.hpp"
 #include "Tpetra_BlockView.hpp"
 
+#include "Tpetra_BlockCrsMatrix_decl.hpp"
+
+#include "KokkosSparse.hpp"
+
 #include "Teuchos_TimeMonitor.hpp"
 #ifdef HAVE_TPETRA_DEBUG
 #  include <set>
@@ -666,7 +670,8 @@ public:
     pointImporter_ (new Teuchos::RCP<typename crs_graph_type::import_type> ()),
     offsetPerBlock_ (0),
     localError_ (new bool (false)),
-    errs_ (new Teuchos::RCP<std::ostringstream> ()) // ptr to a null ptr
+    errs_ (new Teuchos::RCP<std::ostringstream> ()), // ptr to a null ptr
+    use_kokkos_kernels_spmv_impl(false)
   {
   }
 
@@ -683,7 +688,8 @@ public:
     pointImporter_ (new Teuchos::RCP<typename crs_graph_type::import_type> ()),
     offsetPerBlock_ (blockSize * blockSize),
     localError_ (new bool (false)),
-    errs_ (new Teuchos::RCP<std::ostringstream> ()) // ptr to a null ptr
+    errs_ (new Teuchos::RCP<std::ostringstream> ()), // ptr to a null ptr
+    use_kokkos_kernels_spmv_impl(false)
   {
 
     /// KK : additional check is needed that graph is fill complete.
@@ -728,6 +734,69 @@ public:
 
       const auto numValEnt = ind_h.extent(0) * offsetPerBlock ();
       val_ = decltype (val_) (impl_scalar_type_dualview("val", numValEnt));
+    }
+  }
+
+  template<class Scalar, class LO, class GO, class Node>
+  BlockCrsMatrix<Scalar, LO, GO, Node>::
+  BlockCrsMatrix (const crs_graph_type& graph,
+                  const Kokkos::View<Scalar*, device_type> &values,
+                  const LO blockSize,
+                  const bool use_kokkos_kernels) :
+    dist_object_type (graph.getMap ()),
+    graph_ (graph),
+    rowMeshMap_ (* (graph.getRowMap ())),
+    blockSize_ (blockSize),
+    X_colMap_ (new Teuchos::RCP<BMV> ()), // ptr to a null ptr
+    Y_rowMap_ (new Teuchos::RCP<BMV> ()), // ptr to a null ptr
+    pointImporter_ (new Teuchos::RCP<typename crs_graph_type::import_type> ()),
+    offsetPerBlock_ (blockSize * blockSize),
+    localError_ (new bool (false)),
+    errs_ (new Teuchos::RCP<std::ostringstream> ()), // ptr to a null ptr
+    use_kokkos_kernels_spmv_impl(use_kokkos_kernels)
+  {
+    /// KK : additional check is needed that graph is fill complete.
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      ! graph_.isSorted (), std::invalid_argument, "Tpetra::"
+      "BlockCrsMatrix constructor: The input CrsGraph does not have sorted "
+      "rows (isSorted() is false).  This class assumes sorted rows.");
+
+    graphRCP_ = Teuchos::rcpFromRef(graph_);
+
+    // Trick to test whether LO is nonpositive, without a compiler
+    // warning in case LO is unsigned (which is generally a bad idea
+    // anyway).  I don't promise that the trick works, but it
+    // generally does with gcc at least, in my experience.
+    const bool blockSizeIsNonpositive = (blockSize + 1 <= 1);
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      blockSizeIsNonpositive, std::invalid_argument, "Tpetra::"
+      "BlockCrsMatrix constructor: The input blockSize = " << blockSize <<
+      " <= 0.  The block size must be positive.");
+
+    domainPointMap_ = BMV::makePointMap (* (graph.getDomainMap ()), blockSize);
+    rangePointMap_ = BMV::makePointMap (* (graph.getRangeMap ()), blockSize);
+
+    {
+      // These are rcp
+      const auto domainPointMap = getDomainMap();
+      const auto colPointMap = Teuchos::rcp
+        (new typename BMV::map_type (BMV::makePointMap (*graph_.getColMap(), blockSize_)));
+      *pointImporter_ = Teuchos::rcp
+        (new typename crs_graph_type::import_type (domainPointMap, colPointMap));
+    }
+    {
+      auto local_graph_h = graph.getLocalGraphHost ();
+      auto ptr_h = local_graph_h.row_map;
+      ptrHost_ = decltype(ptrHost_)(Kokkos::ViewAllocateWithoutInitializing("graph row offset"), ptr_h.extent(0));
+      Kokkos::deep_copy(ptrHost_, ptr_h);
+
+      auto ind_h = local_graph_h.entries;
+      indHost_ = decltype(indHost_)(Kokkos::ViewAllocateWithoutInitializing("graph column indices"), ind_h.extent(0));
+      Kokkos::deep_copy (indHost_, ind_h);
+
+      const auto numValEnt = ind_h.extent(0) * offsetPerBlock ();
+      TEUCHOS_ASSERT_EQUALITY(numValEnt, values.size());
+      val_ = decltype (val_) (values);
     }
   }
 
@@ -1471,6 +1540,23 @@ public:
   }
 
   template<class Scalar, class LO, class GO, class Node>
+  typename BlockCrsMatrix<Scalar, LO, GO, Node>::local_matrix_device_type
+  BlockCrsMatrix<Scalar, LO, GO, Node>::
+  getLocalMatrixDevice () const
+  {
+    auto numCols = this->graph_.getColMap()->getLocalNumElements();
+    auto val = val_.getDeviceView(Access::ReadWrite);
+    const LO blockSize = this->getBlockSize ();
+    const auto graph = this->graph_.getLocalGraphDevice ();
+
+    return local_matrix_device_type("Tpetra::BlockCrsMatrix::lclMatrixDevice",
+                                    numCols,
+                                    val,
+                                    graph,
+                                    blockSize);
+  }
+
+  template<class Scalar, class LO, class GO, class Node>
   void
   BlockCrsMatrix<Scalar, LO, GO, Node>::
   localApplyBlockNoTrans (const BlockMultiVector<Scalar, LO, GO, Node>& X,
@@ -1494,8 +1580,20 @@ public:
     auto Y_lcl = Y_mv.getLocalViewDevice (Access::ReadWrite);
     auto val = val_.getDeviceView(Access::ReadWrite);
 
-    bcrsLocalApplyNoTrans (alpha_impl, graph, val, blockSize, X_lcl,
-                           beta_impl, Y_lcl);
+    {
+      if (use_kokkos_kernels_spmv_impl) {
+        Teuchos::TimeMonitor timer52(*Teuchos::TimeMonitor::getNewTimer("5.2)   BlockCrs local apply (kokkoskernels))"));
+
+        auto A_lcl = getLocalMatrixDevice();
+        KokkosSparse::spmv (KokkosSparse::NoTranspose, alpha_impl, A_lcl, X_lcl, beta, Y_lcl);
+
+      } else {
+        Teuchos::TimeMonitor timer52(*Teuchos::TimeMonitor::getNewTimer("5.2)   BlockCrs local apply (tpetra))"));
+
+        bcrsLocalApplyNoTrans (alpha_impl, graph, val, blockSize, X_lcl,
+                               beta_impl, Y_lcl);
+      }
+    }
   }
 
   template<class Scalar, class LO, class GO, class Node>
