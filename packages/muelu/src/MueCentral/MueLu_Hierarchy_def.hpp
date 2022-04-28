@@ -1419,8 +1419,12 @@ namespace MueLu {
 
     RCP<xdMV> coords = level.Get<RCP<xdMV> >("Coordinates");
 
-    if (A->getRowMap()->isSameAs(*(coords->getMap()))) {
-      GetOStream(Warnings1) << "Hierarchy::ReplaceCoordinateMap: matrix and coordinates maps are same, skipping..." << std::endl;
+    // Hack to work around issues in Panzer
+    if (A->getRowMap()->lib() != coords->getMap()->lib()) {
+      GetOStream(Warnings1) << "Hierarchy::ReplaceCoordinateMap: WARNING Xpetra libs do not match, skipping..."<<std::endl;
+      Xpetra::IO<typename Teuchos::ScalarTraits<Scalar>::coordinateType, LocalOrdinal, GlobalOrdinal, Node>::Write("coords.dat",*coords);
+
+      level.Delete("Coordinates",NoFactory::get());
       return;
     }
 
