@@ -47,8 +47,13 @@
 
 #include "Tpetra_TestBlockCrsMeshDatabase.hpp"
 
+#include "KokkosKernels_Handle.hpp"                     // for KokkosKernels...
+#include "KokkosSparse_spgemm.hpp"
+#include "KokkosSparse_BsrMatrix.hpp"
+
 #include <memory>
 #include <type_traits>
+#include <string>
 
 namespace { // (anonymous)
 
@@ -388,81 +393,12 @@ int main (int argc, char *argv[])
 
       if (debug) {
         std::ostringstream os;
-        os << *debugPrefix << "Make BlockCrsMatrix" << endl;
-        std::cerr << os.str ();
-      }
-      // Create BlockCrsMatrix
-      RCP<tpetra_blockcrs_matrix_type> A_bcrs_old (new tpetra_blockcrs_matrix_type (*bcrs_graph, blocksize));
-
-      if (debug) {
-        std::ostringstream os;
         os << *debugPrefix << "Fill BlockCrsMatrix" << endl;
         std::cerr << os.str ();
       }
-      typedef tpetra_blockcrs_matrix_type::little_block_type block_type;
-      Kokkos::View<block_type*, device_type> blocks;
-      {
-        TimeMonitor timerLocalBlockCrsFill(*TimeMonitor::getNewTimer("2) LocalBlockCrsFillOld"));
 
-        // Tpetra BlockCrsMatrix only has high level access functions
-        // To fill this on device, we need an access to the meta data of blocks
-        const auto rowptr_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), rowptr);
-        const auto colidx_host = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace(), colidx);
-
-        blocks = Kokkos::View<block_type*, device_type>("blocks", rowptr_host(num_owned_elements));
-
-        const auto blocks_host = Kokkos::create_mirror_view(blocks);
-        // This MUST run on host, since it invokes a host-only method,
-        // getLocalBlock.  This means we must NOT use KOKKOS_LAMBDA,
-        // since that would build the lambda for both host AND device.
-
-        /// without UVM, the getLocalBlockDeviceNonConst cannot be called within the parallel for 
-        /// even though it is host execution space as the method can involve kernel launch 
-        /// for memory transfers.
-        // Kokkos::parallel_for
-        //   (Kokkos::RangePolicy<host_space, LO> (0, num_owned_elements),
-        //    [&] (const LO row) {
-        for (LO row=0;row<LO(num_owned_elements);++row) {
-          const auto beg = rowptr_host(row);
-          const auto end = rowptr_host(row+1);
-          typedef typename std::remove_const<decltype (beg) >::type offset_type;
-          for (offset_type loc = beg; loc < end; ++loc) {
-            blocks_host(loc) = A_bcrs_old->getLocalBlockDeviceNonConst(row, colidx_host(loc));
-          }
-        }
-        //   });
-
-        Kokkos::deep_copy(blocks, blocks_host);
-
-        Kokkos::parallel_for
-          ("Old Block Fill",
-           Kokkos::RangePolicy<exec_space, LO> (0, num_owned_elements),
-           KOKKOS_LAMBDA (const LO row) {
-            const auto beg = rowptr(row);
-            const auto end = rowptr(row+1);
-            typedef typename std::remove_const<decltype (beg) >::type offset_type;
-            for (offset_type loc = beg; loc < end; ++loc) {
-              const GO gid_row = mesh_gids(row);
-              const GO gid_col = mesh_gids(colidx(loc));
-
-              LO i0, j0, k0, i1, j1, k1;
-              sb.idx_to_ijk(gid_row, i0, j0, k0);
-              sb.idx_to_ijk(gid_col, i1, j1, k1);
-
-              const LO diff_i = i0 - i1;
-              const LO diff_j = j0 - j1;
-              const LO diff_k = j0 - k1;
-
-              auto block = blocks(loc);
-              for (LO l0=0;l0<blocksize;++l0)
-                for (LO l1=0;l1<blocksize;++l1) {
-                  block(l0, l1) = get_block_crs_entry<value_type>(i0, j0, k0,
-                                                                  diff_i, diff_j, diff_k,
-                                                                  l0, l1);                
-               }
-            }
-          });
-      }     
+      RCP<tpetra_blockcrs_matrix_type> A_bcrs;
+      RCP<tpetra_blockcrs_matrix_type> A2_bcrs;
 
       // Create device data views for BlockCrsMatrix
       typename Kokkos::View<value_type*, device_type>
@@ -505,10 +441,15 @@ int main (int argc, char *argv[])
           });
       }
 
-      RCP<tpetra_blockcrs_matrix_type> A_bcrs (new tpetra_blockcrs_matrix_type (*bcrs_graph,
-                                                                                bcrs_values,
-                                                                                blocksize,
-                                                                                use_kokkos_kernels));
+      A_bcrs = rcp(new tpetra_blockcrs_matrix_type (*bcrs_graph,
+                                                    bcrs_values,
+                                                    blocksize,
+                                                    use_kokkos_kernels));
+
+      A2_bcrs = rcp(new tpetra_blockcrs_matrix_type (*bcrs_graph,
+                                                    bcrs_values,
+                                                    blocksize,
+                                                    use_kokkos_kernels));
 
       {
         TimeMonitor timerBlockCrsFillComplete(*TimeMonitor::getNewTimer("3) BlockCrsMatrix FillComplete - currently do nothing"));
@@ -546,10 +487,10 @@ int main (int argc, char *argv[])
 
       if (debug) {
         std::ostringstream os;
-        os << *debugPrefix << "Make B_bcrs MultiVector" << endl;
+        os << *debugPrefix << "Make b_bcrs MultiVector" << endl;
         std::cerr << os.str ();
       }
-      RCP<tpetra_multivector_type> B_bcrs = Teuchos::rcp(new tpetra_multivector_type(A_bcrs->getRangeMap(),  nrhs));
+      RCP<tpetra_multivector_type> b_bcrs = Teuchos::rcp(new tpetra_multivector_type(A_bcrs->getRangeMap(),  nrhs));
 
       if (debug) {
         std::ostringstream os;
@@ -558,12 +499,12 @@ int main (int argc, char *argv[])
       }
       // matrix vector multiplication
       A_bcrs->set_timer_on_off(false);
-      A_bcrs->apply(*X, *B_bcrs);
+      A_bcrs->apply(*X, *b_bcrs);
       A_bcrs->set_timer_on_off(true);
       {
         for (LO iter=0;iter<repeat;++iter) {
           TimeMonitor timerBlockCrsApply(*TimeMonitor::getNewTimer("5) BlockCrs Apply"));
-          A_bcrs->apply(*X, *B_bcrs);
+          A_bcrs->apply(*X, *b_bcrs);
         }
       }
 
@@ -577,7 +518,7 @@ int main (int argc, char *argv[])
       typename tpetra_crs_matrix_type::local_matrix_device_type::values_type
         crs_values("crs_values", colidx.extent(0)*blocksize*blocksize);
 
-      RCP<tpetra_crs_matrix_type> A_crs;
+      RCP<tpetra_crs_matrix_type> A_crs, A2_crs;
       {
         TimeMonitor timerConvertBlockCrsToPointCrs(*TimeMonitor::getNewTimer("6) Conversion from BlockCrs to PointCrs"));
 
@@ -656,6 +597,10 @@ int main (int argc, char *argv[])
                                                col_crs_map,
                                                local_matrix,
                                                Teuchos::null));
+        A2_crs = rcp(new tpetra_crs_matrix_type(row_crs_map,
+                                               col_crs_map,
+                                               local_matrix,
+                                               Teuchos::null));
 
       } // end conversion timer
 
@@ -670,12 +615,133 @@ int main (int argc, char *argv[])
         A_crs->describe(*out, Teuchos::VERB_EXTREME);
       }
 
+      // Matrix-Matrix product
+      {
+        if (commWorld->getSize() != 1) {
+
+          if (debug) {
+            std::ostringstream os;
+            os << *debugPrefix << "Matrix-Matrix product example currently on on 1 mpi proces" << endl;
+            std::cerr << os.str ();
+          }
+
+        } else {
+
+          if (debug) {
+            std::ostringstream os;
+            os << *debugPrefix << "Crs Matrix-Matrix product" << endl;
+            std::cerr << os.str ();
+          }
+
+          //std::string alg_name = std::string("SPGEMM_KK_MEMORY");
+          std::string alg_name = std::string("SPGEMM_KK_DENSE");
+          //std::string alg_name = std::string("SPGEMM_KK");
+
+          // CRS
+          {
+            using CrsLocalMatDevType = tpetra_crs_matrix_type::local_matrix_device_type;
+            using size_type = CrsLocalMatDevType::size_type;
+            using ordinal_type = CrsLocalMatDevType::ordinal_type;
+            using scalar_type = CrsLocalMatDevType::value_type;
+            using device_type = CrsLocalMatDevType::device_type;
+
+            const CrsLocalMatDevType & Amat_crs = A_crs->getLocalMatrixDevice();
+            const CrsLocalMatDevType & Bmat_crs = A2_crs->getLocalMatrixDevice();
+
+            // KokkosKernelsHandle
+            typedef KokkosKernels::Experimental::KokkosKernelsHandle<
+                size_type,ordinal_type, scalar_type,
+                typename device_type::execution_space,
+                typename device_type::memory_space,
+                typename device_type::memory_space>
+                KernelHandle;
+
+            TimeMonitor timerSPGEMM_KK_MEMORY(*TimeMonitor::getNewTimer("8) CRS "+alg_name));
+
+            KokkosSparse::SPGEMMAlgorithm alg_enum = KokkosSparse::StringToSPGEMMAlgorithm(alg_name);
+
+            KernelHandle kh;
+            kh.create_spgemm_handle(alg_enum);
+            //kh.set_team_work_size(16);
+
+            CrsLocalMatDevType Cmat;
+
+            {
+              TimeMonitor timerSPGEMM_KK_MEMORY(*TimeMonitor::getNewTimer("8.1) CRS "+alg_name+" symbolic"));
+              KokkosSparse::spgemm_symbolic(kh, Amat_crs, false, Bmat_crs, false, Cmat);
+            }
+            {
+              TimeMonitor timerSPGEMM_KK_MEMORY(*TimeMonitor::getNewTimer("8.2) CRS "+alg_name+" numeric"));
+              KokkosSparse::spgemm_numeric(kh, Amat_crs, false, Bmat_crs, false, Cmat);
+            }
+            kh.destroy_spgemm_handle();
+
+            double sum_of_values = 0;
+            const auto vals_host = Kokkos::create_mirror_view_and_copy(host_space(), Cmat.values);
+            for (int i=0; i<vals_host.extent(0); ++i) sum_of_values += vals_host(i);
+            std::cout << "CRS "+alg_name+" Sum of entries: " << sum_of_values << std::endl;
+          }
+
+          if (debug) {
+            std::ostringstream os;
+            os << *debugPrefix << "BlockCrs Matrix-Matrix product" << endl;
+            std::cerr << os.str ();
+          }
+
+          // BlockCRS
+          {
+            using BcrsLocalMatDevType = tpetra_blockcrs_matrix_type::local_matrix_device_type;
+            using size_type = BcrsLocalMatDevType::size_type;
+            using ordinal_type = BcrsLocalMatDevType::ordinal_type;
+            using scalar_type = BcrsLocalMatDevType::value_type;
+            using device_type = BcrsLocalMatDevType::device_type;
+
+            const BcrsLocalMatDevType & Amat_bcrs = A_bcrs->getLocalMatrixDevice();
+            const BcrsLocalMatDevType & Bmat_bcrs = A2_bcrs->getLocalMatrixDevice();
+
+            // KokkosKernelsHandle
+            typedef KokkosKernels::Experimental::KokkosKernelsHandle<
+                size_type,ordinal_type, scalar_type,
+                typename device_type::execution_space,
+                typename device_type::memory_space,
+                typename device_type::memory_space>
+                KernelHandle;
+
+            TimeMonitor timerSPGEMM_KK_MEMORY(*TimeMonitor::getNewTimer("9) BCRS "+alg_name));
+
+            KokkosSparse::SPGEMMAlgorithm alg_enum = KokkosSparse::StringToSPGEMMAlgorithm(alg_name);
+
+            KernelHandle kh;
+            kh.create_spgemm_handle(alg_enum);
+            kh.set_team_work_size(16);
+
+            BcrsLocalMatDevType Cmat;
+
+            {
+              TimeMonitor timerSPGEMM_KK_MEMORY(*TimeMonitor::getNewTimer("9.1) BCRS "+alg_name+" symbolic"));
+              KokkosSparse::block_spgemm_symbolic(kh, Amat_bcrs, false, Bmat_bcrs, false, Cmat);
+            }
+            {
+              TimeMonitor timerSPGEMM_KK_MEMORY(*TimeMonitor::getNewTimer("9.2) BCRS "+alg_name+" numeric"));
+              KokkosSparse::block_spgemm_numeric(kh, Amat_bcrs, false, Bmat_bcrs, false, Cmat);
+            }
+
+            kh.destroy_spgemm_handle();
+
+            double sum_of_values = 0;
+            const auto vals_host = Kokkos::create_mirror_view_and_copy(host_space(), Cmat.values);
+            for (int i=0; i<vals_host.extent(0); ++i) sum_of_values += vals_host(i);
+            std::cout << "BCRS "+alg_name+" Sum of entries: " << sum_of_values << std::endl;
+          }
+        }
+      }
+
       if (debug) {
         std::ostringstream os;
-        os << *debugPrefix << "Make B_crs MultiVector" << endl;
+        os << *debugPrefix << "Make b_crs MultiVector" << endl;
         std::cerr << os.str ();
       }
-      RCP<tpetra_multivector_type> B_crs = Teuchos::rcp(new tpetra_multivector_type(A_bcrs->getRangeMap(),  nrhs));
+      RCP<tpetra_multivector_type> b_crs = Teuchos::rcp(new tpetra_multivector_type(A_bcrs->getRangeMap(),  nrhs));
 
       if (debug) {
         std::ostringstream os;
@@ -684,12 +750,12 @@ int main (int argc, char *argv[])
       }
       // perform on point crs matrix
       A_crs->set_timer_on_off(false);
-      A_crs->apply(*X, *B_crs);
+      A_crs->apply(*X, *b_crs);
       A_crs->set_timer_on_off(true);
       {
         for (LO iter=0;iter<repeat;++iter) {
           TimeMonitor timerPointCrsApply(*TimeMonitor::getNewTimer("7) PointCrs Apply"));
-          A_crs->apply(*X, *B_crs);
+          A_crs->apply(*X, *b_crs);
         }
       }
 
@@ -698,14 +764,14 @@ int main (int argc, char *argv[])
         os << *debugPrefix << "Check results" << endl;
         std::cerr << os.str ();
       }
-      // Check B_bcrs against B_crs
+      // Check b_bcrs against b_crs
       {
-        B_crs->update(-1.0, *B_bcrs, 1.0);
+        b_crs->update(-1.0, *b_bcrs, 1.0);
 
         Kokkos::View<typename tpetra_multivector_type::dot_type*, host_space> norm2 ("norm2", nrhs);
         Kokkos::View<typename tpetra_multivector_type::dot_type*, host_space> diff2 ("diff2", nrhs);
-        B_bcrs->dot(*B_bcrs, norm2);
-        B_crs->dot(*B_crs, diff2);
+        b_bcrs->dot(*b_bcrs, norm2);
+        b_crs->dot(*b_crs, diff2);
 
         if (myProcessPrintsDuringTheTest) {
           for (LO i = 0; i < nrhs; ++i) {
