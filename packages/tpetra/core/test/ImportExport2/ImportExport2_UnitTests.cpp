@@ -49,6 +49,7 @@
 #include <Teuchos_Tuple.hpp>
 #include "Tpetra_CrsGraph.hpp"
 #include "Tpetra_CrsMatrix.hpp"
+#include "Tpetra_BlockCrsMatrix.hpp"
 #include "Tpetra_MultiVector.hpp"
 #include "Tpetra_Core.hpp"
 #include "Tpetra_Distributor.hpp"
@@ -672,6 +673,145 @@ namespace {
         }
       }
     } catch (std::exception& e) {
+      err << "Proc " << myImageID << ": " << e.what () << endl;
+      lclErr = 1;
+    }
+
+    reduceAll<int, int> (*comm, REDUCE_MAX, lclErr, outArg (gblErr));
+    TEST_EQUALITY_CONST( gblErr, 0 );
+    if (gblErr != 0) {
+      Tpetra::Details::gathervPrint (out, err.str (), *comm);
+      out << "Above test failed; aborting further tests" << endl;
+      return;
+    }
+  }
+
+  TEUCHOS_UNIT_TEST_TEMPLATE_3_DECL( BlockCrsMatrixImport, importAndFillComplete, LO, GO, Scalar )
+  {
+    std::cout << std::endl;
+
+    auto out_to_screen = Teuchos::getFancyOStream (Teuchos::rcpFromRef (std::cout));
+
+    typedef Tpetra::global_size_t GST;
+    typedef Map<LO, GO> map_type;
+    typedef Tpetra::BlockCrsMatrix<Scalar, LO, GO> block_crs_type;
+    typedef Tpetra::CrsGraph<LO, GO> crs_graph_type;
+    typedef typename map_type::node_type node_type;
+    typedef typename node_type::device_type device_type;
+    typedef typename node_type::execution_space exec_space;
+
+    out << "(BlockCrsMatrixImport,importAndFillComplete) test" << endl;
+    OSTab tab1 (out); // Add one tab level
+
+    const GST INVALID = Teuchos::OrdinalTraits<GST>::invalid ();
+    // get a comm
+    RCP<const Comm<int> > comm = getDefaultComm();
+    const int numImages = comm->getSize();
+    const int myImageID = comm->getRank();
+
+    // Parameters for CrsMatrix.  We'll let all CrsMatrix instances
+    // use the same parameter list.
+    RCP<ParameterList> crsMatPlist = getCrsMatrixParameterList ();
+
+    if (numImages < 2) {
+      out << "This test is only meaningful if running with multiple MPI "
+        "processes, but you ran it with only 1 process." << endl;
+      return;
+    }
+
+    std::ostringstream err;
+    int lclErr = 0;
+    int gblErr = 0;
+
+    out << "First test: Import a diagonal BlockCrsMatrix from a source row Map "
+           "that has all indices on Process 0, to a target row Map that is "
+           "uniformly distributed over processes. Blocksize=5." << endl;
+    try {
+      OSTab tab2 (out);
+      const GO indexBase = 0;
+      const LO tgt_num_local_elements = 3;
+      const LO src_num_local_elements = (myImageID == 0) ?
+        static_cast<LO> (numImages*tgt_num_local_elements) :
+        static_cast<LO> (0);
+
+      const int blocksize = 1;
+
+      std::cout << "HERE1" << std::endl;
+
+      // Create row Maps for the source and target
+      // Create Maps.
+      RCP<const map_type> src_map =
+        rcp (new map_type (INVALID,
+                           src_num_local_elements,
+                           indexBase, comm));
+      RCP<const map_type> tgt_map =
+        rcp (new map_type (INVALID,
+                           tgt_num_local_elements,
+                           indexBase, comm));
+
+      //src_map->describe(*out_to_screen,Teuchos::VERB_EXTREME);
+      //tgt_map->describe(*out_to_screen,Teuchos::VERB_EXTREME);
+
+      std::cout << "HERE2" << std::endl;
+
+      Teuchos::RCP<crs_graph_type> src_graph =
+	Teuchos::rcp (new crs_graph_type (src_map, 1));
+      Teuchos::RCP<crs_graph_type> tgt_graph =
+	Teuchos::rcp (new crs_graph_type (tgt_map, 1));
+      src_graph->fillComplete();
+      tgt_graph->fillComplete();
+
+      //src_graph->describe(*out_to_screen,Teuchos::VERB_EXTREME);
+      //tgt_graph->describe(*out_to_screen,Teuchos::VERB_EXTREME);
+
+      std::cout << "HERE3" << std::endl;
+
+      // Create BlockCrsMatrix objects.
+      RCP<block_crs_type> src_mat =
+        rcp (new block_crs_type (*src_graph, blocksize));
+      RCP<block_crs_type> tgt_mat =
+        rcp (new block_crs_type (*tgt_graph, blocksize));
+
+      std::cout << "HERE4" << std::endl;
+
+      src_mat->describe(*out_to_screen,Teuchos::VERB_EXTREME);
+
+//      // Create the importer
+//      Import<LO, GO> importer (src_map, tgt_map, getImportParameterList ());
+
+//      // Test the all-in-one import and fill complete nonmember
+//      // constructor.
+//      Teuchos::ParameterList dummy;
+//      RCP<block_crs_type> A_tgt =
+//        Tpetra::importAndFillCompleteBlockCrsMatrix<block_crs_type> (src_mat, importer,
+//                                                                     Teuchos::null,
+//                                                                     Teuchos::null,
+//                                                                     rcp(&dummy,false));
+
+//      // Loop through tgt_mat and make sure it is diagonal.
+//      if (tgt_num_local_elements != 0) {
+//        for (GO gblRow = tgt_map->getMinGlobalIndex ();
+//             gblRow <= tgt_map->getMaxGlobalIndex ();
+//             ++gblRow) {
+//          const LO lclRow = tgt_map->getLocalElement (gblRow);
+
+//          typename crs_type::local_inds_host_view_type lclInds;
+//          typename crs_type::values_host_view_type lclVals;
+//          tgt_mat->getLocalRowView (lclRow, lclInds, lclVals);
+//          TEST_EQUALITY_CONST(lclInds.size(), 1);
+//          TEST_EQUALITY_CONST(lclVals.size(), 1);
+
+//          if (lclInds.size () != 0) { // don't segfault in error case
+//            TEST_EQUALITY(tgt_mat->getColMap ()->getGlobalElement (lclInds[0]), gblRow);
+//          }
+//          if (lclVals.size () != 0) { // don't segfault in error case
+//            TEST_EQUALITY(lclVals[0], as<Scalar> (gblRow));
+//          }
+//        }
+//      }
+
+    }
+    catch (std::exception& e) { // end of the first test
       err << "Proc " << myImageID << ": " << e.what () << endl;
       lclErr = 1;
     }
@@ -3039,6 +3179,7 @@ TEUCHOS_UNIT_TEST_TEMPLATE_2_DECL( Import_Util,GetTwoTransferOwnershipVector, LO
 // These are the tests associated to UNIT_TEST_GROUP_SC_LO_GO that work for all backends.
 #define UNIT_TEST_GROUP_SC_LO_GO_COMMON( SC, LO, GO )                   \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( CrsMatrixImportExport, doImport, LO, GO, SC ) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( BlockCrsMatrixImport, importAndFillComplete, LO, GO, SC ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( MultiVectorImport, doImport, LO, GO, SC ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( FusedImportExport, doImport, LO, GO, SC ) \
   TEUCHOS_UNIT_TEST_TEMPLATE_3_INSTANT( Import_Util, UnpackAndCombineWithOwningPIDs, LO, GO, SC )

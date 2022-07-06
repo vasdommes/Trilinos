@@ -1030,6 +1030,29 @@ public:
   template<class Scalar, class LO, class GO, class Node>
   void
   BlockCrsMatrix<Scalar, LO, GO, Node>::
+  importAndFillComplete (Teuchos::RCP<BlockCrsMatrix<Scalar, LO, GO, Node> >& destMatrix,
+                         const Import<LO, GO, Node>& importer,
+                         const Teuchos::RCP<const map_type>& domainMap,
+                         const Teuchos::RCP<const map_type>& rangeMap,
+                         const Teuchos::RCP<Teuchos::ParameterList>& params) const
+  {
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using this_type = BlockCrsMatrix<Scalar, LO, GO, Node>;
+
+    TEUCHOS_TEST_FOR_EXCEPTION(destMatrix.is_null(), std::invalid_argument,
+                               "Right now, assuming destMatrix is null.");
+    TEUCHOS_TEST_FOR_EXCEPTION(params.is_null(), std::invalid_argument,
+                               "Right now, assuming params is null.");
+
+
+    Teuchos::RCP<crs_graph_type> graph = rcp (new crs_graph_type (importer.getTargetMap(), 0));
+    destMatrix = rcp (new this_type (*graph, this->getBlockSize()));
+  }
+
+  template<class Scalar, class LO, class GO, class Node>
+  void
+  BlockCrsMatrix<Scalar, LO, GO, Node>::
   setAllToScalar (const Scalar& alpha)
   {
     auto val_d = val_.getDeviceView(Access::OverwriteAll);
