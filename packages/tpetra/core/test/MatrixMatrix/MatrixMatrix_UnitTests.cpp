@@ -49,6 +49,8 @@
 #include "Tpetra_Core.hpp"
 #include "Tpetra_Vector.hpp"
 #include "Tpetra_CrsMatrixMultiplyOp.hpp"
+#include "Tpetra_BlockCrsMatrix.hpp"
+#include "Tpetra_BlockCrsMatrix_Helpers.hpp"
 #include "Tpetra_Import.hpp"
 #include "Tpetra_Export.hpp"
 #include "Teuchos_CommandLineProcessor.hpp"
@@ -67,6 +69,7 @@ namespace {
   std::string matnamesFile;
 
   using Tpetra::MatrixMarket::Reader;
+  using Tpetra::BlockCrsMatrix;
   using Tpetra::CrsMatrix;
   using Tpetra::CrsMatrixMultiplyOp;
   using Tpetra::global_size_t;
@@ -1194,6 +1197,264 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Tpetra_MatMat, operations_test,SC,LO, GO, NT) 
   TEST_EQUALITY_CONST( gblSuccess, 1 );
 }
 
+TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Tpetra_MatMatMult, BlockCrsMult,SC,LO, GO, NT)  {
+  RCP<const Comm<int> > comm = Tpetra::getDefaultComm();
+
+  // NOTE: The matrix reader doesn't read real matrices into a complex data type, so we just swap down to MT here
+  typedef typename Teuchos::ScalarTraits<SC>::magnitudeType MT;
+  typedef Map<LO,GO,NT>                     map_type;
+  typedef BlockCrsMatrix<MT,LO,GO,NT> BlockMatrix_t;
+  typedef CrsMatrix<MT,LO,GO,NT> PointMatrix_t;
+  const int myRank = comm->getRank ();
+  //const int numProcs = comm->getSize();
+
+  // Create an output stream that prints immediately, rather than
+  // waiting until the test finishes.  This lets us get debug output
+  // even if an unexpected exception or crash happens.  Unfortunately,
+  // Teuchos::FancyOStream does not implement operator=, so we can't
+  // replace 'out' temporarily.
+  RCP<FancyOStream> newOutP = (myRank == 0) ?
+    Teuchos::getFancyOStream (Teuchos::rcpFromRef (std::cerr)) :
+    Teuchos::getFancyOStream (rcp (new Teuchos::oblackholestream ()));
+  FancyOStream& newOut = *newOutP;
+
+  newOut << "Tpetra block sparse matrix-matrix multiply: operations_test" << endl;
+  Teuchos::OSTab tab1 (newOut);
+
+  newOut << "Get parameters from XML file" << endl;
+  Teuchos::RCP<Teuchos::ParameterList> matrixSystems =
+    Teuchos::getParametersFromXmlFile(matnamesFile);
+
+  for (Teuchos::ParameterList::ConstIterator it = matrixSystems->begin();
+       it != matrixSystems->end();
+       ++it) {
+    TEUCHOS_TEST_FOR_EXCEPTION(!it->second.isList(), std::runtime_error,
+      "All top-level items in the list of matrix file names must be "
+      "ParameterList instances.  " << endl <<
+      "Bad tag's name: " << it->first <<
+      "Type name: " << it->second.getAny().typeName() <<
+      endl << endl);
+
+    ParameterList currentSystem = matrixSystems->sublist (it->first);
+    std::string name = currentSystem.name();
+    std::string A_file = currentSystem.get<std::string> ("A");
+    std::string A_domainmap_file = currentSystem.get<std::string> ("A_domainmap", "");
+    std::string A_rangemap_file = currentSystem.get<std::string> ("A_rangemap", "");
+    std::string A_rowmap_file = currentSystem.get<std::string> ("A_rowmap", "");
+    std::string A_colmap_file = currentSystem.get<std::string> ("A_colmap", "");
+
+    std::string B_file = currentSystem.get<std::string> ("B");
+    std::string B_domainmap_file = currentSystem.get<std::string> ("B_domainmap", "");
+    std::string B_rangemap_file = currentSystem.get<std::string> ("B_rangemap", "");
+    std::string B_rowmap_file = currentSystem.get<std::string> ("B_rowmap", "");
+    std::string B_colmap_file = currentSystem.get<std::string> ("B_colmap", "");
+
+    std::string C_file = currentSystem.get<std::string> ("C");
+    std::string C_domainmap_file = currentSystem.get<std::string> ("C_domainmap", "");
+    std::string C_rangemap_file = currentSystem.get<std::string> ("C_rangemap", "");
+    std::string C_rowmap_file = currentSystem.get<std::string> ("C_rowmap", "");
+    std::string C_colmap_file = currentSystem.get<std::string> ("C_colmap", "");
+
+    std::string D_file = currentSystem.get<std::string> ("D", "");
+    std::string D_domainmap_file = currentSystem.get<std::string> ("D_domainmap", "");
+    std::string D_rangemap_file = currentSystem.get<std::string> ("D_rangemap", "");
+    std::string D_rowmap_file = currentSystem.get<std::string> ("D_rowmap", "");
+    std::string D_colmap_file = currentSystem.get<std::string> ("D_colmap", "");
+
+    std::string op = currentSystem.get<std::string> ("op");
+
+    const bool AT = currentSystem.get<bool> ("TransA");
+    const bool BT = currentSystem.get<bool> ("TransB");
+    const bool CT = currentSystem.get<bool> ("TransC", false);
+    const int numProcs = currentSystem.get<int> ("numProcs", 0);
+
+    // Don't run tests that use op=add,RAP or that use transposes
+    const bool uses_any_transposes = (AT || BT || CT);
+    if (op=="add" || op=="RAP" || uses_any_transposes) continue;
+
+    TEUCHOS_TEST_FOR_EXCEPTION(op != "multiply", std::runtime_error,
+                               "This matrix opertation is either unrecognized, or should have been skipped: " << op);
+
+    // Don't run tests where the core count does not match the maps
+    if(numProcs > 0 && comm->getSize() != numProcs) continue;
+
+
+    double epsilon = currentSystem.get<double> ("epsilon",
+                                       100. * Teuchos::ScalarTraits<SC>::eps());
+
+    // Read point matrices from file
+    RCP<PointMatrix_t> A_point, B_point, C_point, D_point;
+
+    if (A_file != ""){
+      if (A_domainmap_file == "" || A_rangemap_file == "" || A_rowmap_file == "" || A_colmap_file == "") {
+        out << "Attempt to read sparse matrix file \"" << A_file
+            << "\"" << endl;
+        A_point = Reader<PointMatrix_t>::readSparseFile (A_file, comm);
+      }
+      else {
+        RCP<const map_type> domainmap = Reader<PointMatrix_t>::readMapFile (A_domainmap_file, comm);
+        RCP<const map_type> rangemap  = Reader<PointMatrix_t>::readMapFile (A_rangemap_file, comm);
+        RCP<const map_type> rowmap    = Reader<PointMatrix_t>::readMapFile (A_rowmap_file, comm);
+        RCP<const map_type> colmap    = Reader<PointMatrix_t>::readMapFile (A_colmap_file, comm);
+        out << "Attempt to read sparse matrix file \""
+            << A_file << "\"" << endl;
+        A_point = Reader<PointMatrix_t>::readSparseFile (A_file, rowmap, colmap, domainmap, rangemap);
+      }
+    }
+    if (B_domainmap_file == "" || B_rangemap_file == "" || B_rowmap_file == "" || B_colmap_file == "") {
+      out << "Attempt to read sparse matrix file \"" << B_file
+          << "\"" << endl;
+      B_point = Reader<PointMatrix_t>::readSparseFile (B_file, comm);
+    }
+    else {
+      RCP<const map_type> domainmap = Reader<PointMatrix_t>::readMapFile (B_domainmap_file, comm);
+      RCP<const map_type> rangemap  = Reader<PointMatrix_t>::readMapFile (B_rangemap_file, comm);
+      RCP<const map_type> rowmap    = Reader<PointMatrix_t>::readMapFile (B_rowmap_file, comm);
+      RCP<const map_type> colmap    = Reader<PointMatrix_t>::readMapFile (B_colmap_file, comm);
+      out << "Attempt to read sparse matrix file \"" << B_file
+          << "\"" << endl;
+      B_point = Reader<PointMatrix_t>::readSparseFile (B_file, rowmap, colmap, domainmap, rangemap);
+    }
+    if (C_domainmap_file == "" || C_rangemap_file == "" || C_rowmap_file == "" || C_colmap_file == "") {
+      out << "Attempt to read sparse matrix file \"" << C_file
+          << "\"" << endl;
+      C_point = Reader<PointMatrix_t>::readSparseFile (C_file, comm);
+    }
+    else {
+      RCP<const map_type> domainmap = Reader<PointMatrix_t>::readMapFile (C_domainmap_file, comm);
+      RCP<const map_type> rangemap  = Reader<PointMatrix_t>::readMapFile (C_rangemap_file, comm);
+      RCP<const map_type> rowmap    = Reader<PointMatrix_t>::readMapFile (C_rowmap_file, comm);
+      RCP<const map_type> colmap    = Reader<PointMatrix_t>::readMapFile (C_colmap_file, comm);
+      out << "Attempt to read sparse matrix file \"" << C_file
+          << "\"" << endl;
+      C_point = Reader<PointMatrix_t>::readSparseFile (C_file, rowmap, colmap, domainmap, rangemap);
+    }
+    if (D_file != "") {
+      if (D_domainmap_file == "" || D_rangemap_file == "" || D_rowmap_file == "" || D_colmap_file == "") {
+        out << "Attempt to read sparse matrix file \"" << D_file
+            << "\"" << endl;
+        D_point = Reader<PointMatrix_t>::readSparseFile (D_file, comm);
+      }
+      else {
+        RCP<const map_type> domainmap = Reader<PointMatrix_t>::readMapFile (D_domainmap_file, comm);
+        RCP<const map_type> rangemap  = Reader<PointMatrix_t>::readMapFile (D_rangemap_file, comm);
+        RCP<const map_type> rowmap    = Reader<PointMatrix_t>::readMapFile (D_rowmap_file, comm);
+        RCP<const map_type> colmap    = Reader<PointMatrix_t>::readMapFile (D_colmap_file, comm);
+        out << "Attempt to read sparse matrix file \"" << D_file
+            << "\"" << endl;
+        D_point = Reader<PointMatrix_t>::readSparseFile (D_file, rowmap, colmap, domainmap, rangemap);
+      }
+    }
+
+    if (A_file == "") {
+      A_point = C_point;
+    }
+
+    // Convert to block matrices with blocksize 1
+    RCP<BlockMatrix_t> A, B, C, D;
+    A = Tpetra::convertToBlockCrsMatrix<MT,LO,GO,NT>(*A_point, 1);
+    B = Tpetra::convertToBlockCrsMatrix<MT,LO,GO,NT>(*B_point, 1);
+    C = Tpetra::convertToBlockCrsMatrix<MT,LO,GO,NT>(*C_point, 1);
+    D = Tpetra::convertToBlockCrsMatrix<MT,LO,GO,NT>(*D_point, 1);
+
+//    if (verbose)
+//      newOut << "Running multiply test (manual FC) for " << currentSystem.name() << endl;
+
+//    mult_test_results results = multiply_test_manualfc(name, A_point, B_point, AT, BT, C_point, comm, newOut);
+
+//    if (verbose) {
+//      newOut << "Results:"     << endl;
+//      newOut << "\tEpsilon: "  << results.epsilon  << endl;
+//      newOut << "\tcNorm: "    << results.cNorm    << endl;
+//      newOut << "\tcompNorm: " << results.compNorm << endl;
+//      newOut << "\tisImportValid: " <<results.isImportValid << endl;
+//    }
+//    TEST_COMPARE(results.epsilon, <, epsilon);
+//    TEUCHOS_TEST_FOR_EXCEPTION(!results.isImportValid,std::logic_error,std::string("ManualFC: Import validity failed: ") + currentSystem.name());
+
+//    if (verbose)
+//      newOut << "Running multiply test (auto FC) for " << currentSystem.name() << endl;
+
+//    results = multiply_test_autofc(name, A_point, B_point, AT, BT, C_point, comm, newOut);
+
+//    if (verbose) {
+//      newOut << "Results:"     << endl;
+//      newOut << "\tEpsilon: "  << results.epsilon  << endl;
+//      newOut << "\tcNorm: "    << results.cNorm    << endl;
+//      newOut << "\tcompNorm: " << results.compNorm << endl;
+//      newOut << "\tisImportValid: " <<results.isImportValid << endl;
+//    }
+//    TEST_COMPARE(results.epsilon, <, epsilon);
+//    TEUCHOS_TEST_FOR_EXCEPTION(!results.isImportValid,std::logic_error,std::string("AutoFC: Import validity failed: ") + currentSystem.name());
+
+//    if (verbose)
+//      newOut << "Running multiply reuse test for " << currentSystem.name() << endl;
+
+//    results = multiply_reuse_test(name, A_point, B_point, AT, BT, C_point, comm, newOut);
+
+//    if (verbose) {
+//      newOut << "Results:"     << endl;
+//      newOut << "\tEpsilon: "  << results.epsilon  << endl;
+//      newOut << "\tcNorm: "    << results.cNorm    << endl;
+//      newOut << "\tcompNorm: " << results.compNorm << endl;
+//    }
+//    TEST_COMPARE(results.epsilon, <, epsilon);
+
+//    // Check if all diagonal entries are there, required for KokkosKernels Jacobi
+//    bool diagExists = true;
+//    auto rowMap = A_point->getRowMap();
+//    Tpetra::Vector<MT, LO, GO, NT> diags(rowMap);
+//    A_point->getLocalDiagCopy(diags);
+//    size_t diagLength = rowMap->getLocalNumElements();
+//    Teuchos::Array<MT> diagonal(diagLength);
+//    diags.get1dCopy(diagonal());
+
+//    for(size_t i = 0; i < diagLength; ++i) {
+//      if(diagonal[i] == Teuchos::ScalarTraits<SC>::zero()) {
+//        diagExists = false;
+//        break;
+//      }
+//    }
+
+//    // Do we try Jacobi?
+//    if (diagExists && AT == false && BT == false && A_point->getDomainMap()->isSameAs(*A_point->getRangeMap())) {
+//      if (verbose)
+//        newOut << "Running jacobi test for " << currentSystem.name() << endl;
+
+//      results = jacobi_test(name, A_point, B_point, comm, newOut);
+//      if (verbose) {
+//        newOut << "Results:"     << endl;
+//        newOut << "\tEpsilon: "  << results.epsilon  << endl;
+//        newOut << "\tcNorm: "    << results.cNorm    << endl;
+//        newOut << "\tcompNorm: " << results.compNorm << endl;
+//      }
+//      TEST_COMPARE(results.epsilon, <, epsilon)
+
+//      if (verbose)
+//        newOut << "Running jacobi reuse test for " << currentSystem.name() << endl;
+
+//      results = jacobi_reuse_test(name, A_point, B_point, comm, newOut);
+
+//      if (verbose) {
+//        newOut << "Results:"     << endl;
+//        newOut << "\tEpsilon: "  << results.epsilon  << endl;
+//        newOut << "\tcNorm: "    << results.cNorm    << endl;
+//        newOut << "\tcompNorm: " << results.compNorm << endl;
+//      }
+//      TEST_COMPARE(results.epsilon, <, epsilon)
+//    }
+  }
+
+  const int lclSuccess = success ? 1 : 0;
+  int gblSuccess = 0;
+  reduceAll<int, int> (*comm, REDUCE_MIN, lclSuccess, outArg (gblSuccess));
+  newOut << "We made it through operations_test on all processes!" << endl;
+  if (gblSuccess != 1) {
+    newOut << "FAILED on at least one process!" << endl;
+  }
+  TEST_EQUALITY_CONST( gblSuccess, 1 );
+}
+
 /*
  * This test was created at the request of Chris Siefert to verify
  * that some inexplicable behaviour in MueLu was not due to a faulty
@@ -2220,7 +2481,8 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(Tpetra_MatMatAdd, locally_unsorted, SC, LO, GO
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Tpetra_MatMatAdd, transposed_b, SC, LO, GO, NT) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Tpetra_MatMatAdd, locally_unsorted, SC, LO, GO, NT) \
   TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Tpetra_MatMatAdd, different_col_maps, SC, LO, GO, NT) \
-  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Tpetra_MatMatAdd, different_index_base, SC, LO, GO, NT)
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Tpetra_MatMatAdd, different_index_base, SC, LO, GO, NT) \
+  TEUCHOS_UNIT_TEST_TEMPLATE_4_INSTANT(Tpetra_MatMatMult, BlockCrsMult, SC, LO, GO, NT)
 
 // FIXME_SYCL requires querying free device memory in KokkosKernels, see
 // https://github.com/kokkos/kokkos-kernels/issues/1062.
