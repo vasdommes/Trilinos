@@ -49,7 +49,7 @@
 #include "Tpetra_BlockMultiVector.hpp"
 #include "Tpetra_BlockView.hpp"
 
-#include "Tpetra_BlockCrsMatrix_decl.hpp"
+//#include "Tpetra_BlockCrsMatrix_decl.hpp"
 
 #include "KokkosSparse.hpp"
 
@@ -740,7 +740,7 @@ public:
   template<class Scalar, class LO, class GO, class Node>
   BlockCrsMatrix<Scalar, LO, GO, Node>::
   BlockCrsMatrix (const crs_graph_type& graph,
-                  const Kokkos::View<Scalar*, device_type> &values,
+                  const typename local_matrix_device_type::values_type& values,
                   const LO blockSize,
                   const bool use_kokkos_kernels) :
     dist_object_type (graph.getMap ()),
@@ -1016,10 +1016,7 @@ public:
   void
   BlockCrsMatrix<Scalar, LO, GO, Node>::
   importAndFillComplete (Teuchos::RCP<BlockCrsMatrix<Scalar, LO, GO, Node> >& destMatrix,
-                         const Import<LO, GO, Node>& importer,
-                         const Teuchos::RCP<const map_type>& domainMap,
-                         const Teuchos::RCP<const map_type>& rangeMap,
-                         const Teuchos::RCP<Teuchos::ParameterList>& params) const
+                         const Import<LO, GO, Node>& importer) const
   {
     using Teuchos::RCP;
     using Teuchos::rcp;
@@ -1028,18 +1025,18 @@ public:
     // Right now, we make many assumptions...
     TEUCHOS_TEST_FOR_EXCEPTION(!destMatrix.is_null(), std::invalid_argument,
                                "Right now, assuming destMatrix is null.");
-    TEUCHOS_TEST_FOR_EXCEPTION(!domainMap.is_null(), std::invalid_argument,
-                               "Right now, assuming domainMap is null.");
-    TEUCHOS_TEST_FOR_EXCEPTION(!rangeMap.is_null(), std::invalid_argument,
-                               "Right now, assuming rangeMap is null.");
-    TEUCHOS_TEST_FOR_EXCEPTION(!params.is_null(), std::invalid_argument,
-                               "Right now, assuming params is null.");
 
     // BlockCrsMatrix requires a complete graph at construction.
     // So first step is to import and fill complete the destGraph.
-    RCP<crs_graph_type> destGraph = rcp (new crs_graph_type (importer.getTargetMap(), 0));
-    destGraph->doImport(this->getCrsGraph(), importer, Tpetra::INSERT);
-    destGraph->fillComplete();
+    //RCP<crs_graph_type> destGraph = rcp (new crs_graph_type (importer.getTargetMap(), 0));
+    //destGraph->doImport(this->getCrsGraph(), importer, Tpetra::INSERT);
+    //destGraph->fillComplete();
+
+    RCP<crs_graph_type>  srcGraph = rcp (new  crs_graph_type(this->getCrsGraph()));
+    RCP<crs_graph_type> destGraph = importAndFillCompleteCrsGraph<crs_graph_type>(srcGraph, importer,
+                                                                                  srcGraph->getDomainMap(),
+                                                                                  srcGraph->getRangeMap());
+
 
     // Final step, create and import the destMatrix.
     destMatrix = rcp (new this_type (*destGraph, getBlockSize()));
@@ -3536,7 +3533,19 @@ public:
 //
 // Must be expanded from within the Tpetra namespace!
 //
-#define TPETRA_BLOCKCRSMATRIX_INSTANT(S,LO,GO,NODE) \
-  template class BlockCrsMatrix< S, LO, GO, NODE >;
+#define TPETRA_BLOCKCRSMATRIX_MATRIX_INSTANT(SCALAR,LO,GO,NODE) \
+  template class BlockCrsMatrix< SCALAR , LO , GO , NODE >;
+
+#define TPETRA_BLOCKCRSMATRIX_IMPORT_AND_FILL_COMPLETE_INSTANT(SCALAR, LO, GO, NODE) \
+  template<> \
+  Teuchos::RCP<BlockCrsMatrix<SCALAR, LO, GO, NODE> > \
+  importAndFillCompleteBlockCrsMatrix (const Teuchos::RCP<const BlockCrsMatrix<SCALAR, LO, GO, NODE> >& sourceMatrix,  \
+                                       const Import<BlockCrsMatrix<SCALAR, LO, GO, NODE>::local_ordinal_type, \
+                                                    BlockCrsMatrix<SCALAR, LO, GO, NODE>::global_ordinal_type, \
+                                                    BlockCrsMatrix<SCALAR, LO, GO, NODE>::node_type>& importer);
+
+#define TPETRA_BLOCKCRSMATRIX_INSTANT(SCALAR, LO, GO ,NODE) \
+  TPETRA_BLOCKCRSMATRIX_MATRIX_INSTANT(SCALAR, LO, GO, NODE) \
+  TPETRA_BLOCKCRSMATRIX_IMPORT_AND_FILL_COMPLETE_INSTANT(SCALAR, LO, GO, NODE)
 
 #endif // TPETRA_BLOCKCRSMATRIX_DEF_HPP

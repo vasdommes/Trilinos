@@ -47,6 +47,7 @@
 #include <Teuchos_Array.hpp>
 #include "Tpetra_ConfigDefs.hpp"
 #include "Tpetra_CrsMatrix.hpp"
+#include "Tpetra_BlockCrsMatrix.hpp"
 #include "Tpetra_Vector.hpp"
 #include "TpetraExt_MMHelpers.hpp"
 #include "KokkosKernels_Handle.hpp"
@@ -60,6 +61,18 @@
 namespace Tpetra {
 
 namespace MatrixMatrix {
+
+template <class Scalar,
+          class LocalOrdinal,
+          class GlobalOrdinal,
+          class Node>
+void Multiply(
+  const Teuchos::RCP<const BlockCrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> >& A,
+  bool transposeA,
+  const Teuchos::RCP<const BlockCrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> >& B,
+  bool transposeB,
+  Teuchos::RCP<BlockCrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> >& C,
+  const std::string& label = std::string());
 
 /// \brief Sparse matrix-matrix multiply
 ///
@@ -336,6 +349,16 @@ template<class Scalar,
          class GlobalOrdinal,
          class Node>
 void mult_A_B_newmatrix(
+  BlockCrsMatrixStruct<Scalar, LocalOrdinal, GlobalOrdinal, Node>& Aview,
+  BlockCrsMatrixStruct<Scalar, LocalOrdinal, GlobalOrdinal, Node>& Bview,
+  Teuchos::RCP<BlockCrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> >& C,
+  const std::string& label = std::string());
+
+template<class Scalar,
+         class LocalOrdinal,
+         class GlobalOrdinal,
+         class Node>
+void mult_A_B_newmatrix(
   CrsMatrixStruct<Scalar, LocalOrdinal, GlobalOrdinal, Node>& Aview,
   CrsMatrixStruct<Scalar, LocalOrdinal, GlobalOrdinal, Node>& Bview,
   CrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>& C,
@@ -393,6 +416,18 @@ template<class Scalar,
          class GlobalOrdinal,
          class Node>
 void import_and_extract_views(
+  const BlockCrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>& M,
+  Teuchos::RCP<const Map<LocalOrdinal, GlobalOrdinal, Node> > targetMap,
+  BlockCrsMatrixStruct<Scalar, LocalOrdinal, GlobalOrdinal, Node>& Mview,
+  Teuchos::RCP<const Import<LocalOrdinal,GlobalOrdinal, Node> > prototypeImporter = Teuchos::null,
+  bool userAssertsThereAreNoRemotes = false,
+  const std::string& label = std::string());
+
+template<class Scalar,
+         class LocalOrdinal,
+         class GlobalOrdinal,
+         class Node>
+void import_and_extract_views(
   const CrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>& M,
   Teuchos::RCP<const Map<LocalOrdinal, GlobalOrdinal, Node> > targetMap,
   CrsMatrixStruct<Scalar, LocalOrdinal, GlobalOrdinal, Node>& Mview,
@@ -408,7 +443,6 @@ template<class Scalar,
 void setMaxNumEntriesPerRow(
   CrsMatrixStruct<Scalar, LocalOrdinal, GlobalOrdinal, Node>& Mview);
 
-
   // MMM Kernel wrappers struct
   // Because C++ doesn't support partial template specialization of functions.
   template<class Scalar,
@@ -417,6 +451,18 @@ void setMaxNumEntriesPerRow(
 	   class Node,
            class LocalOrdinalViewType>
   struct KernelWrappers {
+    static inline void mult_A_B_newmatrix_kernel_wrapper(BlockCrsMatrixStruct<Scalar, LocalOrdinal, GlobalOrdinal, Node>& Aview,
+							 BlockCrsMatrixStruct<Scalar, LocalOrdinal, GlobalOrdinal, Node>& Bview,
+							 const LocalOrdinalViewType & Acol2Brow,
+							 const LocalOrdinalViewType & Acol2Irow,
+							 const LocalOrdinalViewType & Bcol2Ccol,
+							 const LocalOrdinalViewType & Icol2Ccol,
+               Teuchos::RCP<BlockCrsMatrix<Scalar, LocalOrdinal, GlobalOrdinal, Node> >& C,
+               const Teuchos::RCP<const Map<LocalOrdinal,GlobalOrdinal,Node> >& CcolMap,
+							 Teuchos::RCP<const Import<LocalOrdinal,GlobalOrdinal,Node> > Cimport,
+                                                         const std::string& label = std::string());
+
+
     static inline void mult_A_B_newmatrix_kernel_wrapper(CrsMatrixStruct<Scalar, LocalOrdinal, GlobalOrdinal, Node>& Aview,
 							 CrsMatrixStruct<Scalar, LocalOrdinal, GlobalOrdinal, Node>& Bview,
 							 const LocalOrdinalViewType & Acol2Brow,
@@ -532,6 +578,17 @@ void setMaxNumEntriesPerRow(
                                                            const std::string& label = std::string(),
                                                            const Teuchos::RCP<Teuchos::ParameterList>& params = Teuchos::null);
   };
+
+// This only merges matrices that look like B & Bimport, aka, they have no overlapping rows
+  template<class Scalar,class LocalOrdinal,class GlobalOrdinal,class Node, class LocalOrdinalViewType>
+  inline const typename Tpetra::BlockCrsMatrix<Scalar,LocalOrdinal,GlobalOrdinal,Node>::local_matrix_device_type 
+  merge_matrices(BlockCrsMatrixStruct<Scalar, LocalOrdinal, GlobalOrdinal, Node>& Aview,
+                 BlockCrsMatrixStruct<Scalar, LocalOrdinal, GlobalOrdinal, Node>& Bview,
+                 const LocalOrdinalViewType & Acol2Brow,
+                 const LocalOrdinalViewType & Acol2Irow,
+                 const LocalOrdinalViewType & Bcol2Ccol,
+                 const LocalOrdinalViewType & Icol2Ccol,  
+                 const size_t mergedNodeNumCols);
 
   // This only merges matrices that look like B & Bimport, aka, they have no overlapping rows
   template<class Scalar,class LocalOrdinal,class GlobalOrdinal,class Node, class LocalOrdinalViewType>
