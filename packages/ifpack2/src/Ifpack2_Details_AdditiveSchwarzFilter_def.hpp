@@ -45,6 +45,7 @@
 
 #include "Ifpack2_Details_AdditiveSchwarzFilter_decl.hpp"
 #include "KokkosKernels_Sorting.hpp"
+#include "KokkosSparse_SortCrs.hpp"
 #include "Kokkos_Bitset.hpp"
 
 namespace Ifpack2
@@ -237,9 +238,14 @@ setup(const Teuchos::RCP<const row_matrix_type>& A_unfiltered,
   //Fill the local matrix of A_ (filtered and permuted)
   //First, construct the rowmap by counting the entries in each row
   row_map_type localRowptrs(Kokkos::view_alloc(Kokkos::WithoutInitializing, "Filtered rowptrs"), numLocalRows + 1);
-  Kokkos::parallel_for(policy_type(0, numLocalRows),
+  Kokkos::parallel_for(policy_type(0, numLocalRows + 1),
       KOKKOS_LAMBDA(local_ordinal_type i)
       {
+        if(i == numLocalRows)
+        {
+          localRowptrs(i) = 0;
+          return;
+        }
         //Count the entries that will be in filtered row i.
         //This means entries which correspond to local, non-singleton rows/columns.
         local_ordinal_type numEntries = 0;
@@ -270,8 +276,6 @@ setup(const Teuchos::RCP<const row_matrix_type>& A_unfiltered,
           }
         }
         localRowptrs(i) = numEntries;
-        if(i == numLocalRows - 1)
-          localRowptrs(i + 1) = 0;
       });
   //Prefix sum to finish computing the rowptrs
   size_type numLocalEntries;
@@ -416,7 +420,7 @@ void AdditiveSchwarzFilter<MatrixType>::fillLocalMatrix(typename AdditiveSchwarz
         }
       });
   //Sort the matrix, since the reordering can shuffle the entries into any order.
-  KokkosKernels::sort_crs_matrix(localMatrix);
+  KokkosSparse::sort_crs_matrix(localMatrix);
 }
 
 template<class MatrixType>

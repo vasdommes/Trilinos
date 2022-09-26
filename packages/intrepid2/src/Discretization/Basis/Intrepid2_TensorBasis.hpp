@@ -49,7 +49,6 @@
 #ifndef Intrepid2_TensorBasis_h
 #define Intrepid2_TensorBasis_h
 
-#include <Kokkos_View.hpp>
 #include <Kokkos_DynRankView.hpp>
 
 #include <Teuchos_RCP.hpp>
@@ -1510,18 +1509,18 @@ struct OperatorTensorDecomposition
               
               TensorPoints<PointValueType, DeviceType> basisPoints(basisPointComponents);
               
-              bool useVectorData = (basisValueView.rank() == 3);
+              bool useVectorData2 = (basisValueView.rank() == 3);
 
               BasisValues<OutputValueType,DeviceType> basisValues;
-              if (useVectorData)
+              if (useVectorData2)
               {
                 VectorData<OutputValueType,DeviceType> vectorData(outputData);
                 basisValues = BasisValues<OutputValueType,DeviceType>(vectorData);
               }
               else
               {
-                TensorData<OutputValueType,DeviceType> tensorData(outputData);
-                basisValues = BasisValues<OutputValueType,DeviceType>(tensorData);
+                TensorData<OutputValueType,DeviceType> tensorData2(outputData);
+                basisValues = BasisValues<OutputValueType,DeviceType>(tensorData2);
               }
               
               tensorComponents_[basisOrdinal]->getValues(basisValues, basisPoints, op);
@@ -1675,7 +1674,7 @@ struct OperatorTensorDecomposition
                   //   (this would allow us to eliminate both for loops here)
                   // At the moment, we defer such optimizations on the idea that this may not ever become a performance bottleneck.
                   FunctorType functor(outputValues_dkTensor, outputValues1_dkEnum1, outputValues2_dkEnum2, tensorPoints, weight);
-                  Kokkos::parallel_for( policy , functor, "TensorViewFunctor");
+                  Kokkos::parallel_for("TensorViewFunctor", policy , functor);
                 }
               }
             }
@@ -1817,7 +1816,7 @@ struct OperatorTensorDecomposition
       using FunctorType = TensorViewFunctor<ExecutionSpace, OutputValueType, OutputViewType>;
       
       FunctorType functor(outputValues, outputValues1, outputValues2, tensorPoints, weight);
-      Kokkos::parallel_for( policy , functor, "TensorViewFunctor");
+      Kokkos::parallel_for("TensorViewFunctor", policy , functor);
     }
     
     /** \brief Creates and returns a Basis object whose DeviceType template argument is Kokkos::HostSpace::device_type, but is otherwise identical to this.
@@ -2334,7 +2333,7 @@ struct OperatorTensorDecomposition
       
       using FunctorType = TensorBasis3_Functor<ExecutionSpace, OutputValueType, OutputViewType>;
       FunctorType functor(outputValues, outputValues1, outputValues2, outputValues3, tensorPoints, weight);
-      Kokkos::parallel_for( policy , functor, "TensorBasis3_Functor");
+      Kokkos::parallel_for("TensorBasis3_Functor", policy , functor);
     }
     
     /** \brief Creates and returns a Basis object whose DeviceType template argument is Kokkos::HostSpace::device_type, but is otherwise identical to this.
