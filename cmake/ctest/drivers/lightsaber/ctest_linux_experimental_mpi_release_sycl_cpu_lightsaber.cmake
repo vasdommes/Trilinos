@@ -53,8 +53,41 @@
 # ************************************************************************
 # @HEADER
 
-tribits_extpkg_create_imported_all_libs_target_and_config_file( CUBLAS
-  INNER_FIND_PACKAGE_NAME  CUDAToolkit
-  IMPORTED_TARGETS_FOR_ALL_LIBS  CUDA::cublas )
-# Above, the CUDA TPL should have already found CUDAToolkit so we just need to
-# grab the target from it to form the CUSPARSE::all_libs target.
+
+INCLUDE("${CTEST_SCRIPT_DIRECTORY}/TrilinosCTestDriverCore.lightsaber.gcc.cmake")
+
+#
+# Set the options specific to this build case
+#
+
+# The variable BUILD_DIR_NAME is based COMM_TYPE, BUILD_TYPE, and BUILD_NAME_DETAILS.
+# Tribits creates the variable listed under "Build Name" by prepending the OS type and compiler
+# details to BUILD_DIR_NAME.
+SET(COMM_TYPE MPI)
+SET(BUILD_TYPE RELEASE)
+SET(BUILD_NAME_DETAILS SYCL_CPU)
+
+SET(CTEST_PARALLEL_LEVEL 8)
+SET(CTEST_TEST_TYPE Experimental)
+SET(Trilinos_TRACK  Experimental)  # Set the CDash track to Nightly
+SET(CTEST_TEST_TIMEOUT 14400) # twice the default value, for valgrind
+SET(CTEST_DO_MEMORY_TESTING FALSE)
+SET(Trilinos_PACKAGES Tpetra)
+
+SET(EXTRA_CONFIGURE_OPTIONS
+  "-DTrilinos_ENABLE_COMPLEX:BOOL=OFF"
+  "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION=ON"
+  "-DTrilinos_ENABLE_DEPENDENCY_UNIT_TESTS=OFF"
+  "-DKokkos_ENABLE_SYCL=ON"
+  "-DTpetra_INST_SYCL=ON"
+  "-DTpetra_INST_SERIAL=ON"
+  "-DTPL_ENABLE_SuperLU=ON"
+  "-DCMAKE_CXX_COMPILER:STRING=/opt/intel/oneapi/mpi/2021.7.0/bin/mpiicpc"
+  "-DCMAKE_C_COMPILER:STRING=/opt/intel/oneapi/mpi/2021.7.0/bin/mpiicc"
+)
+
+#
+# Set the rest of the system-specific options and run the dashboard build/test
+#
+
+TRILINOS_SYSTEM_SPECIFIC_CTEST_DRIVER()
