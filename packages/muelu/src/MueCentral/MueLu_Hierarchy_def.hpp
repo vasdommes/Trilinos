@@ -500,6 +500,12 @@ namespace MueLu {
 
       level.Release(*smootherFact);
     }
+#ifdef out
+if ( (isLastLevel == true) && (isOrigLastLevel == true )) printf("islastlevel is origlastlevel true true");
+if ( (isLastLevel == true) && (isOrigLastLevel == false)) printf("islastlevel is origlastlevel true false");
+if ( (isLastLevel == false) && (isOrigLastLevel == false)) printf("islastlevel is origlastlevel false false");
+if ( (isLastLevel == false) && (isOrigLastLevel == true)) printf("islastlevel is origlastlevel false true");
+#endif
 
     if (isLastLevel == true) {
       if (isOrigLastLevel == false) {
@@ -507,6 +513,8 @@ namespace MueLu {
         // assuming that we are not at the coarsest level. Now, we changed our mind, so we have to release those.
         Levels_[nextLevelID]->Release(TopRAPFactory(coarseLevelManager, nextLevelManager));
       }
+printf("shrink this guy : %d  %d\n",(int) nextLevelID, (int) Levels_.size());
+//      Levels_.resize(nextLevelID-1);
       Levels_.resize(nextLevelID);
     }
 

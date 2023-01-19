@@ -86,6 +86,10 @@ namespace MueLu {
     std::string label = "MueLu::TransP-" + Teuchos::toString(coarseLevel.GetLevelID());
 
     RCP<Matrix> P = Get< RCP<Matrix> >(coarseLevel, "P");
+if (P == Teuchos::null) {
+   printf("We found a null P\n");
+   return;
+}
     const Teuchos::ParameterList& pL = GetParameterList();
 
     // Reuse pattern if available (multiple solve)

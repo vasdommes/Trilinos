@@ -152,8 +152,16 @@ namespace MueLu {
     if(pL.isParameter("Nullspace name")) nspName = pL.get<std::string>("Nullspace name");
 
 
+    RCP<Matrix>                Ptentative;
     RCP<Matrix>                A             = Get< RCP<Matrix> >               (fineLevel, "A");
     RCP<Aggregates>            aggregates    = Get< RCP<Aggregates> >           (fineLevel, "Aggregates");
+if ( aggregates->GetNumGlobalAggregates() == 0) {
+  printf("we are in the zero agg case\n");
+  Ptentative = Teuchos::null;
+  Set(coarseLevel, "P",           Ptentative);
+  return;
+}
+
     RCP<AmalgamationInfo>      amalgInfo     = Get< RCP<AmalgamationInfo> >     (fineLevel, "UnAmalgamationInfo");
     RCP<MultiVector>           fineNullspace = Get< RCP<MultiVector> >          (fineLevel, nspName);
     RCP<const Map>             coarseMap     = Get< RCP<const Map> >            (fineLevel, "CoarseMap");
@@ -172,7 +180,6 @@ namespace MueLu {
     TEUCHOS_TEST_FOR_EXCEPTION( A->getDomainMap()->getLocalNumElements() != fineNullspace->getMap()->getLocalNumElements(),
 			       Exceptions::RuntimeError,"MueLu::TentativePFactory::MakeTentative: Size mismatch between A and Nullspace");
 
-    RCP<Matrix>                Ptentative;
     RCP<MultiVector>           coarseNullspace;
     RCP<RealValuedMultiVector> coarseCoords;
 

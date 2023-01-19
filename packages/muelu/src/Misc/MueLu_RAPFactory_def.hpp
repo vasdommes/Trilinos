@@ -133,6 +133,12 @@ namespace MueLu {
       const Teuchos::ParameterList& pL = GetParameterList();
       RCP<Matrix> A = Get< RCP<Matrix> >(fineLevel,   "A");
       RCP<Matrix> P = Get< RCP<Matrix> >(coarseLevel, "P"), AP;
+if (P == Teuchos::null) {
+    printf("RAP found a null P\n");
+    Ac = Teuchos::null;
+    Set(coarseLevel, "A",         Ac);
+    return;
+}
 
       bool isEpetra = A->getRowMap()->lib() == Xpetra::UseEpetra;
       bool isGPU =

@@ -132,6 +132,12 @@ namespace MueLu {
     // Level Get
     RCP<Matrix> A     = Get< RCP<Matrix> >(fineLevel, "A");
     RCP<Matrix> Ptent = coarseLevel.Get< RCP<Matrix> >("P", initialPFact.get());
+RCP<Matrix> finalP;
+if (Ptent == Teuchos::null) {
+   printf("we found a null Ptent\n"); fflush(stdout);
+   finalP = Teuchos::null;
+   Set(coarseLevel, "P",             finalP);
+}
 
     if (restrictionMode_) {
       SubFactoryMonitor m2(*this, "Transpose A", coarseLevel);
@@ -139,7 +145,6 @@ namespace MueLu {
     }
 
     // Build final prolongator
-    RCP<Matrix> finalP;
 
     // Reuse pattern if available
     RCP<ParameterList> APparams = rcp(new ParameterList);;
