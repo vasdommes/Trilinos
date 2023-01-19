@@ -207,6 +207,13 @@ namespace MueLu {
      */
     void ComputeNodesInAggregate(Array<LO> & aggPtr, Array<LO> & aggNodes,Array<LO> & unaggregated) const;
 
+    /*! \brief Get global number of aggregates
+
+    \note This method is private because it is used only for printing and because with the current implementation,
+    communication occurs each time this method is called.
+    */
+    GO GetNumGlobalAggregates() const;
+
     //! @name Overridden from Teuchos::Describable
     //@{
 
@@ -245,12 +252,6 @@ namespace MueLu {
     //! Array of sizes of each local aggregate.
     mutable Teuchos::ArrayRCP<LO> aggregateSizes_;
 
-    /*! \brief Get global number of aggregates
-
-    \note This method is private because it is used only for printing and because with the current implementation,
-    communication occurs each time this method is called.
-    */
-    GO GetNumGlobalAggregates() const;
   };
 
 } //namespace MueLu
