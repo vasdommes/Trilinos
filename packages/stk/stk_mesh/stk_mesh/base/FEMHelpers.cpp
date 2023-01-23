@@ -33,10 +33,8 @@
 // 
 
 #include <stk_mesh/base/FEMHelpers.hpp>
-#include <sstream>                      // for operator<<, etc
 #include <stk_mesh/base/BulkData.hpp>   // for BulkData
 #include <stk_mesh/base/Types.hpp>      // for PartVector, EntityId, etc
-#include <string>                       // for char_traits, operator<<
 #include "stk_mesh/base/MetaData.hpp"   // for get_topology, etc
 #include "stk_mesh/base/Part.hpp"       // for Part
 #include "stk_topology/topology.hpp"    // for topology, etc
@@ -44,10 +42,12 @@
 #include <stk_mesh/baseImpl/MeshImplUtils.hpp>
 #include <stk_mesh/baseImpl/Partition.hpp>
 #include <stk_mesh/baseImpl/elementGraph/ElemElemGraph.hpp>
+#include <sstream>                      // for operator<<, etc
+#include <string>                       // for char_traits, operator<<
+#include <iterator>
+#include <type_traits>
 
-namespace stk
-{
-namespace mesh
+namespace stk::mesh
 {
 
 namespace
@@ -561,26 +561,29 @@ stk::mesh::Entity get_side_entity_for_elem_id_side_pair_of_rank(const stk::mesh:
     return get_side_entity_for_elem_side_pair_of_rank(bulk, elem, sideOrdinal, sideRank);
 }
 
+template<class IterType>
+EntityId get_max_id(IterType begin, IterType end)
+{
+  EntityId maxId = 0;
+  if constexpr (std::is_same_v<std::vector<std::pair<EntityKey,Entity>>::const_iterator, IterType>)
+  {
+    if (begin != end) {
+      IterType lastEntityKeyEntityPair = --end;
+      maxId = lastEntityKeyEntityPair->first.id();
+    }
+  }
+  else
+  {
+    for(IterType iter = begin; iter != end; ++iter) {
+      maxId = std::max(maxId, iter->first.id());
+    } 
+  }
+  return maxId;
+}
+
 EntityId get_max_id_on_local_proc(const BulkData& bulk, EntityRank rank)
 {
-    const BucketVector& buckets = bulk.buckets(rank);
-    EntityId maxId = 0;
-    for(const Bucket* bptr : buckets) {
-      const Bucket& bkt = *bptr;
-      if (bkt.getPartition()->needs_to_be_sorted()) {
-        for(Entity entity : bkt) {
-          maxId = std::max(maxId, bulk.identifier(entity));
-        }
-      }
-      else {
-        unsigned indexOfLastEntityInBucket = bkt.size() - 1;
-        EntityId id = bulk.identifier(bkt[indexOfLastEntityInBucket]);
-        maxId = std::max(maxId, id);
-      }
-    }
-
-    return maxId;
+  return get_max_id(bulk.begin_entities(rank), bulk.end_entities(rank));
 }
 
-}
 }

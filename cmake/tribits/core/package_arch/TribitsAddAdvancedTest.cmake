@@ -156,14 +156,11 @@ include(PrintVar)
 # defined in `Test case Pass/Fail (tribits_add_advanced_test())`_) in order
 # for the overall test to pass.
 #
-# Finally, the test is only added if tests are enabled for the SE package
-# (i.e. `${PACKAGE_NAME}_ENABLE_TESTS`_ ``= ON``) or the parent package (if
-# this is a subpackage) (i.e. ``${PARENT_PACKAGE_NAME}_ENABLE_TESTS=ON``) or
-# if other criteria are met (see some of the arguments in `Overall Arguments
-# (tribits_add_advanced_test())`_ that can trigger a test to not be added).
-# (NOTE: A more efficient way to optionally enable tests is to put them in a
-# ``test/`` subdir and then include that subdir with
-# `tribits_add_test_directories()`_.)
+# Finally, the test is only added if tests are enabled for the package
+# (i.e. `${PACKAGE_NAME}_ENABLE_TESTS`_ ``= ON``) and if other criteria are
+# met (see `Overall Arguments (tribits_add_advanced_test())`_).  (NOTE: A more
+# efficient way to optionally enable tests is to put them in a ``test/``
+# subdir and then include that subdir with `tribits_add_test_directories()`_.)
 #
 # *Sections:*
 #

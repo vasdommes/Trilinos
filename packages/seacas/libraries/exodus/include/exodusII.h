@@ -11,9 +11,7 @@
  * exodusII.h - Exodus II API include file
  *
  *****************************************************************************/
-
-#ifndef EXODUSII_H
-#define EXODUSII_H
+#pragma once
 
 #include "exodus_config.h"
 
@@ -54,12 +52,12 @@
 #endif
 
 /* EXODUS version number */
-#define EXODUS_VERSION       "8.15"
+#define EXODUS_VERSION       "8.19"
 #define EXODUS_VERSION_MAJOR 8
-#define EXODUS_VERSION_MINOR 15
-#define EXODUS_RELEASE_DATE  "February 24, 2022"
+#define EXODUS_VERSION_MINOR 19
+#define EXODUS_RELEASE_DATE  "September 2, 2022"
 
-#define EX_API_VERS       8.15f
+#define EX_API_VERS       8.19f
 #define EX_API_VERS_NODOT (100 * EXODUS_VERSION_MAJOR + EXODUS_VERSION_MINOR)
 #define EX_VERS           EX_API_VERS
 
@@ -1827,6 +1825,4 @@ EXODUS_EXPORT int ex_get_idx(int         exoid,       /**< NetCDF/Exodus file ID
 
 #ifdef __cplusplus
 } /* close brackets on extern "C" declaration */
-#endif
-
 #endif

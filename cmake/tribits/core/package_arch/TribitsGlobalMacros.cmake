@@ -51,9 +51,11 @@ include(TribitsReportInvalidTribitsUsage)
 include(TribitsReadAllProjectDepsFilesCreateDepsGraph)
 include(TribitsAdjustPackageEnables)
 include(TribitsGitRepoVersionInfo)
+include(TribitsSetUpEnabledOnlyDependencies)
 
 # Standard TriBITS utilities includes
 include(TribitsAddOptionAndDefine)
+include(TribitsAddEnumCacheVar)
 include(AdvancedOption)
 include(AdvancedSet)
 include(AppendStringVar)
@@ -69,6 +71,7 @@ include(Split)
 include(TimingUtils)
 include(SetDefaultAndFromEnv) # Used by some call-back files
 include(TribitsFilepathHelpers)
+include(TribitsDeprecatedHelpers)
 
 # Standard CMake includes
 include(CheckIncludeFileCXX)
@@ -629,7 +632,7 @@ macro(tribits_define_global_options_and_define_extra_repos)
   advanced_set( ${PROJECT_NAME}_ELEVATE_ST_TO_PT
     ${${PROJECT_NAME}_ELEVATE_ST_TO_PT_DEFAULT}
     CACHE BOOL
-    "Elevate all defined ST SE packages to PT packages." )
+    "Elevate all defined ST packages to PT packages." )
 
   if ("${${PROJECT_NAME}_ENABLE_CPACK_PACKAGING_DEFAULT}" STREQUAL "")
     set(${PROJECT_NAME}_ENABLE_CPACK_PACKAGING_DEFAULT OFF)
@@ -717,22 +720,55 @@ macro(tribits_define_global_options_and_define_extra_repos)
     "Determines if a variety of development mode checks are turned on by default or not."
     )
 
-  advanced_set( ${PROJECT_NAME}_ASSERT_MISSING_PACKAGES
-    ${${PROJECT_NAME}_ENABLE_DEVELOPMENT_MODE}
-    CACHE BOOL
-    "Determines if asserts are performed on missing packages or not." )
+  if (NOT "${${PROJECT_NAME}_ASSERT_MISSING_PACKAGES}" STREQUAL "")
+    tribits_deprecated("Warning, ${PROJECT_NAME}_ASSERT_MISSING_PACKAGES="
+      "'${${PROJECT_NAME}_ASSERT_MISSING_PACKAGES}' is set and is no"
+      " longer supported!  Please set"
+      " ${PROJECT_NAME}_ASSERT_DEFINED_DEPENDENCIES instead (see build ref)!" )
+    if (${PROJECT_NAME}_ASSERT_MISSING_PACKAGES)
+      set(${PROJECT_NAME}_ASSERT_DEFINED_DEPENDENCIES_DEFAULT  FATAL_ERROR)
+    else()
+     set(${PROJECT_NAME}_ASSERT_DEFINED_DEPENDENCIES_DEFAULT  IGNORE)
+    endif()
+  endif()
+
+  if ("${${PROJECT_NAME}_ASSERT_DEFINED_DEPENDENCIES_DEFAULT}" STREQUAL "")
+    if (${PROJECT_NAME}_ENABLE_DEVELOPMENT_MODE)
+      set(${PROJECT_NAME}_ASSERT_DEFINED_DEPENDENCIES_DEFAULT  FATAL_ERROR)
+    else()
+      set(${PROJECT_NAME}_ASSERT_DEFINED_DEPENDENCIES_DEFAULT  IGNORE)
+    endif()
+  endif()
+
+  set(${PROJECT_NAME}_ASSERT_DEFINED_DEPENDENCIES_ERROR_VALUES_LIST
+    "FATAL_ERROR" "SEND_ERROR" )
+  set(${PROJECT_NAME}_ASSERT_DEFINED_DEPENDENCIES_VALUES_LIST
+    ${${PROJECT_NAME}_ASSERT_DEFINED_DEPENDENCIES_ERROR_VALUES_LIST}
+    "WARNING" "NOTICE" "IGNORE" "OFF" )
+  tribits_add_enum_cache_var( ${PROJECT_NAME}_ASSERT_DEFINED_DEPENDENCIES
+    DEFAULT_VAL ${${PROJECT_NAME}_ASSERT_DEFINED_DEPENDENCIES_DEFAULT}
+    DOC_STRING
+      "Assert that all external and internal dependencies are defined in the project"
+    ALLOWED_STRINGS_LIST
+      ${${PROJECT_NAME}_ASSERT_DEFINED_DEPENDENCIES_VALUES_LIST}
+    IS_ADVANCED )
 
   if ("${${PROJECT_NAME}_ASSERT_CORRECT_TRIBITS_USAGE_DEFAULT}" STREQUAL "")
     if (${PROJECT_NAME}_ENABLE_DEVELOPMENT_MODE)
-      set(${PROJECT_NAME}_ASSERT_CORRECT_TRIBITS_USAGE_DEFAULT FATAL_ERROR)
+      set(${PROJECT_NAME}_ASSERT_CORRECT_TRIBITS_USAGE_DEFAULT  FATAL_ERROR)
     else()
-      set(${PROJECT_NAME}_ASSERT_CORRECT_TRIBITS_USAGE_DEFAULT IGNORE)
+      set(${PROJECT_NAME}_ASSERT_CORRECT_TRIBITS_USAGE_DEFAULT  IGNORE)
     endif()
   endif()
-  advanced_set( ${PROJECT_NAME}_ASSERT_CORRECT_TRIBITS_USAGE
-    "${${PROJECT_NAME}_ASSERT_CORRECT_TRIBITS_USAGE_DEFAULT}"
-    CACHE BOOL
-    "Assert correct usage of TriBITS.  Value values include 'FATAL_ERROR', 'SEND_ERROR', 'WARNING', and 'IGNORE'.  Default '${${PROJECT_NAME}_ASSERT_CORRECT_TRIBITS_USAGE_DEFAULT}' " )
+  set(${PROJECT_NAME}_ASSERT_CORRECT_TRIBITS_USAGE_VALUES_LIST
+      "FATAL_ERROR" "SEND_ERROR" "WARNING" "IGNORE" "OFF")
+  tribits_add_enum_cache_var( ${PROJECT_NAME}_ASSERT_CORRECT_TRIBITS_USAGE
+    DEFAULT_VAL "${${PROJECT_NAME}_ASSERT_CORRECT_TRIBITS_USAGE_DEFAULT}"
+    DOC_STRING
+      "Assert correct usage of TriBITS"
+    ALLOWED_STRINGS_LIST
+      ${${PROJECT_NAME}_ASSERT_CORRECT_TRIBITS_USAGE_VALUES_LIST}
+    IS_ADVANCED )
 
   advanced_set( ${PROJECT_NAME}_WARN_ABOUT_MISSING_EXTERNAL_PACKAGES
     FALSE  CACHE  BOOL
@@ -928,6 +964,17 @@ macro(tribits_define_global_options_and_define_extra_repos)
     ${${PROJECT_NAME}_SHOW_MACHINE_LOAD_IN_TEST_DEFAULT}
     CACHE BOOL
     "Set to 'ON' to see the machine load for advanced tests." )
+
+  if ("${TRIBITS_HANDLE_TRIBITS_DEPRECATED_CODE_DEFAULT}" STREQUAL "")
+    set(TRIBITS_HANDLE_TRIBITS_DEPRECATED_CODE_DEFAULT  "DEPRECATION")
+  endif()
+
+  tribits_add_enum_cache_var(TRIBITS_HANDLE_TRIBITS_DEPRECATED_CODE
+    DEFAULT_VAL "${TRIBITS_HANDLE_TRIBITS_DEPRECATED_CODE_DEFAULT}"
+    DOC_STRING "Mode for dealing with usage of TriBITS deprecated functionality"
+    ALLOWED_STRINGS_LIST ${TRIBITS_HANDLE_TRIBITS_DEPRECATED_CODE_ALL_VALID_VALUES}
+    IS_ADVANCED
+    )
 
   mark_as_advanced(BUILD_TESTING)
   mark_as_advanced(CMAKE_BACKWARDS_COMPATIBILITY)
@@ -1408,22 +1455,22 @@ macro(tribits_handle_project_extra_link_flags_as_a_tpl)
 
     # Tack on ${PROJECT_NAME}TribitsLastLib as a dependency to all enabled
     # external packages/TPLs
-    foreach(TPL_NAME ${${PROJECT_NAME}_TPLS})
-      list(APPEND ${TPL_NAME}_LIB_ALL_DEPENDENCIES ${lastLibTplName})
+    foreach(TPL_NAME ${${PROJECT_NAME}_DEFINED_TPLS})
+      list(APPEND ${TPL_NAME}_LIB_DEFINED_DEPENDENCIES ${lastLibTplName})
       if (TPL_ENABLE_${TPL_NAME})
         list(APPEND ${TPL_NAME}_LIB_ENABLED_DEPENDENCIES ${lastLibTplName})
       endif()
     endforeach()
 
     # Prepend ${PROJECT_NAME}TribitsLastLib to the list of external packages/TPLs
-    list(PREPEND ${PROJECT_NAME}_TPLS ${lastLibTplName})
+    list(PREPEND ${PROJECT_NAME}_DEFINED_TPLS ${lastLibTplName})
     set(TPL_ENABLE_${lastLibTplName} ON)
     set(${lastLibTplName}_PACKAGE_BUILD_STATUS EXTERNAL)
 
     # Tack on ${PROJECT_NAME}TribitsLastLib as a dependency to all enabled
     # internal packages
-    foreach(PACKAGE_NAME ${${PROJECT_NAME}_PACKAGES})
-      list(APPEND ${PACKAGE_NAME}_LIB_ALL_DEPENDENCIES ${lastLibTplName})
+    foreach(PACKAGE_NAME ${${PROJECT_NAME}_DEFINED_INTERNAL_TOPLEVEL_PACKAGES})
+      list(APPEND ${PACKAGE_NAME}_LIB_DEFINED_DEPENDENCIES ${lastLibTplName})
       if (${PROJECT_NAME}_ENABLE_${PACKAGE_NAME})
         list(APPEND ${PACKAGE_NAME}_LIB_ENABLED_DEPENDENCIES ${lastLibTplName})
       endif()
@@ -1440,14 +1487,14 @@ macro(tribits_process_enabled_tpls)
 
   tribits_config_code_start_timer(CONFIGURE_TPLS_TIME_START_SECONDS)
 
-  foreach(TPL_NAME ${${PROJECT_NAME}_TPLS})
+  foreach(TPL_NAME ${${PROJECT_NAME}_DEFINED_TPLS})
     if (TPL_ENABLE_${TPL_NAME})
       tribits_process_enabled_tpl(${TPL_NAME})
     endif()
   endforeach()
 
   tribits_config_code_stop_timer(CONFIGURE_TPLS_TIME_START_SECONDS
-    "\nTotal time to configure enabled TPLs")
+    "\nTotal time to configure enabled external packages/TPLs")
 
 endmacro()
 
@@ -1762,7 +1809,7 @@ endmacro()
 # packages will be listed in the summary if they had one or more tests run.
 #
 macro(tribits_set_labels_to_subprojects_mapping)
-  set(CTEST_LABELS_FOR_SUBPROJECTS ${${PROJECT_NAME}_PACKAGES})
+  set(CTEST_LABELS_FOR_SUBPROJECTS ${${PROJECT_NAME}_DEFINED_INTERNAL_TOPLEVEL_PACKAGES})
 endmacro()
 
 
@@ -2055,7 +2102,7 @@ macro(tribits_configure_enabled_packages)
   # other even downstream packages (which is pretty messed up really).
   #
 
-  foreach(TRIBITS_PACKAGE ${${PROJECT_NAME}_PACKAGES})
+  foreach(TRIBITS_PACKAGE ${${PROJECT_NAME}_DEFINED_INTERNAL_TOPLEVEL_PACKAGES})
 
     # Get all the package sources independent of whether they are enabled or not.
     # There are some messed up packages that grab parts out of unrelated
@@ -2106,14 +2153,14 @@ macro(tribits_configure_enabled_packages)
   # Tell packages that are also repos they are being processed as a package.
   set(TRIBITS_PROCESSING_PACKAGE TRUE)
 
-  foreach(TRIBITS_PACKAGE ${${PROJECT_NAME}_PACKAGES})
+  foreach(TRIBITS_PACKAGE ${${PROJECT_NAME}_DEFINED_INTERNAL_TOPLEVEL_PACKAGES})
 
     tribits_determine_if_process_package(${TRIBITS_PACKAGE}
       PROCESS_PACKAGE  PACKAGE_ENABLE_STR)
 
     if (PROCESS_PACKAGE)
 
-      message("Processing enabled package: ${TRIBITS_PACKAGE} (${PACKAGE_ENABLE_STR})")
+      message("Processing enabled top-level package: ${TRIBITS_PACKAGE} (${PACKAGE_ENABLE_STR})")
 
       if (NOT ${PROJECT_NAME}_TRACE_DEPENDENCY_HANDLING_ONLY)
 
@@ -2152,7 +2199,7 @@ macro(tribits_configure_enabled_packages)
         list(APPEND ${PROJECT_NAME}_LIBRARIES ${${TRIBITS_PACKAGE}_LIBRARIES})
 
         tribits_package_config_code_stop_timer(PROCESS_THIS_PACKAGE_TIME_START_SECONDS
-          "-- Total time to configure package ${TRIBITS_PACKAGE}")
+          "-- Total time to configure top-level package ${TRIBITS_PACKAGE}")
 
       endif()
 
@@ -2243,7 +2290,7 @@ macro(tribits_configure_enabled_packages)
 
     # Add empty <PackageName>_libs targets for top-level packages if asked
     if (${PROJECT_NAME}_DEFINE_MISSING_PACKAGE_LIBS_TARGETS)
-      foreach(TRIBITS_PACKAGE ${${PROJECT_NAME}_PACKAGES})
+      foreach(TRIBITS_PACKAGE ${${PROJECT_NAME}_DEFINED_INTERNAL_TOPLEVEL_PACKAGES})
         if (NOT TARGET ${TRIBITS_PACKAGE}_libs)
           add_custom_target(${TRIBITS_PACKAGE}_libs
             COMMENT "Dummy target for ${TRIBITS_PACKAGE}_libs that builds nothing!")
@@ -2276,20 +2323,17 @@ macro(tribits_setup_packaging_and_distribution)
   # The above must define the basic project settings for CPACK that are
   # specific to the project and should not be provided by the user.
 
-  # K.2) Removing any packages or SE packages not enabled from the tarball
+  # K.2) Removing any packages or packages not enabled from the tarball
 
   if (${PROJECT_NAME}_EXCLUDE_DISABLED_SUBPACKAGES_FROM_DISTRIBUTION)
-    set(_SE_OR_FULL_PACKAGES ${${PROJECT_NAME}_SE_PACKAGES})
+    set(tribitsPackageList ${${PROJECT_NAME}_DEFINED_INTERNAL_PACKAGES})
   else()
-    set(_SE_OR_FULL_PACKAGES ${${PROJECT_NAME}_PACKAGES})
+    set(tribitsPackageList ${${PROJECT_NAME}_DEFINED_INTERNAL_TOPLEVEL_PACKAGES})
   endif()
 
-  tribits_get_nonenabled_list(
-    _SE_OR_FULL_PACKAGES  ${PROJECT_NAME}
-    NON_ENABLED_SE_OR_FULL_PACKAGES  NUM_NON_ENABLED_SE_OR_FULL_PACKAGES)
-  #print_var(NON_ENABLED_SE_OR_FULL_PACKAGES)
+  tribits_get_sublist_nonenabled(tribitsPackageList  nonEnabledTribitsPackage  "")
 
-  foreach(TRIBITS_PACKAGE ${NON_ENABLED_SE_OR_FULL_PACKAGES})
+  foreach(TRIBITS_PACKAGE ${nonEnabledTribitsPackage})
 
     # Determine if this is a package to not ignore
     find_list_element(TRIBITS_CPACK_PACKAGES_TO_NOT_IGNORE
@@ -2346,18 +2390,18 @@ macro(tribits_setup_packaging_and_distribution)
 
   # K.3) Set up install component dependencies
 
-  tribits_get_enabled_list(
-    ${PROJECT_NAME}_PACKAGES  ${PROJECT_NAME}
-    ENABLED_PACKAGES  NUM_ENABLED)
-  #message("ENABLED PACKAGES: ${ENABLED_PACKAGES} ${NUM_ENABLED}")
+  tribits_get_sublist_enabled(
+    ${PROJECT_NAME}_DEFINED_INTERNAL_TOPLEVEL_PACKAGES
+    enabledInternalToplevelPackages  "")
 
-  foreach(PKG ${ENABLED_PACKAGES})
-    if(NOT "${${PKG}_LIB_REQUIRED_DEP_PACKAGES}" STREQUAL "")
-        string(TOUPPER ${PKG} UPPER_PKG)
-        #message("${UPPER_PKG} depends on : ${${PKG}_LIB_REQUIRED_DEP_PACKAGES}")
-        set(CPACK_COMPONENT_${UPPER_PKG}_DEPENDS ${${PKG}_LIB_REQUIRED_DEP_PACKAGES})
+  foreach(pkgName ${enabledInternalToplevelPackages})
+    if(NOT "${${pkgName}_LIB_ENABLED_DEPENDENCIES}" STREQUAL "")
+      string(TOUPPER ${pkgName} upperPkgName)
+      set(CPACK_COMPONENT_${upperPkgName}_DEPENDS ${${pkgName}_LIB_ENABLED_DEPENDENCIES})
+      # ToDo: The above needs to be changed to the list of *internal* enabled
+      # package dependencies!  (But there are no tests for this currently and
+      # I am not sure who is using this.)
     endif()
-    #message("${PKG} depends on : ${${PKG}_LIB_REQUIRED_DEP_PACKAGES}")
   endforeach()
 
   # K.4) Resetting the name to avoid overwriting registry keys when installing
@@ -2416,7 +2460,7 @@ endmacro()
 function(tribits_add_install_package_by_package_target)
 
   set(TRIBITS_ENABLED_PACKAGES_BINARY_DIRS)
-  foreach(TRIBITS_PACKAGE ${${PROJECT_NAME}_PACKAGES})
+  foreach(TRIBITS_PACKAGE ${${PROJECT_NAME}_DEFINED_INTERNAL_TOPLEVEL_PACKAGES})
     list(APPEND TRIBITS_ENABLED_PACKAGES_BINARY_DIRS "${${TRIBITS_PACKAGE}_BINARY_DIR}")
   endforeach()
 

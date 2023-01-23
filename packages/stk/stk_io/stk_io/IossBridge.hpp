@@ -55,13 +55,12 @@
 #include "stk_mesh/base/FieldState.hpp"     // for FieldState
 #include "stk_mesh/base/Part.hpp"           // for Part
 #include "stk_topology/topology.hpp"        // for topology
-#include "stk_util/util/ParameterList.hpp"  // for STK_ANY_NAMESPACE, Type
+#include "stk_util/util/ParameterList.hpp"  // for Type
 #include "stk_util/util/ReportHandler.hpp"  // for ThrowRequireMsg
 namespace Ioss { class DatabaseIO; }
 namespace Ioss { class ElementTopology; }
 namespace Ioss { class EntityBlock; }
 namespace Ioss { class Region; }
-namespace Teuchos { class any; }
 namespace stk { namespace io { struct FieldAndName; } }
 namespace stk { namespace mesh { class FieldBase; } }
 namespace stk { namespace mesh { class FieldRestriction; } }
@@ -102,12 +101,12 @@ stk::mesh::EntityRank get_entity_rank(const Ioss::GroupingEntity *entity,
                                       const stk::mesh::MetaData &meta);
 
 struct GlobalAnyVariable {
-  GlobalAnyVariable(const std::string &name, const STK_ANY_NAMESPACE::any *value, stk::util::ParameterType::Type type)
+  GlobalAnyVariable(const std::string &name, const std::any *value, stk::util::ParameterType::Type type)
     : m_name(name), m_value(value), m_type(type)
   {}
 
   std::string m_name;
-  const STK_ANY_NAMESPACE::any *m_value;
+  const std::any *m_value;
   stk::util::ParameterType::Type m_type;
 };
 
@@ -136,8 +135,6 @@ struct FieldNameToPartLess
 };
 
 typedef std::vector<FieldNameToPart> FieldNameToPartVector;
-
-stk::mesh::Part *getPart(const stk::mesh::MetaData& meta_data, const std::string& name);
 
 bool is_valid_for_output(stk::io::OutputParams &params, const stk::mesh::Part &part);
 void get_selected_nodes(OutputParams &params,
@@ -533,8 +530,34 @@ void put_edge_block_io_part_attribute( stk::mesh::Part &part);
 void put_assembly_io_part_attribute( stk::mesh::Part &part);
 
 void create_named_suffix_field_output_type(const std::string & typeName, const std::vector<std::string> & suffices);
+void set_named_suffix_field_output_type(stk::mesh::FieldBase & field, const std::string & typeName);
 
-void set_field_output_type(stk::mesh::FieldBase & field, const std::string & typeName);
+enum class FieldOutputType {
+  //                  Output Subscripts:
+  SCALAR,           //  []
+  VECTOR_2D,        //  [x, y]
+  VECTOR_3D,        //  [x, y, z]
+  FULL_TENSOR_36,   //  [xx, yy, zz, xy, yz, zx, yx, zy, xz]
+  FULL_TENSOR_32,   //  [xx, yy, zz, xy, yx]
+  FULL_TENSOR_22,   //  [xx, yy, xy, yx]
+  FULL_TENSOR_16,   //  [xx, xy, yz, zx, yx, zy, xz]
+  FULL_TENSOR_12,   //  [xx, xy, yx]
+  SYM_TENSOR_33,    //  [xx, yy, zz, xy, yz, zx]
+  SYM_TENSOR_31,    //  [xx, yy, zz, xy]
+  SYM_TENSOR_21,    //  [xx, yy, xy]
+  SYM_TENSOR_13,    //  [xx, xy, yz, zx]
+  SYM_TENSOR_11,    //  [xx, xy]
+  SYM_TENSOR_10,    //  [xx]
+  ASYM_TENSOR_03,   //  [xy, yz, zx]
+  ASYM_TENSOR_02,   //  [xy, yz]
+  ASYM_TENSOR_01,   //  [xy]
+  MATRIX_22,        //  [xx, xy, yx, yy]
+  MATRIX_33,        //  [xx, xy, xz, yx, yy, yz, zx, zy, zz]
+  QUATERNION_2D,    //  [s, q]
+  QUATERNION_3D     //  [x, y, z, q]
+};
+
+void set_field_output_type(stk::mesh::FieldBase & field, FieldOutputType fieldOutputType);
 
 bool has_field_output_type(const stk::mesh::FieldBase & field);
 const Ioss::VariableType * get_field_output_type(const stk::mesh::FieldBase & field);

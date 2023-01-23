@@ -48,7 +48,8 @@ include(PrependGlobalSet)
 include(RemoveGlobalDuplicates)
 include(TribitsGeneralMacros)
 include(TribitsReportInvalidTribitsUsage)
-include(SetAndIncDirs)
+include(TribitsDeprecatedHelpers)
+include(TribitsSetAndIncDirs)
 
 
 # @FUNCTION: tribits_add_library()
@@ -138,16 +139,16 @@ include(SetAndIncDirs)
 #
 #   ``DEPLIBS <deplib0> <deplib1> ...``
 #
-#     List of dependent libraries that are built in the current SE package
-#     that this library is dependent on.  These libraries are passed into
+#     List of dependent libraries that are built in the current package that
+#     this library is dependent on.  These libraries are passed into
 #     ``target_link_libraries(<libTargetName> ...)`` so that CMake knows about
-#     the dependency structure of the libraries within this SE package.
-#     **NOTE:** One must **not** list libraries in other upstream `TriBITS SE
+#     the dependency structure of the libraries within this package.
+#     **NOTE:** One must **not** list libraries in other upstream `TriBITS
 #     Packages`_ or libraries built externally from this TriBITS CMake project
 #     in ``DEPLIBS``.  The TriBITS system automatically handles linking to
-#     libraries in upstream TriBITS SE packages.  External libraries need to
-#     be listed in the ``IMPORTEDLIBS`` argument instead if they are not
-#     already specified automatically using a `TriBITS TPL`_.
+#     libraries in upstream TriBITS packages.  External libraries need to be
+#     listed in the ``IMPORTEDLIBS`` argument instead if they are not already
+#     specified automatically using a `TriBITS TPL`_.
 #
 #   ``IMPORTEDLIBS <ideplib0> <ideplib1> ...``
 #
@@ -172,8 +173,8 @@ include(SetAndIncDirs)
 #     will be created.  If both ``STATIC`` and ``SHARED`` are passed in (which
 #     is obviously a mistake), then a shared library will be created.
 #     WARNING: Once you mark a library with ``STATIC``, then all of the
-#     downstream libraries in the current SE package and all downstream SE
-#     packages must also be also be marked with ``STATIC``.  That is because,
+#     downstream libraries in the current package and all downstream packages
+#     must also be also be marked with ``STATIC``.  That is because,
 #     generally, one can not link a link a static lib against a downstream
 #     shared lib since that is not portable (but can be done on some platforms
 #     if, for example, ``-fPIC`` is specified).  So be careful to use
@@ -202,7 +203,7 @@ include(SetAndIncDirs)
 #     ``add_library()`` where ``cuda_add_library()`` is assumed to be defined
 #     by the standard ``FindCUDA.cmake`` module as processed using the
 #     standard TriBITS ``FindTPLCUDA.cmake`` file (see `Standard TriBITS
-#     TPLs`_).  For this option to work, this SE package must have an enabled
+#     TPLs`_).  For this option to work, this package must have an enabled
 #     direct or indirect dependency on the TriBITS CUDA TPL or a
 #     configure-time error may occur about not knowing about
 #     ``cuda_all_library()``.
@@ -670,7 +671,7 @@ function(tribits_add_library_assert_deplibs)
       # dependency on the upstream package that owns this upstream TESTONLY
       # library if it comes from an upstream package.
     elseif (NOT PARSE_TESTONLY AND depLibIsTestOnlyLib) # any depLibAlreadyInPkgLibs
-      message(WARNING "WARNING: '${depLib}' in DEPLIBS is a TESTONLY lib"
+      tribits_deprecated("'${depLib}' in DEPLIBS is a TESTONLY lib"
         " and it is illegal to link to this non-TESTONLY library '${LIBRARY_NAME}'."
         "  Such usage is deprecated (and this warning will soon become an error)!"
         "  If this is a regular library in this package or in an dependent upstream"
@@ -680,7 +681,7 @@ function(tribits_add_library_assert_deplibs)
         " ${${PACKAGE_NAME}_SOURCE_DIR}/cmake/Dependencies.cmake")
       # ToDo: Turn the above to FATAL_ERROR after dropping deprecated code
     elseif (NOT depLibAlreadyInPkgLibs AND TARGET ${prefixedDepLib}) # any PARSE_TESTONLY
-      message(WARNING "WARNING: '${depLib}' in DEPLIBS is not"
+      tribits_deprecated("'${depLib}' in DEPLIBS is not"
         " a lib in this package but is a library defined in the current"
         " cmake project!  Such usage is deprecated (and"
         " will result in a configure error soon).  If this is a library in"
@@ -691,7 +692,7 @@ function(tribits_add_library_assert_deplibs)
         " this package's dependencies file"
         " ${${PACKAGE_NAME}_SOURCE_DIR}/cmake/Dependencies.cmake.")
     elseif (NOT depLibAlreadyInPkgLibs AND NOT TARGET ${prefixedDepLib} )
-      message(WARNING "WARNING: '${depLib}' in DEPLIBS is not"
+      tribits_deprecated("'${depLib}' in DEPLIBS is not"
         " a lib defined in the current cmake project!  Such usage is deprecated (and"
         " will result in a configure error soon).  If this is an external"
         " lib you are trying to link in, it should likely be handled as a TriBITS"
@@ -725,7 +726,7 @@ function(tribits_add_library_assert_importedlibs)
       FOUND_IMPORTEDLIB_IN_LIBRARIES_IDX)
     tribits_lib_is_testonly(${prefixedImportedLib}  importedLibIsTestOnlyLib)
     if (importedLibIsTestOnlyLib)
-      message(WARNING "WARNING: '${importedLib}' in IMPORTEDLIBS is a TESTONLY lib"
+      tribits_deprecated("'${importedLib}' in IMPORTEDLIBS is a TESTONLY lib"
         " and it is illegal to pass in through IMPORTEDLIBS!"
         "  Such usage is deprecated (and this warning will soon become an error)!"
         "  Should '${importedLib}' instead be passed through DEPLIBS?")
