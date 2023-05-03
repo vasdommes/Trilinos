@@ -25,6 +25,7 @@ CoalesceDropFactory_kokkos - #if defined(HAVE_MUELU_KOKKOS_REFACTOR)
 CoarseMapFactory
 CoarseMapFactory_kokkos - #if defined(HAVE_MUELU_KOKKOS_REFACTOR)
 CoarseningVisualizationFactory
+CombinePFactory
 Constraint
 ConstraintFactory
 CoordinatesTransferFactory
@@ -141,4 +142,5 @@ NodePartitionInterface - #if defined(HAVE_MPI)
 XpetraOperator
 RefMaxwell
 Maxwell1
+MultiPhys
 Maxwell_Utils

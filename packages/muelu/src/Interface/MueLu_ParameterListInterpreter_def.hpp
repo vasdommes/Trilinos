@@ -86,6 +86,7 @@
 #include "MueLu_NullspaceFactory.hpp"
 #include "MueLu_PatternFactory.hpp"
 #include "MueLu_ReplicatePFactory.hpp"
+#include "MueLu_CombinePFactory.hpp"
 #include "MueLu_PgPFactory.hpp"
 #include "MueLu_RAPFactory.hpp"
 #include "MueLu_RAPShiftFactory.hpp"
@@ -593,7 +594,7 @@ namespace MueLu {
         Exceptions::RuntimeError, "Unknown \"reuse: type\" value: \"" << reuseType << "\". Please consult User's Guide.");
 
     MUELU_SET_VAR_2LIST(paramList, defaultList, "multigrid algorithm", std::string, multigridAlgo);
-    TEUCHOS_TEST_FOR_EXCEPTION(strings({"unsmoothed", "sa", "pg", "emin", "matlab", "pcoarsen","classical","smoothed reitzinger","unsmoothed reitzinger","replicate"}).count(multigridAlgo) == 0,
+    TEUCHOS_TEST_FOR_EXCEPTION(strings({"unsmoothed", "sa", "pg", "emin", "matlab", "pcoarsen","classical","smoothed reitzinger","unsmoothed reitzinger","replicate","combine"}).count(multigridAlgo) == 0,
         Exceptions::RuntimeError, "Unknown \"multigrid algorithm\" value: \"" << multigridAlgo << "\". Please consult User's Guide.");
 #ifndef HAVE_MUELU_MATLAB
     TEUCHOS_TEST_FOR_EXCEPTION(multigridAlgo == "matlab", Exceptions::RuntimeError,
@@ -673,6 +674,9 @@ namespace MueLu {
 
     } else if (multigridAlgo == "replicate") {
       UpdateFactoryManager_Replicate(paramList, defaultList, manager, levelID, keeps);
+
+    } else if (multigridAlgo == "combine") {
+      UpdateFactoryManager_Combine(paramList, defaultList, manager, levelID, keeps);
 
     } else if (multigridAlgo == "pg") {
       // Petrov-Galerkin
@@ -2169,6 +2173,23 @@ namespace MueLu {
 
     ParameterList Pparams;
     MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "replicate: npdes", int, Pparams);
+
+    P->SetParameterList(Pparams);
+    manager.SetFactory("P", P);
+
+  }
+
+  // =====================================================================================================
+  // ================================= Algorithm: Combine         ========================================
+  // =====================================================================================================
+  template <class Scalar, class LocalOrdinal, class GlobalOrdinal, class Node>
+  void ParameterListInterpreter<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
+  UpdateFactoryManager_Combine(ParameterList& paramList, const ParameterList& defaultList, FactoryManager& manager, int /* levelID */, std::vector<keep_pair>& keeps) const
+  {
+    auto P = rcp(new MueLu::CombinePFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>());
+
+    ParameterList Pparams;
+    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "combine: numBlks", int, Pparams);
 
     P->SetParameterList(Pparams);
     manager.SetFactory("P", P);

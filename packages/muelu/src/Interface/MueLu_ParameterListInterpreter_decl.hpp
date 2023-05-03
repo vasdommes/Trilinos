@@ -256,6 +256,8 @@ namespace MueLu {
                                  int levelID, std::vector<keep_pair>& keeps) const;
     void UpdateFactoryManager_Replicate(Teuchos::ParameterList& paramList, const Teuchos::ParameterList& defaultList, FactoryManager& manager,
                                  int levelID, std::vector<keep_pair>& keeps) const;
+    void UpdateFactoryManager_Combine(Teuchos::ParameterList& paramList, const Teuchos::ParameterList& defaultList, FactoryManager& manager,
+                                 int levelID, std::vector<keep_pair>& keeps) const;
     void UpdateFactoryManager_Matlab(Teuchos::ParameterList& paramList, const Teuchos::ParameterList& defaultList, FactoryManager& manager,
                                      int levelID, std::vector<keep_pair>& keeps) const;
 

@@ -83,6 +83,9 @@ using CoarseMapFactory_kokkos [[maybe_unused]] = MueLu::CoarseMapFactory_kokkos<
 #ifdef MUELU_COARSENINGVISUALIZATIONFACTORY_SHORT
 using CoarseningVisualizationFactory [[maybe_unused]] = MueLu::CoarseningVisualizationFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node>;
 #endif
+#ifdef MUELU_COMBINEPFACTORY_SHORT
+typedef MueLu::CombinePFactory<Scalar,LocalOrdinal,GlobalOrdinal,Node> CombinePFactory;
+#endif
 #ifdef MUELU_CONSTRAINT_SHORT
 using Constraint [[maybe_unused]] = MueLu::Constraint<Scalar,LocalOrdinal,GlobalOrdinal,Node>;
 #endif

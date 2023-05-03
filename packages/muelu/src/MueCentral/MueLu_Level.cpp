@@ -357,8 +357,10 @@ namespace MueLu {
   }
 
   void Level::print(std::ostream& out, const VerbLevel verbLevel) const {
+#ifdef out
     if (!(verbLevel & Debug))
       return;
+#endif
 
     out << "LevelID = " << GetLevelID() << std::endl;
 

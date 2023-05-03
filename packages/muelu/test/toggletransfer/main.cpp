@@ -59,6 +59,7 @@
 
 #include "MueLu_SemiCoarsenPFactory.hpp" // for semi-coarsening constants
 #include <MueLu_TestHelpers.hpp>
+#include <MueLu_MultiPhys.hpp>
 
 /**********************************************************************************/
 /* CREATE INITAL MATRIX                                                           */
@@ -76,6 +77,16 @@
 #include <Galeri_XpetraProblemFactory.hpp>
 #include <Galeri_XpetraUtils.hpp>
 
+#ifdef HAVE_MUELU_BELOS
+#include <BelosConfigDefs.hpp>
+#include <BelosLinearProblem.hpp>
+#include <BelosSolverFactory.hpp>
+#ifdef HAVE_MUELU_TPETRA
+#include <BelosTpetraAdapter.hpp>
+#endif
+#include <BelosXpetraAdapter.hpp>     // => This header defines Belos::XpetraOp
+#endif
+
 #include <unistd.h>
 /**********************************************************************************/
 
@@ -90,113 +101,134 @@ int main_(Teuchos::CommandLineProcessor &clp, Xpetra::UnderlyingLib lib, int arg
   try {
     Teuchos::RCP<const Teuchos::Comm<int> > comm = Teuchos::DefaultComm<int>::getComm();
 
-    /**********************************************************************************/
-    /* SET TEST PARAMETERS                                                            */
-    /**********************************************************************************/
+    int nx, ny;
 
-    // Default is Laplace1D with nx = 8748.
-    // It's a nice size for 1D and perfect aggregation. (6561=3^8)
-    //Nice size for 1D and perfect aggregation on small numbers of processors. (8748=4*3^7)
-    Galeri::Xpetra::Parameters<GO> matrixParameters(clp, 8748); // manage parameters of the test case
-    Xpetra::Parameters xpetraParameters(clp);             // manage parameters of xpetra
+    // current problem read from files is on a 25 x 25 mesh
+    //
+    // The block system looks like
+    //
+    //     [ E    0   0    0    0] 
+    //     [ 0   D1   0   L1    0]
+    //     [ 0    0  D2    0   L2]
+    //     [ 0   L1   0   D3    0]
+    //     [ 0    0  L2    0   D4]
+    //
+    // E  (1250x1250)  corresponds to a 2D lin elasticity
+    // L1 ( 625x 625) is a variable coef Poisson problem
+    // L2 ( 625x 625) is a variable coef Poisson problem
+    // D1-D4 are 625x625 diagonal matrices
+    
+    nx = 25; ny = 25;
 
-    // custom parameters
-    //std::string aggOrdering = "natural";
-    int minPerAgg=2; //was 3 in simple
-    int maxNbrAlreadySelected=0;
-    int printTimings=0;
-    std::string xmlFile="parameters.xml";
+    Teuchos::RCP<const Map>   mapScalar = MapFactory::Build(lib, nx*ny, 0, comm);
+    Teuchos::RCP<const Map>   map2DofsPerNode = Xpetra::MapFactory<LO,GO,Node>::Build(mapScalar, 2);
 
-    //clp.setOption("aggOrdering",&aggOrdering,"aggregation ordering strategy (natural,graph)");
-    clp.setOption("maxNbrSel",&maxNbrAlreadySelected,"maximum # of nbrs allowed to be in other aggregates");
-    clp.setOption("minPerAgg",&minPerAgg,"minimum #DOFs per aggregate");
-    clp.setOption("timings",&printTimings,"print timings to screen");
-    clp.setOption("xmlFile",&xmlFile,"file name containing MueLu multigrid parameters in XML format");
+    // build map for 5x5 block system  and then read in this matrix
 
-    switch (clp.parse(argc,argv)) {
-      case Teuchos::CommandLineProcessor::PARSE_HELP_PRINTED:        return EXIT_SUCCESS;
-      case Teuchos::CommandLineProcessor::PARSE_ERROR:
-      case Teuchos::CommandLineProcessor::PARSE_UNRECOGNIZED_OPTION: return EXIT_FAILURE;
-      case Teuchos::CommandLineProcessor::PARSE_SUCCESSFUL:          break;
+    GO  maxGID = map2DofsPerNode->getMaxAllGlobalIndex();
+    GO  minGID = map2DofsPerNode->getMinAllGlobalIndex();
+
+    Teuchos::ArrayView<const GO> mapGIDs  = map2DofsPerNode->getLocalElementList();
+    Teuchos::Array<GO>  globalsMultiPhysA(mapGIDs.size()*3); 
+
+    for (int ii = 0; ii < mapGIDs.size(); ii++) { 
+      globalsMultiPhysA[ii                    ] = mapGIDs[ii]; 
+      globalsMultiPhysA[ii +  mapGIDs.size()  ] = mapGIDs[ii] +   (maxGID - minGID + 1);
+      globalsMultiPhysA[ii +  mapGIDs.size()*2] = mapGIDs[ii] + 2*(maxGID - minGID + 1);
     }
+    Teuchos::RCP<const Map>   mapMultiPhysA = Xpetra::MapFactory<LO,GO,Node>::Build(lib, Teuchos::OrdinalTraits<Xpetra::global_size_t>::invalid(), globalsMultiPhysA, map2DofsPerNode->getIndexBase(), comm);
+    Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >     multiPhysA = Xpetra::IO<SC,LO,GO,Node>::Read("multiPhys.mat",mapMultiPhysA); 
+
+
+    // To solve the block system a block diagonal auxiliary operator is used in conjunction with 5 invocations of Hierarchy Setup
+    //
+    //     [ aux4    0     0      0      0] 
+    //     [ 0    aux1     0      0      0]
+    //     [ 0       0  aux3      0      0]
+    //     [ 0       0     0   aux2      0]
+    //     [ 0       0     0      0   aux1]
+    //
+    // Here aux4 correspond to 2 distance Laplacians (one corresponding to even dofs and the other to odd dofs).
+    // aux1 is a single distance Laplacian. aux2 is L1 and aux3 is L2.
+    
+    Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >     aux1 = Xpetra::IO<SC,LO,GO,Node>::Read("aux1.mat",mapScalar);  
+    Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >     aux2 = Xpetra::IO<SC,LO,GO,Node>::Read("aux2.mat",mapScalar);  
+    Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >     aux3 = Xpetra::IO<SC,LO,GO,Node>::Read("aux3.mat",mapScalar); 
+    Teuchos::RCP<Xpetra::Matrix<Scalar,LocalOrdinal,GlobalOrdinal,Node> >     aux4 = Xpetra::IO<SC,LO,GO,Node>::Read("aux4.mat",map2DofsPerNode); 
+
+   Teuchos::ArrayRCP<Teuchos::RCP<Matrix>> arrayOfAuxMatrices(5);
+    arrayOfAuxMatrices[0] = aux4;
+    arrayOfAuxMatrices[1] = aux1;
+    arrayOfAuxMatrices[2] = aux3;
+    arrayOfAuxMatrices[3] = aux2;
+    arrayOfAuxMatrices[4] = aux1;
+
+    // We also pass in 5 sets of coordinates and null spaces
+
+    typedef Teuchos::ScalarTraits<SC> STS;
+    typedef typename STS::magnitudeType real_type;
+    typedef typename Teuchos::ScalarTraits<Scalar>::coordinateType coordinate_type;
+    typedef Xpetra::MultiVector<real_type,LO,GO,NO> RealValuedMultiVector;
+    typedef Xpetra::MultiVectorFactory<coordinate_type,LO,GO,NO> RealValuedMultiVectorFactory;
+
+    Teuchos::ArrayRCP<Teuchos::RCP<RealValuedMultiVector>> arrayOfCoords(5);
+    Teuchos::ArrayRCP<Teuchos::RCP<MultiVector>>           arrayOfNullspaces(5);
+
+    Teuchos::RCP<RealValuedMultiVector> Coords = RealValuedMultiVectorFactory::Build(mapScalar, 2);
+    Teuchos::ArrayRCP<real_type> x = Coords->getDataNonConst(0);
+    Teuchos::ArrayRCP<real_type> y = Coords->getDataNonConst(1);
+    Teuchos::ArrayView<const GO> coordGIDs = mapScalar->getLocalElementList();
+    Scalar meanX = 0.0, meanY = 0.0;
+    for (GO p = 0; p < coordGIDs.size(); p += 1) { 
+       GlobalOrdinal ind = coordGIDs[p];
+       size_t i = ind % nx, j = ind / nx;
+       x[p] = (i+1);
+       y[p] = (j+1);
+       meanX += x[p];
+       meanY += y[p];
+    }
+    meanX = meanX/((Scalar) coordGIDs.size());
+    meanY = meanY/((Scalar) coordGIDs.size());
+
+    arrayOfCoords[0] = Coords; 
+    arrayOfCoords[1] = Coords; 
+    arrayOfCoords[2] = Coords; 
+    arrayOfCoords[3] = Coords; 
+    arrayOfCoords[4] = Coords; 
+
+    Teuchos::RCP<Xpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node>> scalarNullSpace = MultiVectorFactory::Build(mapScalar, 1); 
+    Scalar one2(1.0);
+    scalarNullSpace->putScalar(one2);
+
+    Teuchos::RCP<Xpetra::MultiVector<Scalar,LocalOrdinal,GlobalOrdinal,Node>> elasNullSpace = MultiVectorFactory::Build(map2DofsPerNode, 3); 
+    Scalar zero2(0.0);
+
+    elasNullSpace->putScalar(zero2);
+    Teuchos::ArrayRCP<Scalar> nsValues0, nsValues1, nsValues2;
+
+    nsValues0 = elasNullSpace->getDataNonConst(0);
+    nsValues1 = elasNullSpace->getDataNonConst(1);
+    nsValues2 = elasNullSpace->getDataNonConst(2);
+    for (int j=0; j<2*coordGIDs.size(); j+=2) {
+      // translation
+      nsValues0[j+0] = 1.0;
+      nsValues1[j+1] = 1.0;
+      // rotate around z-axis (x-y plane)
+      nsValues2[j+0] = -(y[j/2]-meanY);
+      nsValues2[j+1] =  (x[j/2]-meanX);
+    }
+
+    arrayOfNullspaces[0] = elasNullSpace;
+    arrayOfNullspaces[1] = scalarNullSpace;
+    arrayOfNullspaces[2] = scalarNullSpace;
+    arrayOfNullspaces[3] = scalarNullSpace;
+    arrayOfNullspaces[4] = scalarNullSpace;
+
+    Teuchos::ParameterList  bigList;
+    Teuchos::updateParametersFromXmlFileAndBroadcast("bigList.xml", Teuchos::Ptr<Teuchos::ParameterList>(&bigList), *comm);
+    Teuchos::RCP<Operator> preconditioner = rcp(new MueLu::MultiPhys<SC,LO,GO,NO>(multiPhysA,arrayOfAuxMatrices, arrayOfNullspaces, arrayOfCoords, 5, bigList, true));
 
     Teuchos::RCP<Teuchos::TimeMonitor> globalTimeMonitor = Teuchos::rcp (new Teuchos::TimeMonitor(*Teuchos::TimeMonitor::getNewTimer("Timings: Global Time")));
-
-    matrixParameters.check();
-    xpetraParameters.check();
-
-    if (comm->getRank() == 0) {
-      std::cout << xpetraParameters << matrixParameters;
-    }
-
-    /**********************************************************************************/
-    /* CREATE INITIAL MATRIX                                                          */
-    /**********************************************************************************/
-    Teuchos::RCP<const Map> map;
-    Teuchos::RCP<Matrix> A;
-
-    {
-      Teuchos::TimeMonitor tm(*Teuchos::TimeMonitor::getNewTimer("Timings: Matrix Build"));
-
-      map = MapFactory::Build(lib, matrixParameters.GetNumGlobalElements(), 0, comm);
-      Teuchos::RCP<Galeri::Xpetra::Problem<Map,CrsMatrixWrap,MultiVector> > Pr =
-        Galeri::Xpetra::BuildProblem<SC,LO,GO,Map,CrsMatrixWrap,MultiVector>(matrixParameters.GetMatrixType(), map, matrixParameters.GetParameterList()); //TODO: Matrix vs. CrsMatrixWrap
-      A = Pr->BuildMatrix();
-
-    }
-    /**********************************************************************************/
-    /*                                                                                */
-    /**********************************************************************************/
-    Teuchos::ParameterList paramList;
-    Teuchos::updateParametersFromXmlFileAndBroadcast(xmlFile, Teuchos::Ptr<Teuchos::ParameterList>(&paramList), *comm);
-
-    if (paramList.isSublist("Factories")) {
-      Teuchos::ParameterList smootherParams = paramList.sublist("Factories").sublist("myJacobi").sublist("ParameterList");
-      double damping = smootherParams.get<double>("relaxation: damping factor");
-      smootherParams.remove("relaxation: damping factor");
-      smootherParams.set<Scalar>("relaxation: damping factor",damping);
-      paramList.sublist("Factories").sublist("myJacobi").set("ParameterList",smootherParams);
-    }
-    if (paramList.isSublist("smoother: params")) {
-      Teuchos::ParameterList smootherParams = paramList.sublist("smoother: params");
-      double damping = smootherParams.get<double>("relaxation: damping factor");
-      smootherParams.remove("relaxation: damping factor");
-      smootherParams.set<Scalar>("relaxation: damping factor",damping);
-      paramList.set("smoother: params",smootherParams);
-    }
-
-    // create parameter list interpreter
-    Teuchos::RCP<HierarchyManager> mueluFactory = Teuchos::rcp(new ParameterListInterpreter(paramList));
-
-    Teuchos::RCP<Hierarchy> H = mueluFactory->CreateHierarchy();
-
-    H->GetLevel(0)->template Set< Teuchos::RCP<Matrix> >("A", A);
-
-    Teuchos::RCP<MultiVector> nullspace = MultiVectorFactory::Build(A->getRowMap(), 1);
-    nullspace->putScalar(1.0);
-    H->GetLevel(0)->Set("Nullspace", nullspace);
-
-    // set minimal information about number of layers for semicoarsening...
-    // This information can also be provided as a user parameter in the xml file using the
-    // parameter: "semicoarsen: num layers"
-    // TAW: 3/16/2016: NumZLayers has to be provided as LO
-    GO zLayers = matrixParameters.GetParameterList().template get<GO>("nz");
-    H->GetLevel(0)->Set("NumZLayers",Teuchos::as<LO>(zLayers));
-
-
-    mueluFactory->SetupHierarchy(*H);
-
-    for (int l=0; l<H->GetNumLevels(); l++) {
-      Teuchos::RCP<MueLu::Level> level = H->GetLevel(l);
-      if(level->IsAvailable("A", MueLu::NoFactory::get()) == false) { success = false; H->GetLevel(l)->print(std::cout, MueLu::Debug);}
-      if(level->IsAvailable("P", MueLu::NoFactory::get()) == false && l>0) { success = false; H->GetLevel(l)->print(std::cout, MueLu::Debug);}
-      if(level->IsAvailable("R", MueLu::NoFactory::get()) == false && l>0) { success = false; H->GetLevel(l)->print(std::cout, MueLu::Debug);}
-      if(level->IsAvailable("PreSmoother",  MueLu::NoFactory::get()) == false) { success = false; H->GetLevel(l)->print(std::cout, MueLu::Debug);}
-      if(level->IsAvailable("PostSmoother", MueLu::NoFactory::get()) == false && l<H->GetNumLevels()-1) { success = false; H->GetLevel(l)->print(std::cout, MueLu::Debug);}
-      if(level->IsAvailable("NumZLayers",   MueLu::NoFactory::get()) == true && l>0) {  success = false; H->GetLevel(l)->print(std::cout, MueLu::Debug);}
-      H->GetLevel(l)->print(std::cout, MueLu::Debug);
-    }
-    ///////////////////////////////////////////////////////////
 
     // =========================================================================
     // System solution (Ax = b)
@@ -205,14 +237,14 @@ int main_(Teuchos::CommandLineProcessor &clp, Xpetra::UnderlyingLib lib, int arg
     typedef Teuchos::ScalarTraits<SC> STS;
     SC zero = STS::zero(), one = STS::one();
 
-    Teuchos::RCP<Vector> X = VectorFactory::Build(A->getRowMap());
-    Teuchos::RCP<Vector> B = VectorFactory::Build(A->getRowMap());
+    Teuchos::RCP<Vector> X = VectorFactory::Build(multiPhysA->getRowMap());
+    Teuchos::RCP<Vector> B = VectorFactory::Build(multiPhysA->getRowMap());
 
     {
-      // we set seed for reproducibility
+      // set seed for reproducibility
       Utilities::SetRandomSeed(*comm);
       X->randomize();
-      A->apply(*X, *B, Teuchos::NO_TRANS, one, zero);
+      multiPhysA->apply(*X, *B, Teuchos::NO_TRANS, one, zero);
 
       Teuchos::Array<typename STS::magnitudeType> norms(1);
       B->norm2(norms);
@@ -222,14 +254,44 @@ int main_(Teuchos::CommandLineProcessor &clp, Xpetra::UnderlyingLib lib, int arg
 
     comm->barrier();
 
-    H->IsPreconditioner(false);
-    H->Iterate(*B, *X, 20);
+    // Belos linear problem
+    typedef MultiVector          MV;
+    typedef Belos::OperatorT<MV> OP;
+
+
+    Teuchos::RCP<OP> belosOp   = Teuchos::rcp(new Belos::XpetraOp<SC, LO, GO, NO>(multiPhysA));
+    Teuchos::RCP<OP> belosPrecOp = Teuchos::rcp(new Belos::XpetraOp<SC, LO, GO, NO>(preconditioner)); // Turns a Xpetra::Matrix object into a Belos operator
+    Teuchos::RCP<Belos::LinearProblem<SC, MV, OP> > belosProblem = rcp(new Belos::LinearProblem<SC, MV, OP>(belosOp, X, B));
+    belosProblem->setRightPrec(belosPrecOp);
+    bool set = belosProblem->setProblem();
+    if (set == false) {
+      std::cout << "\nERROR:  Belos::LinearProblem failed to set up correctly!" << std::endl;
+      return EXIT_FAILURE;
+    }
+    Teuchos::RCP<Teuchos::ParameterList> belosList = Teuchos::parameterList();
+    belosList->set("Maximum Iterations",    100); 
+    belosList->set("Convergence Tolerance", 1e-6);
+    belosList->set("Verbosity",             Belos::Errors + Belos::Warnings + Belos::StatusTestDetails);
+    belosList->set("Output Frequency",      1);
+    belosList->set("Output Style",          Belos::Brief);
+    belosList->set("Implicit Residual Scaling", "None");
+
+    Belos::SolverFactory<SC, MV, OP> solverFactory;
+    Teuchos::RCP<Belos::SolverManager<SC, MV, OP> > solver = solverFactory.create("cg", belosList);
+    solver->setProblem(belosProblem);
+    Belos::ReturnType retStatus = Belos::Unconverged;
+    retStatus = solver->solve();
+
+    int iters = solver -> getNumIters();
+    success = (iters<50 && retStatus == Belos::Converged);
+    if (success)
+      std::cout << "SUCCESS! Belos converged in " << iters << " iterations." << std::endl;
+    else
+      std::cout << "FAILURE! Belos did not converge fast enough." << std::endl;
 
     // Timer final summaries
     globalTimeMonitor = Teuchos::null; // stop this timer before summary
-
-    if (printTimings)
-      Teuchos::TimeMonitor::summarize();
+    Teuchos::TimeMonitor::summarize();
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(verbose, std::cerr, success);
 
